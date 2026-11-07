@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Build &amp; Break</title>
+<style>
+:root{--bg:#f3f0ff;--fg:#1e1b3a;--card:#fff;--line:#d8d2f5;--ac:#6d28d9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12102a;--fg:#ece9ff;--card:#1d1a3d;--line:#35306a;--ac:#8b5cf6}}
+:root[data-theme="dark"]{--bg:#12102a;--fg:#ece9ff;--card:#1d1a3d;--line:#35306a;--ac:#8b5cf6}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+#bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 10px;background:var(--card);border-bottom:1px solid var(--line)}
+.brand{font-size:16px;color:var(--ac)}
+.g{display:flex;gap:4px;flex-wrap:wrap}
+button{font:inherit;padding:6px 10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;cursor:pointer}
+button.on,button.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+body[data-mode="edit"] .pl,body[data-mode="edit"] #hud{display:none}
+body:not([data-mode="edit"]) .ed{display:none}
+#wrap{flex:1;min-height:0;position:relative}
+#game{position:absolute;inset:0}
+#hud{position:absolute;top:8px;right:12px;z-index:2;padding:4px 10px;border-radius:8px;background:rgba(0,0,0,.6);color:#fff;font-variant-numeric:tabular-nums}
+#st{padding:6px 10px;font-size:13px;background:var(--card);border-top:1px solid var(--line)}
+#dlg{display:none;position:fixed;inset:0;z-index:10;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+.box{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(440px,92vw);box-sizing:border-box}
+.box h2{margin:0 0 8px;font-size:18px}
+textarea{width:100%;height:110px;box-sizing:border-box;font:12px monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px}
+.row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+button{touch-action:manipulation}
+#rot{display:none;position:fixed;inset:0;z-index:9;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center;background:var(--bg);color:var(--fg);padding:24px;font-size:18px}
+@media (pointer:coarse) and (orientation:portrait){body:not([data-mode="edit"]):not(.norot) #rot{display:flex}}
+#game canvas{touch-action:none}
+#pad{display:none;position:absolute;left:0;right:0;bottom:0;z-index:3;justify-content:space-between;align-items:flex-end;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));pointer-events:none}
+#pad .g{gap:14px;flex-wrap:nowrap}
+#pad button{pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;width:72px;height:72px;padding:0;border-radius:50%;font-size:26px;background:rgba(0,0,0,.45);color:#fff;border:2px solid rgba(255,255,255,.5)}
+#pad .jb{width:92px;height:92px;font-size:15px;font-weight:700;background:rgba(109,40,217,.7)}
+#pad button.dn{background:rgba(255,255,255,.4)}
+@media (pointer:coarse){body:not([data-mode="edit"]) #pad{display:flex}#bar{flex-wrap:nowrap;overflow-x:auto}.g{flex-wrap:nowrap}button{white-space:nowrap;padding:8px 12px}}
+</style></head>
+<body data-mode="edit">
+<div id="bar">
+  <b class="brand">Build &amp; Break</b>
+  <div class="g ed" id="tools"></div>
+  <div class="g ed"><button id="undo">Undo</button><button id="redo">Redo</button><button id="clear">Clear</button></div>
+  <div class="g ed"><button id="test" class="pri">▶ Test</button><button id="share">Share</button><button id="load">Load code</button></div>
+  <div class="g pl"><button id="rs">Restart (R)</button><button id="fs">⛶ Full screen</button><button id="back" class="pri">Back</button></div>
+</div>
+<div id="wrap"><div id="game"></div><div id="hud"></div>
+  <div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><button data-k="j" class="jb">JUMP</button></div></div>
+<div id="st"></div>
+<div id="rot"><div style="font-size:44px">📱⇄</div><div>Turn your phone sideways to play</div><button id="rotx">Play anyway</button></div>
+<div id="dlg"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+<script>
+const W=30,H=16,S=32,MAXO=150,MAXSP=16,MAXCP=3,MAXK=3,MAXT=12;
+const TYPES={p:"plat",s:"spike",r:"spring",c:"crate",k:"key",h:"check",i:"spike",l:"lava",m:"mspike"};
+const TOOLS=[["p","Block"],["s","Spike"],["r","Spring"],["c","Crate"],["k","Key"],["h","Checkpoint"],["S","Start"],["E","Door"],["x","Erase"],["i","Hidden spike (H)"],["l","Lava drop (L)"],["m","Moving spike (M)"]];
+const $=id=>document.getElementById(id);
+const COARSE=matchMedia("(pointer:coarse)").matches;
+const def=()=>{const o=[];for(let c=0;c<W;c++)o.push(["p",c,15]);o.push(["s",12,14],["s",13,14],["p",20,14],["p",20,13]);return{v:1,s:[2,14],e:[27,14],o}};
+const lim=a=>{const n=t=>a.filter(o=>o[0]===t).length;return a.length>MAXO?"Object limit ("+MAXO+") reached":n("i")+n("l")+n("m")>MAXT?"Trap limit ("+MAXT+") reached":n("s")>MAXSP?"Spike limit ("+MAXSP+") reached":n("h")>MAXCP?"Checkpoint limit ("+MAXCP+") reached":n("k")>MAXK?"Key limit ("+MAXK+") reached":""};
+function validate(L){
+  const ok=a=>Array.isArray(a)&&Number.isInteger(a[0])&&Number.isInteger(a[1])&&a[0]>=0&&a[1]>=0&&a[0]<W&&a[1]<H;
+  if(!L||L.v!==1||!ok(L.s)||!ok(L.e)||!Array.isArray(L.o))return "Not a valid level code";
+  if(L.s[0]===L.e[0]&&L.s[1]===L.e[1])return "Start and door overlap";
+  const seen=new Set([L.s+"",L.e+""]);
+  for(const o of L.o){
+    if(!Array.isArray(o)||!Object.hasOwn(TYPES,o[0])||!ok([o[1],o[2]]))return "Level contains an invalid object";
+    if(o[0]==="m"&&o[1]+3>=W)return "Moving spike needs 3 free cells to its right";
+    const k=o[1]+","+o[2];if(seen.has(k))return "Objects overlap";seen.add(k);
+  }
+  return lim(L.o)||null;
+}
+const enc=L=>btoa(JSON.stringify(L));
+const dec=s=>{try{return JSON.parse(atob(String(s).trim()))}catch(e){return null}};
+const loadSaved=()=>{try{const L=JSON.parse(localStorage.getItem("bb1"));return validate(L)?null:L}catch(e){return null}};
+const save=()=>{try{localStorage.setItem("bb1",JSON.stringify(G.lv))}catch(e){}};
+const G={lv:loadSaved()||def(),cur:null,mode:"edit",tool:"p",undo:[],redo:[]};
+let testedSig=null;
+const sig=()=>JSON.stringify(G.lv);
+const sc=()=>game.scene.getScene("main");
+
+let ft;
+function flash(m){$("st").textContent=m;clearTimeout(ft);ft=setTimeout(hud,2600)}
+function hud(){
+  if(G.mode==="edit"){
+    const n=t=>G.lv.o.filter(o=>o[0]===t).length;
+    $("st").textContent="Objects "+G.lv.o.length+"/"+MAXO+" · Spikes "+n("s")+"/"+MAXSP+" · Traps "+(n("i")+n("l")+n("m"))+"/"+MAXT+" · "+(testedSig===sig()?"✓ Verified, ready to share":"Beat it in Test to unlock sharing")+(COARSE?"  |  Tap or drag to place · pick Erase to remove":"  |  Click or drag to place · right-click erases · keys 1–9 pick a tool · T test");
+  }else $("st").textContent=(COARSE?"Use the on-screen buttons · rotate your phone sideways for a bigger view":"A/D or ←/→ move · Space/W/↑ jump · R restart · Esc back to editor");
+}
+function dlg(t,h,acts){
+  const d=$("dlg");d.innerHTML="<div class=box><h2>"+t+"</h2>"+h+"<div class=row></div></div>";
+  const row=d.querySelector(".row");
+  acts.forEach(([l,f,keep],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";
+    b.onclick=()=>{const r=f&&f();if(r!==false&&!keep)d.style.display="none"};row.appendChild(b)});
+  d.style.display="flex";
+}
+function go(m){
+  G.mode=m;document.body.dataset.mode=m;$("dlg").style.display="none";
+  $("back").textContent=m==="test"?"← Editor (Esc)":"Build my own";
+  hud();sc().scene.restart();
+}
+function startTest(){const e=validate(G.lv);if(e)return flash(e);G.cur=JSON.parse(sig());go("test")}
+function share(){
+  const e=validate(G.lv);if(e)return flash(e);
+  if(testedSig!==sig())return flash("Beat your level in Test first, so nobody gets an unbeatable challenge.");
+  dlg("Challenge a friend","<p>Send this code. Your friend opens the game, clicks <b>Load code</b> and pastes it.</p><textarea id=ta readonly>"+enc(G.lv)+"</textarea>",
+    [["Copy",()=>{const t=$("ta");t.select();try{navigator.clipboard.writeText(t.value)}catch(e){document.execCommand("copy")}flash("Copied");return false}],["Close"]]);
+}
+const undo=()=>{if(!G.undo.length)return;G.redo.push(sig());G.lv=JSON.parse(G.undo.pop());sc().draw();save();hud()};
+const redo=()=>{if(!G.redo.length)return;G.undo.push(sig());G.lv=JSON.parse(G.redo.pop());sc().draw();save();hud()};
+function pick(t){G.tool=t;const tip={i:"Hidden spike: invisible until a runner gets close, then pops up",l:"Lava drop: falls when a runner walks underneath it",m:"Moving spike: slides 3 cells to the right and back"};if(tip[t])flash(tip[t]);document.querySelectorAll("#tools button").forEach(b=>b.classList.toggle("on",b.dataset.t===t))}
+
+TOOLS.forEach(([t,l],i)=>{const b=document.createElement("button");b.dataset.t=t;b.textContent=(i<9?(i+1)+" ":"")+l;b.onclick=()=>pick(t);$("tools").appendChild(b)});
+pick("p");
+$("undo").onclick=undo;$("redo").onclick=redo;$("test").onclick=startTest;$("share").onclick=share;
+$("clear").onclick=()=>{G.undo.push(sig());G.redo=[];G.lv={v:1,s:[2,14],e:[27,14],o:[]};sc().draw();save();hud()};
+$("rs").onclick=()=>sc().scene.restart();$("back").onclick=()=>go("edit");
+$("rotx").onclick=()=>document.body.classList.add("norot");
+$("fs").onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else{await document.documentElement.requestFullscreen();try{await screen.orientation.lock("landscape")}catch(e){}}}catch(e){flash("Full screen isn’t available here. Try opening the game in its own browser tab.")}};
+$("load").onclick=()=>dlg("Load a level code","<p>Paste a code from a friend.</p><textarea id=ta></textarea>",
+  [["Play it",()=>{const L=dec($("ta").value),e=validate(L);if(e){flash(e);return false}G.cur=L;go("play")}],
+   ["Edit a copy",()=>{const L=dec($("ta").value),e=validate(L);if(e){flash(e);return false}G.lv=L;G.undo=[];G.redo=[];save();go("edit")}],["Cancel"]]);
+document.addEventListener("click",e=>{if(e.target.blur&&e.target.tagName==="BUTTON")e.target.blur()});
+const T={l:0,r:0,j:0,jd:0};
+document.querySelectorAll("#pad button").forEach(b=>{
+  const k=b.dataset.k;
+  const on=e=>{e.preventDefault();T[k]=1;if(k==="j")T.jd=1;b.classList.add("dn")};
+  const off=e=>{e.preventDefault();T[k]=0;b.classList.remove("dn")};
+  b.addEventListener("pointerdown",on);
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,off));
+  b.addEventListener("contextmenu",e=>e.preventDefault());
+});
+addEventListener("blur",()=>{T.l=T.r=T.j=0});
+addEventListener("keydown",e=>{
+  if($("dlg").style.display==="flex"||e.target.tagName==="TEXTAREA")return;
+  const k=e.key.toLowerCase();
+  if(G.mode!=="edit"){if(k==="escape")go("edit");else if(k==="r")sc().scene.restart();return}
+  if((e.ctrlKey||e.metaKey)&&k==="z"){e.preventDefault();e.shiftKey?redo():undo()}
+  else if((e.ctrlKey||e.metaKey)&&k==="y"){e.preventDefault();redo()}
+  else if(k>="1"&&k<="9")pick(TOOLS[k-1][0]);
+  else if(k==="t")startTest();else if(k==="h")pick("i");else if(k==="l")pick("l");else if(k==="m")pick("m");
+});
+
+class Main extends Phaser.Scene{
+  constructor(){super("main")}
+  tex(){
+    if(this.textures.exists("plat"))return;
+    const mk=(n,w,h,f)=>{const g=this.make.graphics({add:false});f(g);g.generateTexture(n,w,h);g.destroy()};
+    mk("plat",32,32,g=>{g.fillStyle(0x8b5a2b).fillRect(0,0,32,32);g.fillStyle(0x6f4720).fillRect(0,14,32,2).fillRect(0,24,32,2);g.fillStyle(0x4ade80).fillRect(0,0,32,8);g.fillStyle(0x22c55e).fillRect(0,6,32,2)});
+    mk("spike",32,32,g=>{g.fillStyle(0xef4444);g.fillTriangle(0,32,8,14,16,32);g.fillTriangle(16,32,24,14,32,32)});
+    mk("spring",32,32,g=>{g.fillStyle(0x64748b).fillRect(4,26,24,6);g.fillStyle(0xfacc15).fillRect(8,18,16,4).fillRect(8,12,16,4);g.fillStyle(0xf97316).fillRect(4,8,24,4)});
+    mk("crate",28,28,g=>{g.fillStyle(0xd69e2e).fillRect(0,0,28,28);g.lineStyle(3,0x7b341e).strokeRect(1.5,1.5,25,25);g.lineBetween(2,2,26,26);g.lineBetween(26,2,2,26)});
+    mk("key",32,32,g=>{g.fillStyle(0xfacc15).fillCircle(11,16,7).fillRect(16,14,14,4).fillRect(24,18,3,5);g.fillStyle(0x1b1f3b).fillCircle(11,16,3)});
+    mk("check",32,32,g=>{g.fillStyle(0xcbd5e1).fillRect(10,4,3,28);g.fillStyle(0xffffff).fillTriangle(13,4,28,10,13,16)});
+    mk("door",32,32,g=>{g.fillStyle(0xa78bfa).fillRoundedRect(3,1,26,31,{tl:12,tr:12,bl:0,br:0});g.fillStyle(0x1e1b4b).fillRoundedRect(7,5,18,27,{tl:9,tr:9,bl:0,br:0});g.fillStyle(0xfde047).fillCircle(21,19,2)});
+    mk("player",22,28,g=>{g.fillStyle(0x38bdf8).fillRoundedRect(0,0,22,28,7);g.fillStyle(0xffffff).fillCircle(7,10,4).fillCircle(16,10,4);g.fillStyle(0x0f172a).fillCircle(8,10,2).fillCircle(17,10,2)});
+    mk("x",32,32,g=>{g.lineStyle(2,0xf43f5e).strokeRect(2,2,28,28).lineBetween(6,6,26,26).lineBetween(26,6,6,26)});
+    mk("lava",32,32,g=>{g.fillStyle(0xdc2626).fillRect(0,0,32,32);g.fillStyle(0xf97316).fillRect(0,0,32,24);g.fillStyle(0xfacc15).fillRect(4,4,10,4).fillRect(18,12,8,4);g.fillStyle(0xdc2626).fillTriangle(8,24,14,24,11,32)});
+    mk("mspike",32,32,g=>{g.fillStyle(0x94a3b8).fillRect(0,26,32,6);g.fillStyle(0xef4444);g.fillTriangle(0,26,8,8,16,26);g.fillTriangle(16,26,24,8,32,26);g.fillStyle(0x334155).fillCircle(8,29,3).fillCircle(24,29,3)});
+  }
+  create(){
+    this.tex();this.spr=[];this.pend=null;this.p=null;this.over=false;this.dead=false;this.down=false;
+    this.cameras.main.setBackgroundColor("#1b1f3b");
+    G.mode==="edit"?this.edit():this.play();
+  }
+  /* ---------- EDITOR ---------- */
+  edit(){
+    const gr=this.add.graphics().lineStyle(1,0x8b8fd0,0.15);
+    for(let c=0;c<=W;c++)gr.lineBetween(c*S,0,c*S,H*S);
+    for(let r=0;r<=H;r++)gr.lineBetween(0,r*S,W*S,r*S);
+    this.input.mouse.disableContextMenu();
+    this.ghost=this.add.image(0,0,"plat").setAlpha(0.5).setDepth(5).setVisible(false);
+    this.draw();
+    const cell=p=>[Math.floor(p.x/S),Math.floor(p.y/S)];
+    const inb=(c,r)=>c>=0&&r>=0&&c<W&&r<H;
+    this.input.on("pointerdown",p=>{this.pend=sig();this.down=true;const[c,r]=cell(p);if(inb(c,r))this.apply(c,r,p.rightButtonDown()?"x":G.tool)});
+    this.input.on("pointermove",p=>{
+      const[c,r]=cell(p);
+      if(inb(c,r)){const t=G.tool;this.ghost.setTexture(t==="S"?"player":t==="E"?"door":t==="x"?"x":TYPES[t]).setPosition(c*S+16,c>=0?r*S+(t==="S"?18:16):0).setVisible(true)}else this.ghost.setVisible(false);
+      if(this.down&&inb(c,r)&&(G.tool==="p"||G.tool==="x"||p.rightButtonDown()))this.apply(c,r,p.rightButtonDown()?"x":G.tool);
+    });
+    this.input.on("pointerup",()=>{this.down=false});
+    this.input.on("gameout",()=>this.ghost.setVisible(false));
+  }
+  draw(){
+    this.spr.forEach(s=>s.destroy());this.spr=[];const L=G.lv;
+    L.o.forEach(([t,c,r])=>{
+      const im=this.add.image(c*S+16,r*S+16,TYPES[t]);this.spr.push(im);
+      if(t==="i")im.setAlpha(0.5).setTint(0xa5b4fc);
+      if(t==="m")this.spr.push(this.add.rectangle(c*S+64,r*S+28,96,3,0xfacc15,0.7));
+      if(t==="l"){let rr=r+1;while(rr<H&&!L.o.some(o=>o[0]==="p"&&o[1]===c&&o[2]===rr))rr++;this.spr.push(this.add.rectangle(c*S+16,(r+1+rr)*S/2,2,(rr-r-1)*S,0xf97316,0.45))}
+    });
+    this.spr.push(this.add.image(L.s[0]*S+16,L.s[1]*S+18,"player"));
+    this.spr.push(this.add.image(L.e[0]*S+16,L.e[1]*S+16,"door"));
+    hud();
+  }
+  apply(c,r,t){
+    const L=G.lv,i=L.o.findIndex(o=>o[1]===c&&o[2]===r),sp=a=>a[0]===c&&a[1]===r;
+    const mod=()=>{if(this.pend){G.undo.push(this.pend);if(G.undo.length>100)G.undo.shift();G.redo=[];this.pend=null}};
+    if(t==="x"){if(i<0)return;mod();L.o.splice(i,1)}
+    else if(t==="S"||t==="E"){
+      const k=t==="S"?"s":"e",o2=t==="S"?"e":"s";
+      if(sp(L[k])||sp(L[o2]))return;
+      mod();if(i>=0)L.o.splice(i,1);L[k]=[c,r];
+    }else{
+      if(sp(L.s)||sp(L.e)||(i>=0&&L.o[i][0]===t))return;
+      if(t==="m"&&c+3>=W)return flash("Moving spikes need 3 free cells to the right");
+      const a=L.o.slice();if(i>=0)a[i]=[t,c,r];else a.push([t,c,r]);
+      const e=lim(a);if(e)return flash(e);
+      mod();L.o=a;
+    }
+    this.draw();save();
+  }
+  /* ---------- PLAY / TEST ---------- */
+  play(){
+    const L=G.cur;this.t00=this.time.now;this.over=false;this.dead=false;this.t0=null;this.deaths=0;this.coy=0;this.buf=0;this.jmp=false;
+    this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];
+    this.physics.world.setBounds(0,0,W*S,H*S);this.physics.world.setBoundsCollision(true,true,true,false);
+    this.solid=this.physics.add.staticGroup();this.crates=this.physics.add.group();this.ents=[];
+    const sol=new Set(L.o.filter(o=>o[0]==="p").map(o=>o[1]+","+o[2]));
+    L.o.forEach(([t,c,r],i)=>{
+      const x=c*S+16,y=r*S+16;
+      if(t==="p")this.solid.create(x,y,"plat");
+      else if(t==="c"){const k=this.crates.create(x,y,"crate");k.setDragX(1000).setCollideWorldBounds(true);k.home=[x,y]}
+      else{
+        const s=this.add.image(x,y,TYPES[t]);if(t==="h")s.setTint(0xff8a8a);if(t==="i")s.setVisible(false);
+        const e={t,i,x,y,s,cd:0,y0:y,vy:0};
+        if(t==="l"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break}}
+        this.ents.push(e);
+      }
+    });
+    const door=this.add.image(L.e[0]*S+16,L.e[1]*S+16,"door");
+    this.tweens.add({targets:door,scale:{from:1,to:1.1},yoyo:true,repeat:-1,duration:700});
+    this.ents.push({t:"E",x:door.x,y:door.y,s:door});
+    this.nk=L.o.filter(o=>o[0]==="k").length;
+    const p=this.p=this.physics.add.sprite(this.spawn[0],this.spawn[1],"player").setDepth(3).setCollideWorldBounds(true);
+    p.body.setMaxVelocity(300,900);
+    this.physics.add.collider(p,this.solid);this.physics.add.collider(p,this.crates);
+    this.physics.add.collider(this.crates,this.solid);this.physics.add.collider(this.crates,this.crates);
+    this.k=this.input.keyboard.addKeys("W,A,D,UP,LEFT,RIGHT,SPACE",false);
+  }
+  update(_,dt){
+    const p=this.p;if(G.mode==="edit"||!p||!p.body||this.over||this.dead)return;
+    dt/=1000;const now=this.time.now,k=this.k,JD=Phaser.Input.Keyboard.JustDown,b=p.body;
+    const l=k.A.isDown||k.LEFT.isDown||T.l,r=k.D.isDown||k.RIGHT.isDown||T.r,j=k.W.isDown||k.UP.isDown||k.SPACE.isDown||T.j;
+    const jd=JD(k.W)||JD(k.UP)||JD(k.SPACE)||T.jd;T.jd=0;
+    if((l||r||j)&&this.t0==null)this.t0=now;
+    const tv=(r-l)*200,g=b.blocked.down||b.touching.down;
+    const a=(g?2200:1200)*dt;let vx=b.velocity.x;
+    vx=vx<tv?Math.min(tv,vx+a):Math.max(tv,vx-a);p.setVelocityX(vx);
+    if(tv)p.setFlipX(tv<0);
+    this.coy=g?0.1:this.coy-dt;this.buf=jd?0.12:this.buf-dt;
+    if(this.buf>0&&this.coy>0){p.setVelocityY(-600);this.buf=0;this.coy=0;this.jmp=true}
+    if(this.jmp&&!j&&b.velocity.y<-220)p.setVelocityY(-220);
+    if(b.velocity.y>=0)this.jmp=false;
+    const px=b.x,py=b.y,pw=b.width,ph=b.height;
+    const hit=(x,y,w,h)=>px<x+w&&px+pw>x&&py<y+h&&py+ph>y;
+    const open=this.keysGot.size>=this.nk;
+    for(const e of this.ents){
+      if(e.gone)continue;
+      if(e.t==="s"){if(hit(e.x-12,e.y+2,24,14))return this.die()}
+      else if(e.t==="r"){if(hit(e.x-16,e.y+4,32,12)&&b.velocity.y>=-20&&now>e.cd){p.setVelocityY(-800);e.cd=now+250;this.tweens.add({targets:e.s,scaleY:0.6,yoyo:true,duration:90})}}
+      else if(e.t==="k"){if(hit(e.x-10,e.y-10,20,20)){e.gone=true;e.s.setVisible(false);this.keysGot.add(e.i)}}
+      else if(e.t==="h"){if(!e.on&&hit(e.x-12,e.y-16,24,32)){e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot)}}
+      else if(e.t==="i"){
+        if(!e.up&&Math.abs(px+pw/2-e.x)<56&&Math.abs(py+ph/2-e.y)<64){e.up=true;e.at=now+60;e.s.setVisible(true).setY(e.y+14);this.tweens.add({targets:e.s,y:e.y,duration:70})}
+        if(e.up&&now>e.at&&hit(e.x-12,e.y+2,24,14))return this.die();
+      }
+      else if(e.t==="l"){
+        if(!e.fall&&Math.abs(px+pw/2-e.x)<40&&py>e.y&&py-e.y<9*S)e.fall=true;
+        if(e.fall&&!e.done){e.vy=Math.min(e.vy+1500*dt,800);e.y+=e.vy*dt;if(e.y+16>=e.fy){e.y=e.fy-16;e.done=true}if(e.y>H*S+40)e.done=true;e.s.setY(e.y)}
+        if(hit(e.x-14,e.y-14,28,28))return this.die();
+      }
+      else if(e.t==="m"){
+        const mx=e.x+48+48*Math.sin((now-this.t00)/1000*2.1-Math.PI/2);e.s.setX(mx);
+        if(hit(mx-13,e.y-8,26,22))return this.die();
+      }
+      else if(e.t==="E"){
+        e.s.setAlpha(open?1:0.5);
+        if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Find the key!")}}
+      }
+    }
+    this.crates.getChildren().forEach(c=>{if(c.y>H*S+40){c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0)}});
+    if(p.y>H*S+40)return this.die();
+    $("hud").textContent="Deaths "+this.deaths+" · "+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?" · Keys "+this.keysGot.size+"/"+this.nk:"");
+  }
+  die(){
+    if(this.dead)return;this.dead=true;this.deaths++;
+    this.cameras.main.shake(150,0.012);this.p.setVisible(false);this.p.body.enable=false;
+    this.time.delayedCall(450,()=>{
+      this.p.enableBody(true,this.spawn[0],this.spawn[1],true,true);this.p.setVelocity(0,0);
+      this.keysGot=new Set(this.cpKeys);
+      this.ents.forEach(e=>{
+        if(e.t==="k"){e.gone=this.keysGot.has(e.i);e.s.setVisible(!e.gone)}
+        else if(e.t==="l"){e.fall=false;e.done=false;e.vy=0;e.y=e.y0;e.s.setY(e.y0)}
+        else if(e.t==="i"){e.up=false;e.s.setVisible(false)}
+      });
+      this.crates.getChildren().forEach(c=>{c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0)});
+      this.coy=0;this.buf=0;this.dead=false;
+    });
+  }
+  win(){
+    this.over=true;this.p.body.enable=false;
+    const t=((this.time.now-(this.t0==null?this.time.now:this.t0))/1000).toFixed(1);
+    const txt="<p>Time <b>"+t+"s</b> · Deaths <b>"+this.deaths+"</b></p>";
+    this.time.delayedCall(350,()=>{
+      if(G.mode==="test"){testedSig=sig();
+        dlg("Level verified ✓",txt+"<p>You beat your own level, so it can be shared.</p>",[["Share it",()=>{go("edit");share();return false}],["Back to editor",()=>go("edit")]]);
+      }else dlg("You made it!",txt,[["Try again",()=>go("play")],["Build my own",()=>go("edit")]]);
+    });
+  }
+}
+const game=new Phaser.Game({type:Phaser.AUTO,parent:"game",width:W*S,height:H*S,backgroundColor:"#1b1f3b",pixelArt:true,
+  physics:{default:"arcade",arcade:{gravity:{y:1500},debug:false}},
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:Main});
+hud();
+</script></body></html>
