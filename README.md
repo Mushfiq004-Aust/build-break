@@ -18,6 +18,21 @@ A Phaser 3 pixel-platformer and level editor. This build uses the ARGON version 
 - **Day ground texture:** Day mode uses a muted earth-and-olive platform texture so the ground no longer blends into the bright green scenery.
 - **Mobile camera:** Gameplay camera zoom is increased slightly on touch devices; touch controls are more compact to reduce obstruction of the player.
 
+## Recent fixes
+
+- **Dialog cleanup:** Switching from gameplay to the editor closes any active pause/settings/range dialog and clears the previous toast timer, preventing a popup from remaining over the editor.
+- **Compact share codes:** New share codes use a compact LZW-compressed positional level format. The loader remains backward-compatible with the previous Base64-encoded JSON codes.
+- **Web layout:** Desktop browsers use the mobile-style top bar and slide-out tool drawer, while retaining mouse and keyboard editing. Touch gameplay controls remain hidden for mouse-first desktop users.
+- **Editor visibility:** The editor sidebar is wider, and the Erase quick action has a stronger border, contrast, and background.
+
+
+## Checkpoint, boss, and movement fixes
+
+- **Full checkpoint snapshots:** Activating a checkpoint now records collected pickups, keys, triggered one-shot hazards, falling-spike state, boss flags/health/awake state, and timed crumble/blink-platform state. Respawning restores that checkpoint snapshot instead of respawning earlier progress.
+- **Permanent boss defeats:** Defeated bosses stay defeated after death. Their health bars remain hidden, their flags stay completed, and the HUD no longer reports a defeated boss as ahead. Bosses awakened by a flag remain awake after respawning rather than asking the player to activate the flag again.
+- **Mover motion:** Moving platforms now follow their sinusoidal target path using the required frame velocity without the old hard speed clamp, reducing platform lag and player jitter.
+- **Portal exit placement:** Teleport destinations are centered on the paired portal, and the exit latch still requires the player to leave the portal area before another teleport can occur.
+
 ## Settings and audio
 
 - Sound effects include jumping, collecting keys and power-ups, checkpoints, boss events, damage, level completion, placing/erasing objects, and portals.
@@ -32,6 +47,9 @@ Serve this folder from a static web server and open `index.html`. Phaser 3.80.1 
 ## Validation performed
 
 - JavaScript syntax checked with Node.js.
+- HTML parsed successfully.
+- CSS parsed successfully.
+- Checkpoint, boss-state, mover, and portal changes reviewed for state-reset consistency.
 - CSS parsed with no stylesheet syntax errors.
 - HTML IDs checked for duplicates.
 - ZIP archive integrity checked after packaging.
