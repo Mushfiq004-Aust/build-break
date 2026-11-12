@@ -1,20 +1,18 @@
-# Build & Break — Responsive Game Build
+# Build & Break — Mobile Editor Layout Fix
 
-## What's included
+## Changes in this build
 
-- Shared home/landing screen used as the default entry point on desktop and mobile.
-- Home actions for Play, Level Editor, Settings, and How to Play.
-- Play starts the current saved level; the editor opens the existing Phaser level editor.
-- Desktop toolbar includes a Home action so players can return to the landing screen.
-- Mobile editor keeps its tools in the slide-out drawer and retains a separate Play action.
-- Home screen layout is compact and non-scrollable on mobile, including short landscape viewports and the portrait-device rotated-layout fallback.
-- Mobile fullscreen and landscape orientation are requested when entering the game; browser support and gesture restrictions still apply.
-- Existing Phaser gameplay, level format, and saved levels are retained.
+- Mobile editor categories are stacked vertically in the drawer.
+- Build pieces, helpers, hazards and traps are presented as full-width vertical lists with readable touch targets and icons.
+- Removed the camera movement controls from the tool drawer.
+- Added a compact on-canvas camera D-pad at the right side of the editor, with press-and-hold movement in all four directions.
+- Kept camera controls visible only while editing; they do not appear during gameplay.
+- Preserved the shared home screen, gameplay, editor, settings, level format and desktop layout.
 
 ## Run
 
-Serve this folder from any static web server and open `index.html` in a modern browser. Phaser 3.80.1 is loaded from cdnjs, so the browser needs access to that CDN.
+Serve this folder from a static web server and open `index.html`. Phaser 3.80.1 is loaded from cdnjs, so the browser needs access to that CDN.
 
 ## Mobile browser note
 
-A web page cannot universally force a browser to enter fullscreen or lock orientation on initial navigation. Build & Break requests these capabilities after a user gesture and uses its CSS landscape fallback where supported. Test on the target Android and iOS browsers before production deployment.
+Orientation locking and fullscreen are requested when supported. Browser restrictions vary, so verify on target Android and iOS browsers before production release.
