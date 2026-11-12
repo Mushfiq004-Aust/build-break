@@ -2873,7 +2873,7 @@ class Main extends Phaser.Scene{
     if(k==="1"||k==="4"){e.vy+=1500*s;e.y+=e.vy*s;}
     if(k==="1"){if(e.g){e.vx=0;if(now>e.tm){e.tm=now+1500;e.vy=-600;e.vx=sg*150;}}e.x+=e.vx*s;}
     if(k==="4"){e.x+=sg*35*s;if(now>e.tm){e.tm=now+3600;this.shoot(e.x,e.y+20,-200,0,true,"ebul",2.5,0);this.shoot(e.x,e.y+20,200,0,true,"ebul",2.5,0);this.cameras.main.shake(150,.01);}}
-    if(k==="2"){const d=e.ph%6>4.6;e.x+=((d?cx:e.fx+Math.sin(e.ph*1.1)*180)-e.x)*(d?1.6:1.2)*s;e.y+=((d?py:e.by-90+Math.sin(e.ph*2)*25)-e.y)*(d?1.8:1.6)*s;}
+    if(k==="2"){const d=e.ph%6>4.6;e.x+=((d?cx:e.fx+Math.sin(e.ph*1.1)*180)-e.x)*Math.min(1,(d?1.6:1.2)*s);e.y+=((d?py:e.by-90+Math.sin(e.ph*2)*25)-e.y)*Math.min(1,(d?1.8:1.6)*s);}
     if(k==="3"&&now>e.tm){e.tm=now+3200;e.x=e.fx+(Math.random()-.5)*340;e.y=e.by-Math.random()*100;e.s.setAlpha(.35);this.time.delayedCall(250,()=>e.s.setAlpha(1));const a=Math.atan2(py-e.y,cx-e.x);[-.3,0,.3].forEach(d=>this.shoot(e.x,e.y,Math.cos(a+d)*190,Math.sin(a+d)*190,true,"ebul",4,0));}
     if(k==="5"){e.x=e.fx+Math.sin(e.ph*.8)*220;e.y=e.by-70+Math.sin(e.ph*1.7)*25;if(now>e.tm){e.tm=now+3000;const a=Math.atan2(py-e.y,cx-e.x);[-.35,0,.35].forEach(d=>this.shoot(e.x,e.y,Math.cos(a+d)*240,Math.sin(a+d)*240,true,"fball",3,0));}}
     if(k==="6"){e.x=e.fx+Math.sin(e.ph*1.15)*185;e.y=e.by-85+Math.sin(e.ph*2.1)*32;if(now>e.tm){e.tm=now+2700;const a=Math.atan2(py-e.y,cx-e.x);[-.52,-.26,0,.26,.52].forEach(d=>this.shoot(e.x,e.y,Math.cos(a+d)*265,Math.sin(a+d)*265,true,"ebul",3.2,0));this.cameras.main.shake(90,.004);}}
@@ -2895,11 +2895,13 @@ class Main extends Phaser.Scene{
     }
     if(!this.sl)return;
     this.sl.forEach(m=>{
-      const o=this.mv(m,now),sd=Math.max(1/240,s),tx=m.v?m.x:m.x+o,ty=m.v?m.y+o:m.y;
-      // Drive the kinematic platform at the exact velocity needed to follow its
-      // deterministic path. The old ±500 clamp made it trail behind, then snap,
-      // which shook the player while standing on it.
-      m.s.body.setVelocity((tx-m.s.x)/sd,(ty-m.s.y)/sd);
+      // Use the analytic velocity of the same smooth cosine path used by the
+      // moving hazards. Position-delta corrections depend on frame time and can
+      // make Arcade Physics platforms surge or jitter under a standing player.
+      const w=Math.max(.7,Math.min(2.4,6.3/m.R));
+      const phase=((now-this.t00)/1000)*w;
+      const speed=.5*m.R*S*Math.sin(phase)*w;
+      m.s.body.setVelocity(m.v?0:speed,m.v?speed:0);
     });
     this.dyn.forEach(d=>{const bb=this.p&&this.p.body,k=d.b,n=this.time.now;if(d.t==="U"){const on=((n-this.t00)/1000+d.ph)%3.2<2;if(on!==d.on){d.on=on;k.body.enable=on;k.setAlpha(on?1:.2);}}else{if(!d.st&&!d.rb&&bb&&Math.abs(bb.bottom-(d.y-16))<5&&bb.right>d.x-16&&bb.x<d.x+16){d.st=n+450;this.tweens.add({targets:k,x:d.x+2,yoyo:true,repeat:3,duration:50});}if(d.st&&n>d.st){d.st=0;d.rb=n+3000;k.body.enable=false;k.setVisible(false);}if(d.rb&&n>d.rb){d.rb=0;k.body.enable=true;k.setVisible(true).setX(d.x);}}});
     const p=this.p;if(!p||!p.body||this.over||this.dead)return;
@@ -3001,7 +3003,7 @@ class Main extends Phaser.Scene{
           }
           break;
         }
-        case"1":case"2":case"3":case"4":case"5":this.boss(e,s,now,px,py,pw,ph,hit);break;
+        case"1":case"2":case"3":case"4":case"5":case"6":this.boss(e,s,now,px,py,pw,ph,hit);break;
         case"G":if(!e.on&&hit(e.x-14,e.y-16,28,32)){
           const targets=this.bosses.filter(bb=>bb.t===String(e.R));
           const living=targets.filter(bb=>!bb.dead);
