@@ -1,5 +1,11 @@
 # Build & Break — ARGON + Mobile Editor Merge
 
+## Latest stability fixes
+- Fixed Storm Serpent (Boss 6) not receiving its AI/update call, which could leave it inactive or broken during gameplay.
+- Reworked moving-platform motion to use the analytic velocity of its smooth back-and-forth path instead of per-frame position correction, reducing platform surges and player shaking.
+- Clamped Bat Lord tracking interpolation so a slow frame cannot cause a large movement overshoot.
+
+
 A Phaser 3 pixel-platformer and level editor. This build uses the ARGON version as its base so its animated environments, character effects, boss animations, particle bursts, and level-completion celebration remain intact. It also incorporates the mobile zoom, audio/settings, and interaction improvements from the previous mobile build.
 
 ## Editor improvements
