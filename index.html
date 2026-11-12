@@ -173,7 +173,7 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   position: relative;
 }
 #pal {
-  width: 220px;
+  width: 264px;
   flex: none;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -959,7 +959,7 @@ body.home-active #drawerScrim {
 }
 
 /* Mobile / Coarse Pointer Responsive Architecture */
-@media (pointer: coarse), (max-width: 820px) {
+@media (pointer: coarse), (max-width: 820px), (pointer: fine) {
   #bar, #pal {
     display: none !important;
   }
@@ -1282,6 +1282,8 @@ body.home-active #drawerScrim {
   }
 }
 
+@media (pointer: fine) { #pad { display:none !important; } #mobileBar { padding-left:12px; padding-right:12px; } #toolSheet { width:min(360px, 34vw); } }
+
 /* V8: quick editor actions, range steppers and clearer selection feedback */
 #quickTools,.mobile-quick-tools {
   display:grid;
@@ -1302,7 +1304,7 @@ body.home-active #drawerScrim {
   font-weight:800;
 }
 .quick-tool span { font-size:18px; }
-.quick-tool[data-t="x"] { border-color:rgba(244,63,94,.55); }
+.quick-tool[data-t="x"] { border:2px solid #f43f5e; background:rgba(244,63,94,.16); color:#ff718c; font-weight:900; box-shadow:0 0 0 1px rgba(244,63,94,.12); }
 .quick-tool.on { outline:2px solid var(--ac); background:color-mix(in srgb,var(--ac) 16%,var(--bg)); }
 #pal #quickTools { position:sticky; top:-8px; z-index:4; padding:4px 0 8px; background:var(--card); }
 #rangeControls { display:inline-flex; gap:5px; }
@@ -1318,7 +1320,7 @@ body.home-active #drawerScrim {
 .range-prompt small { color:var(--fg-muted); line-height:1.45; }
 #mobileQuickTools { position:sticky; top:-8px; z-index:3; padding:4px 0 9px; background:var(--card); }
 #mobileQuickTools .quick-tool { min-height:52px; }
-#mobileQuickTools .quick-tool[data-t="x"] { color:#e11d48; }
+#mobileQuickTools .quick-tool[data-t="x"] { color:#ff718c; border:2px solid #f43f5e; background:rgba(244,63,94,.16); font-weight:900; }
 #pal .tc.on { border-color:var(--ac); background:color-mix(in srgb,var(--ac) 15%,var(--card)); }
 #rangeControls span { font-size:11px; font-weight:750; color:var(--fg-muted); }
 @media (pointer:coarse), (max-width:820px) {
@@ -1365,7 +1367,7 @@ body.home-active #drawerScrim {
   background:var(--card);
 }
 #mobileQuickTools .quick-tool { min-height:46px; }
-#mobileQuickTools .quick-tool[data-t="x"] { color:#e11d48; }
+#mobileQuickTools .quick-tool[data-t="x"] { color:#ff718c; border:2px solid #f43f5e; background:rgba(244,63,94,.16); font-weight:900; }
 
 #mobileQuickTools { position:static; top:auto; z-index:auto; }
 </style>
@@ -1789,7 +1791,28 @@ function validate(L){
   }
   return null;
 }
-const enc=L=>btoa(JSON.stringify(L)),dec=s=>{try{return JSON.parse(atob(String(s).trim()))}catch(e){return null}};
+// Compact LZW share format. Legacy Base64(JSON) codes remain supported.
+function lzwPack(input){
+  const dict=new Map();for(let i=0;i<256;i++)dict.set(String.fromCharCode(i),i);
+  let next=256,w="",codes=[];
+  for(const ch of input){const wc=w+ch;if(dict.has(wc))w=wc;else{codes.push(dict.get(w));if(next<65535)dict.set(wc,next++);w=ch;}}
+  if(w)codes.push(dict.get(w));
+  let binary="";for(const code of codes)binary+=String.fromCharCode(code>>8,code&255);
+  return btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");
+}
+function lzwUnpack(encoded){
+  const b64=encoded.replace(/-/g,"+").replace(/_/g,"/");
+  const binary=atob(b64+"=".repeat((4-b64.length%4)%4));
+  const codes=[];for(let i=0;i+1<binary.length;i+=2)codes.push((binary.charCodeAt(i)<<8)|binary.charCodeAt(i+1));
+  if(!codes.length)return "";
+  const dict=[];for(let i=0;i<256;i++)dict[i]=String.fromCharCode(i);
+  let next=256,w=dict[codes[0]],out=w;
+  for(let i=1;i<codes.length;i++){const k=codes[i],entry=dict[k]!==undefined?dict[k]:w+w[0];out+=entry;if(next<65535)dict[next++]=w+entry[0];w=entry;}
+  return out;
+}
+const enc=L=>"z"+lzwPack(JSON.stringify([L.v,L.s,L.e,L.o])),dec=s=>{
+  try{const raw=String(s).trim();if(raw.startsWith("z")){const a=JSON.parse(lzwUnpack(raw.slice(1)));return Array.isArray(a)?{v:a[0],s:a[1],e:a[2],o:a[3]}:null;}return JSON.parse(atob(raw));}catch(e){return null}
+};
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const G={lv:(l=>{
@@ -1869,6 +1892,10 @@ async function enterImmersivePlay(){
 }
 
 function go(m){
+  // Close gameplay dialogs before switching scenes/modes so overlays cannot get stranded.
+  const dialog=$("dlg");if(dialog)dialog.style.display="none";
+  document.body.classList.remove("result-visible");
+  clearTimeout(ft);
   hideMobileHome();
   if(COARSE)enterImmersivePlay();
   G.mode=m;
@@ -2608,10 +2635,10 @@ class Main extends Phaser.Scene{
   /* ---------- PLAY ---------- */
   play(){
     const L=G.cur;this.t00=this.time.now;this.t0=null;this.deaths=0;this.bosses=[];
-    this.flagged=new Set(L.o.filter(o=>o[0]==="G").map(o=>String(o[3]||1)));
+    this.flagged=new Set(L.o.filter(o=>o[0]==="G").map(o=>String(o[3]||1)));this.activatedBosses=new Set();
     this.dsh=0;this.dcd=0;this.acd=0;this.jc=0;this.pd=0;this.hinted=0;this.unlockedShown=false;
     this.gf=this.add.graphics().setDepth(1);this.coy=0;this.buf=0;this.lastGroundedAt=-9999;this.jmp=false;this.frz=0;this.fcd=0;this.inv=0;
-    this.fx=FX0();this.mud=new Set();this.dyn=[];this.proj=[];this.ice=new Set();this.belt=new Map();this.sl=[];this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];
+    this.fx=FX0();this.mud=new Set();this.dyn=[];this.proj=[];this.ice=new Set();this.belt=new Map();this.sl=[];this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];this.cpState=null;this.cpDyn=null;
     this.physics.world.setBounds(0,0,W*S,H*S);this.physics.world.setBoundsCollision(true,true,true,false);
     this.solid=this.physics.add.staticGroup();this.crates=this.physics.add.group();this.ents=[];
     const sol=new Set(L.o.filter(o=>"pavwM".includes(o[0])).map(o=>o[1]+","+o[2]));this.sol=sol;
@@ -2717,8 +2744,13 @@ class Main extends Phaser.Scene{
       return;
     }
     if(!this.sl)return;
-    this.sl.forEach(m=>{const o=this.mv(m,now),sd=Math.max(.001,s),f=v=>Math.max(-500,Math.min(500,v));
-      if(m.v)m.s.body.setVelocity(0,f((m.y+o-m.s.y)/sd));else m.s.body.setVelocity(f((m.x+o-m.s.x)/sd),0);});
+    this.sl.forEach(m=>{
+      const o=this.mv(m,now),sd=Math.max(1/240,s),tx=m.v?m.x:m.x+o,ty=m.v?m.y+o:m.y;
+      // Drive the kinematic platform at the exact velocity needed to follow its
+      // deterministic path. The old ±500 clamp made it trail behind, then snap,
+      // which shook the player while standing on it.
+      m.s.body.setVelocity((tx-m.s.x)/sd,(ty-m.s.y)/sd);
+    });
     this.dyn.forEach(d=>{const bb=this.p&&this.p.body,k=d.b,n=this.time.now;if(d.t==="U"){const on=((n-this.t00)/1000+d.ph)%3.2<2;if(on!==d.on){d.on=on;k.body.enable=on;k.setAlpha(on?1:.2);}}else{if(!d.st&&!d.rb&&bb&&Math.abs(bb.bottom-(d.y-16))<5&&bb.right>d.x-16&&bb.x<d.x+16){d.st=n+450;this.tweens.add({targets:k,x:d.x+2,yoyo:true,repeat:3,duration:50});}if(d.st&&n>d.st){d.st=0;d.rb=n+3000;k.body.enable=false;k.setVisible(false);}if(d.rb&&n>d.rb){d.rb=0;k.body.enable=true;k.setVisible(true).setX(d.x);}}});
     const p=this.p;if(!p||!p.body||this.over||this.dead)return;
     const JD=Phaser.Input.Keyboard.JustDown,b=p.body,fx=this.fx,fr=now<this.frz,jb=fx.jump>now;
@@ -2771,7 +2803,14 @@ class Main extends Phaser.Scene{
         case"s":if(hit(e.x-12,e.y+2,24,14))this.hurt();break;
         case"r":if(hit(e.x-16,e.y+4,32,12)&&b.velocity.y>=-20&&now>e.cd){p.setVelocityY(-800);e.cd=now+250;this.tweens.add({targets:e.s,scaleY:.6,yoyo:true,duration:90});Sfx.play("jump");}break;
         case"k":if(hit(e.x-10,e.y-10,20,20)){e.gone=true;e.s.setVisible(false);this.keysGot.add(e.i);Sfx.play("key");Sfx.vib(25);Juice.burst(this,e.x,e.y,0xfacc15,"🔑 "+this.keysGot.size+"/"+this.nk);flash("🔑 Key "+this.keysGot.size+"/"+this.nk);}break;
-        case"h":if(!e.on&&hit(e.x-12,e.y-16,24,32)){e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot);Sfx.play("check");Sfx.vib(30);Juice.burst(this,e.x,e.y,0x4ade80,"✓ CHECKPOINT");flash("✓ Checkpoint saved!");}break;
+        case"h":if(!e.on&&hit(e.x-12,e.y-16,24,32)){
+          e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot);
+          // Save the world state as well as the respawn position: collected items,
+          // triggered traps, opened flags and their visual/physics state.
+          this.cpState=this.ents.map(q=>({gone:!!q.gone,on:!!q.on,up:!!q.up,fall:!!q.fall,done:!!q.done,y:q.y,vy:q.vy,dead:!!q.dead,hp:q.hp,awake:!!q.awake}));
+          this.cpDyn=this.dyn.map(d=>({st:d.st?Math.max(0,d.st-now):0,rb:d.rb?Math.max(0,d.rb-now):0,on:d.on,visible:d.b.visible,enabled:d.b.body.enable,x:d.b.x,y:d.b.y}));
+          Sfx.play("check");Sfx.vib(30);Juice.burst(this,e.x,e.y,0x4ade80,"✓ CHECKPOINT");flash("✓ Checkpoint saved!");
+        }break;
         case"i":
           if(!e.up&&!ghost&&Math.abs(px+pw/2-e.x)<56&&Math.abs(py+ph/2-e.y)<64){e.up=true;e.at=now+60;e.s.setVisible(true).setY(e.y+14);this.tweens.add({targets:e.s,y:e.y,duration:70});}
           if(e.up&&now>e.at&&hit(e.x-12,e.y+2,24,14))this.hurt();break;
@@ -2800,7 +2839,7 @@ class Main extends Phaser.Scene{
           if(!this.portalNeedsExit&&now>this.portalCooldown&&hit(e.x-12,e.y-14,24,28)){
             if(e.pair){
               this.portalNeedsExit=true;this.portalCooldown=now+450;
-              p.body.reset(e.pair.x,e.pair.y);p.setVelocity(0,0);
+              p.body.reset(e.pair.x-pw/2,e.pair.y-ph/2);p.setVelocity(0,0);
               Sfx.play("portal");Sfx.vib(25);
               this.cameras.main.flash(90,180,90,255);
             }else{
@@ -2811,7 +2850,12 @@ class Main extends Phaser.Scene{
           break;
         }
         case"1":case"2":case"3":case"4":case"5":this.boss(e,s,now,px,py,pw,ph,hit);break;
-        case"G":if(!e.on&&hit(e.x-14,e.y-16,28,32)){e.on=true;e.s.setTint(0x4ade80);this.bosses.forEach(bb=>{if(bb.t===String(e.R))bb.awake=true;});Sfx.play("boss");Sfx.vib([40,30,60]);this.cameras.main.shake(180,.012);Juice.card({icon:"👹",tag:"WARNING",title:"BOSS AWAKENED!",hint:"Use your weapon to defeat the boss!",color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3200});}break;
+        case"G":if(!e.on&&hit(e.x-14,e.y-16,28,32)){
+          const targets=this.bosses.filter(bb=>bb.t===String(e.R));
+          const living=targets.filter(bb=>!bb.dead);
+          e.on=true;e.s.setTint(0x4ade80);
+          if(living.length){this.activatedBosses.add(String(e.R));living.forEach(bb=>bb.awake=true);Sfx.play("boss");Sfx.vib([40,30,60]);this.cameras.main.shake(180,.012);Juice.card({icon:"👹",tag:"WARNING",title:"BOSS AWAKENED!",hint:"Use your weapon to defeat the boss!",color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3200});}
+        }break;
         case"E":e.s.setAlpha(open?1:.5);if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Collect all keys and defeat every boss!");}}break;
       }
     }
@@ -2846,11 +2890,36 @@ class Main extends Phaser.Scene{
       this.ents.forEach(e=>{
         if(e.t==="k"){e.gone=this.keysGot.has(e.i);e.s.setVisible(!e.gone);}
         else if("eotjAH".includes(e.t)){e.gone=false;e.s.setVisible(true);}
-        else if(e.t==="G"){e.on=false;e.s.clearTint();}
-        else if("12345".includes(e.t)&&!e.dead){e.awake=false;e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);}
+        else if(e.t==="G"){
+          const bosses=this.bosses.filter(bb=>bb.t===String(e.R));
+          e.on=this.activatedBosses.has(String(e.R))||(bosses.length>0&&bosses.every(bb=>bb.dead));
+          if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
+        }
+        else if("12345".includes(e.t)&&!e.dead){e.awake=this.activatedBosses.has(e.t);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);e.bar.setSize(50,6);}
         else if(e.t==="l"){e.fall=false;e.done=false;e.vy=0;e.y=e.y0;e.s.setY(e.y0);}
         else if(e.t==="i"){e.up=false;e.s.setVisible(false);}
       });
+      if(this.cpDyn){
+        this.dyn.forEach((d,i)=>{const st=this.cpDyn[i];if(!st)return;d.st=st.st?this.time.now+st.st:0;d.rb=st.rb?this.time.now+st.rb:0;d.on=st.on;d.b.body.enable=st.enabled;d.b.setVisible(st.visible).setPosition(st.x,st.y);});
+      }
+      if(this.cpState){
+        this.ents.forEach((e,i)=>{
+          const st=this.cpState[i];if(!st)return;
+          // A boss defeated at any point in the run is permanent progress, even
+          // if it was defeated after the last checkpoint was activated.
+          if("12345".includes(e.t)&&e.dead){e.gone=true;e.s.setVisible(false);if(e.bar)e.bar.setVisible(false);return;}
+          Object.assign(e,{gone:st.gone,on:st.on,up:st.up,fall:st.fall,done:st.done,y:st.y,vy:st.vy,dead:st.dead,hp:st.hp,awake:st.awake});
+          e.s.setVisible(!e.gone);
+          if(e.t==="h")e.on=true;
+          if(e.t==="G"){
+            const boss=this.bosses.find(bb=>bb.t===String(e.R));
+            e.on=this.activatedBosses.has(String(e.R))||!!(boss&&boss.dead)||st.on;e.s.setTint(e.on?0x4ade80:0xffffff);
+          }
+          if(e.t==="i")e.s.setVisible(!!e.up).setY(e.y);
+          if(e.t==="l")e.s.setY(e.y);
+          if("12345".includes(e.t)&&!e.dead){if(e.awake)this.activatedBosses.add(e.t);e.bar.setVisible(true);e.bar.setSize(50*Math.max(0,e.hp)/e.max,6);}
+        });
+      }
       this.crates.getChildren().forEach(c=>{c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);});
       this.coy=0;this.buf=0;this.portalNeedsExit=false;this.portalCooldown=0;this.dead=false;
     });
