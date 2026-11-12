@@ -1,30 +1,18 @@
-# Build & Break — Mobile + Web Update (V6)
+# Build & Break — Mobile polish update
 
-## What's fixed and improved
+This package contains the updated standalone Phaser 3 game.
 
-- Rebuilt the mobile level-tools drawer around **one scroll container**. The drawer owns vertical scrolling; the palette and category groups no longer create nested or flex-collapsed scroll areas.
-- Tool categories (Build, Obstacles, Hazards, Traps, Bosses, Powerups, Weapons, Helpers and Level) remain in a single vertical list. Every category and its tool buttons contribute to the drawer's natural scroll height.
-- Added a portrait-fallback touch-scroll bridge: when the browser cannot rotate the device and the app uses its CSS landscape fallback, ordinary vertical finger swipes are mapped to the drawer's scroll position.
-- Kept camera movement on the editor canvas in its dedicated directional pad, separate from the tool list.
-- Made editor setup idempotent across Phaser scene restarts so action buttons and tool listeners are not repeatedly wrapped or rebound.
-- Added a working, persistent Day/Night appearance switch on the home screen and in Settings. The UI and Phaser background layers change together.
-- Refined feedback with animated toasts, ability-acquisition banners and a more celebratory level-completion dialog.
-- Preserved the existing level format, editor actions, gameplay mechanics, level validation, and desktop game controls.
-- Kept the same landing page on desktop and mobile.
+## Updates in this build
+- Slightly increased mobile gameplay camera zoom (desktop zoom remains unchanged).
+- Reduced the size/visual weight of touch controls and kept them anchored to the lower corners.
+- Moved toast and ability notifications into a consistent top notification lane so they avoid the player and touch controls.
+- Added lightweight synthesized sound effects for notifications, pickups, abilities, jumping, attacks, damage and level completion.
+- Added Sound and Vibration switches in Settings, with preferences saved locally. Vibration depends on browser/device support for the Vibration API.
+- Added a Day/Night control to the in-game bar and Settings; removed the duplicate home-menu theme button.
+- Replaced free-typing movement range with bounded minus/plus controls (minimum 1, maximum 12) on mobile and desktop.
 
 ## Run
+Open `index.html` in a modern browser with internet access (Phaser 3.80.1 is loaded from cdnjs).
 
-Serve this folder from a static web server and open `index.html`. Phaser 3.80.1 is loaded from cdnjs, so the browser needs access to that CDN.
-
-## Validation performed
-
-- JavaScript syntax check (`node --check`): passed.
-- CSS stylesheet parsing: passed with no parse errors.
-- HTML duplicate-ID check: passed.
-- ZIP archive integrity: checked after packaging.
-
-A full click-through browser/device test could not be completed in this execution environment. Test the drawer on both a landscape Android browser and a portrait-only iOS browser before production deployment.
-
-## Mobile browser note
-
-Orientation locking and fullscreen are requested from user interactions where supported. Browser restrictions vary; the CSS-rotated landscape fallback remains in place for browsers that do not support orientation locking.
+## Validation note
+The inline JavaScript syntax, stylesheet parsing, duplicate element IDs, and ZIP integrity were checked. Automated browser/device interaction testing was unavailable in this environment, so please test on an actual phone before publishing.
