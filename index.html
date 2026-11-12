@@ -278,6 +278,43 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
   #mobileHome .home-foot{font-size:8px;margin-top:5px;}
 }
 
+
+/* Mobile editor refinement: true vertical tool lists and an always-visible camera D-pad. */
+@media (pointer:coarse){
+  #mobileDrawer{gap:10px}
+  #mobileActions{grid-template-columns:repeat(2,minmax(0,1fr));flex:none}
+  #mobilePan{display:none}
+  body[data-mode="edit"] #mobilePan{display:block;position:absolute;z-index:9;right:max(10px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);width:112px;padding:7px 6px 6px;border:1px solid #ffffff38;border-radius:15px;background:rgba(15,12,40,.76);box-shadow:0 5px 20px #0005;backdrop-filter:blur(8px);pointer-events:auto}
+  #mobilePan .pan-hint{font-size:9px;line-height:1.2;letter-spacing:.13em;text-align:center;color:#e9ddff;opacity:.8;margin:0 0 5px;font-weight:800}
+  #mobilePan #pan{display:grid!important;grid-template-columns:repeat(3,32px);grid-template-rows:repeat(3,32px);gap:3px;justify-content:center;align-items:center;width:100%;padding:0;margin:0;border:0;background:transparent}
+  #mobilePan #pan>span{display:none}
+  #mobilePan #pan>button{width:32px;height:32px;min-height:32px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#ffffff18;border:1px solid #ffffff35;color:#fff;font-size:17px;line-height:1;touch-action:none;user-select:none;-webkit-user-select:none}
+  #mobilePan #pan>button[data-p="0,-1"]{grid-column:2;grid-row:1}
+  #mobilePan #pan>button[data-p="-1,0"]{grid-column:1;grid-row:2}
+  #mobilePan #pan>button[data-p="1,0"]{grid-column:3;grid-row:2}
+  #mobilePan #pan>button[data-p="0,1"]{grid-column:2;grid-row:3}
+  #mobilePan #pan>button:active{background:var(--ac);border-color:#c4b5fd}
+  /* Categories and their items are stacked top-to-bottom, never in horizontal strips. */
+  #mobileDrawer #pal{display:flex!important;flex:1 1 auto;min-height:0;width:100%;flex-direction:column!important;align-items:stretch;gap:7px;overflow-x:hidden;overflow-y:auto;padding:0 2px 14px;border:0;background:transparent}
+  #mobileDrawer #pal details,#mobileDrawer #pal details[open]{display:flex!important;flex:none;width:100%;height:auto;min-width:0;flex-direction:column!important;align-items:stretch!important;gap:5px;padding:0 0 8px;border:0;border-bottom:1px solid var(--line);scroll-snap-align:none}
+  #mobileDrawer #pal details>summary{display:block;width:100%;box-sizing:border-box;white-space:normal;font-size:13px;font-weight:800;padding:10px 12px}
+  #mobileDrawer #pal details[open]>summary{background:var(--ac);color:#fff}
+  #mobileDrawer #pal .tc{display:flex!important;flex:none;width:100%!important;min-width:0!important;min-height:44px!important;box-sizing:border-box;flex-direction:row!important;align-items:center;justify-content:flex-start;gap:11px;padding:6px 10px;font-size:13px;text-align:left;border-radius:10px}
+  #mobileDrawer #pal .tc canvas{width:30px!important;height:30px!important;flex:none}
+  #mobileDrawer #pal .tc.on{background:color-mix(in srgb,var(--ac) 18%,var(--bg));border-color:var(--ac)}
+  #mobileDrawer #pal #info{display:none!important}
+}
+@media (pointer:coarse) and (orientation:portrait){
+  body[data-mode="edit"] #mobilePan{right:max(8px,env(safe-area-inset-bottom));top:50%;}
+}
+@media (pointer:coarse) and (max-height:420px){
+  body[data-mode="edit"] #mobilePan{width:100px;padding:5px}
+  #mobilePan #pan{grid-template-columns:repeat(3,29px);grid-template-rows:repeat(3,29px)}
+  #mobilePan #pan>button{width:29px;height:29px;min-height:29px}
+  #mobileDrawer #pal .tc{min-height:39px!important;padding:4px 8px}
+  #mobileDrawer #pal .tc canvas{width:26px!important;height:26px!important}
+}
+
 </style></head>
 <body data-mode="edit" class="home-active">
 <div id="bootScreen" aria-label="Loading game"><div class="boot-mark">BUILD <span>&amp;</span> BREAK<div class="boot-track"><i></i></div><div style="font-size:10px;letter-spacing:.2em;color:#aaa8c8;margin-top:12px">LOADING ADVENTURE</div></div></div>
@@ -328,7 +365,7 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
   <div class="g pl"><button id="rs">Restart (R)</button><button id="back" class="pri">← Editor (Esc)</button></div>
 </div>
 <div id="main"><div id="pal" class="ed"></div><div id="wrap"><div id="game"></div><div id="hud"></div><div id="fx" class="ov"></div><div id="tip" class="ov"></div><div id="ban" class="ov"></div><div id="st" class="ov"></div><div id="rot" class="ov">↻ Rotate to landscape for the best view</div>
-  <div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><div class="g"><button data-k="s">⇄</button><button data-k="d">💨</button><button data-k="a">⚔</button><button data-k="j" class="jb">JUMP</button></div></div></div></div><div id="dlg"></div>
+  <div id="mobilePan" aria-label="Move editor camera"><div class="pan-hint">CAMERA</div></div><div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><div class="g"><button data-k="s">⇄</button><button data-k="d">💨</button><button data-k="a">⚔</button><button data-k="j" class="jb">JUMP</button></div></div></div></div><div id="dlg"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
 <script>
 const W=60,H=30,S=32,MAXO=700,DUR=8000,MV="gumzb";
@@ -537,12 +574,14 @@ function setupMobileHome(){
 function setupMobileEditor(){
   if(!COARSE)return;
   const actions=$("mobileActions");
-  ["undo","redo","clear","demo","rg","pan","share","load","cust","help"].forEach(id=>{
+  ["undo","redo","clear","demo","rg","share","load","cust","help"].forEach(id=>{
     const el=$(id);if(!el)return;
     if(id==="rg"){
       const wrap=document.createElement("label");wrap.className="mobile-range";wrap.textContent="Movement range";wrap.appendChild(el);actions.appendChild(wrap);
     }else actions.appendChild(el);
   });
+  // Camera navigation stays on the editor canvas, not buried in the tool drawer.
+  const pan=$("pan");if(pan)$("mobilePan").appendChild(pan);
   const pal=$("pal");$("mobileDrawer").appendChild(pal);
   const open=()=>{document.body.classList.add("drawer-open");$("mobileMenuToggle").setAttribute("aria-expanded","true")};
   const close=()=>{document.body.classList.remove("drawer-open");$("mobileMenuToggle").setAttribute("aria-expanded","false")};
@@ -553,7 +592,7 @@ function setupMobileEditor(){
   $("mobileRestart").onclick=()=>sc().scene.restart();
   document.querySelectorAll("#pal .tc").forEach(b=>b.addEventListener("click",close));
 }
-$("help").onclick=()=>{const t=COARSE;dlg("How to play",G.mode==="edit"?"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"Tap or drag to place. Use the <b>Pan</b> tool (Level section) or the ▲▼◀▶ buttons to scroll. <b>Erase</b> removes objects. ↶ ↷ undo and redo.":"Click or drag to place, right-click erases. Scroll with WASD, arrows, mouse wheel (Shift = sideways) or middle-drag. Ctrl+Z / Ctrl+Y undo and redo. Keys 1–9 pick tools, T plays.")+"</p><p>Movers, saws, boulders and moving spikes use the <b>Range</b> box. Boss flags use Range as the boss number.</p>":"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapon.":"A/D or arrows move · Space/W jump · X or J attack · Shift dash · Q switch weapon · R restart · Esc editor.")+"</p>",[["Got it"]])};
+$("help").onclick=()=>{const t=COARSE;dlg("How to play",G.mode==="edit"?"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"Tap or drag to place. Use the on-screen ▲▼◀▶ camera pad at the right side to move around the level. <b>Erase</b> removes objects. ↶ ↷ undo and redo.":"Click or drag to place, right-click erases. Scroll with WASD, arrows, mouse wheel (Shift = sideways) or middle-drag. Ctrl+Z / Ctrl+Y undo and redo. Keys 1–9 pick tools, T plays.")+"</p><p>Movers, saws, boulders and moving spikes use the <b>Range</b> box. Boss flags use Range as the boss number.</p>":"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapon.":"A/D or arrows move · Space/W jump · X or J attack · Shift dash · Q switch weapon · R restart · Esc editor.")+"</p>",[["Got it"]])};
 $("test").onclick=startTest;$("rs").onclick=()=>sc().scene.restart();$("back").onclick=()=>go("edit");$("cust").onclick=custom;
 const undo=()=>{if(!G.und.length)return;G.red.push(JSON.stringify(G.lv));G.lv=JSON.parse(G.und.pop());sc().draw();save()},redo=()=>{if(!G.red.length)return;G.und.push(JSON.stringify(G.lv));G.lv=JSON.parse(G.red.pop());sc().draw();save()};
 $("undo").onclick=undo;$("redo").onclick=redo;
