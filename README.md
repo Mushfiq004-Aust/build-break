@@ -1,17 +1,17 @@
 # Build & Break: Adventure
 
-A browser-playable platform game and level editor. Open `index.html` in a modern browser. Phaser 3.80.1 is loaded from a CDN, so an internet connection is required.
+A browser-playable Phaser 3 platform game with a level editor. Open `index.html` in a modern browser. Phaser 3.80.1 is loaded from a CDN, so an internet connection is required.
 
-## Mobile experience
+## Mobile app experience
 
-- Phone gameplay uses a landscape-oriented game surface. On portrait phones, the complete game UI rotates into a landscape layout automatically, so the player does not need to rotate the physical phone just to use the interface.
-- When the player starts a level, the game requests fullscreen and the Screen Orientation API's `landscape` lock where the browser supports them.
-- Browser security rules still prevent a website from guaranteeing native device rotation or fullscreen immediately on link navigation. iOS Safari and some embedded browsers do not expose the same fullscreen/orientation APIs; the CSS landscape fallback keeps the game usable in those browsers.
-- The mobile editor has a dedicated expandable Level Tools drawer. The level canvas remains clear while the drawer is closed.
-- Play is a separate primary action. During gameplay, the header changes to Restart and Editor actions.
-- Completion and other dialogs are rendered inside the fullscreen game surface, so the level-complete result remains visible.
-- Touch controls support movement, jump, attack, dash, and weapon switching.
-- Safe-area insets are respected for notches and home indicators.
+- Mobile opens into a dedicated loading splash and main menu instead of dropping players directly into the editor.
+- Main menu actions are separated into **Play**, **Level Editor**, **Settings**, and **How to Play**.
+- The app requests landscape orientation on load and again from menu interactions. When native orientation locking is unavailable (notably in iOS Safari and some embedded browsers), the complete app surface rotates into a landscape layout so the player does not need to rotate the physical phone.
+- Fullscreen is requested from user interaction because browsers generally block automatic fullscreen on initial navigation.
+- Play and Level Editor are separate destinations. The mobile editor remains in the immersive app shell and exposes its tools through a slide-out drawer.
+- The editor drawer contains building categories, undo/redo, clear, demo level, movement range, pan controls, share/load level codes, character customization, and help.
+- The gameplay HUD and touch controls are sized for landscape mobile screens and safe-area insets.
+- Level-completion dialogs are mounted at the application level (outside the Phaser canvas wrapper) and use a fixed high-priority overlay, so the victory result is not clipped by the game canvas or fullscreen layout.
 
 ## Desktop controls
 
@@ -39,4 +39,8 @@ A browser-playable platform game and level editor. Open `index.html` in a modern
 - Undo/redo, clear, demo level, movement range, share codes, load codes, character customization, and help are available in the drawer.
 - The desktop editor retains its original sidebar and toolbar layout.
 
-The default level is playable, and custom levels can be built and shared with level codes. The game saves the current level locally in the browser.
+The default level is playable, custom levels can be built and shared with level codes, and the current level is saved locally in the browser.
+
+## Browser limitations
+
+A web page cannot guarantee that every mobile browser will physically rotate the device or enter fullscreen immediately when a link is opened. Orientation lock and fullscreen are requested where supported and permitted by browser gesture rules; the CSS landscape fallback handles portrait-only browsers.
