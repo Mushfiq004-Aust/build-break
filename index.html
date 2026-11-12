@@ -315,6 +315,107 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
   #mobileDrawer #pal .tc canvas{width:26px!important;height:26px!important}
 }
 
+
+/* V7: robust mobile editor drawer. The drawer itself is the ONLY scroll owner. */
+@media (pointer:coarse){
+  #mobileDrawer{
+    display:block!important;position:fixed!important;z-index:22!important;
+    top:0!important;bottom:0!important;left:0!important;right:auto!important;
+    width:min(390px,94vw)!important;height:auto!important;min-height:0!important;max-height:none!important;
+    box-sizing:border-box!important;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(18px + env(safe-area-inset-bottom,0px))!important;
+    overflow-x:hidden!important;overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;
+    touch-action:pan-y!important;scrollbar-gutter:stable;
+    transform:translate3d(-110%,0,0);background:var(--card)!important;
+  }
+  body.drawer-open #mobileDrawer{transform:translate3d(0,0,0)!important}
+  #mobileDrawer .drawer-head{
+    position:sticky!important;top:calc(-10px - env(safe-area-inset-top,0px))!important;
+    z-index:5;margin:0 -12px 10px!important;padding:10px 12px 12px!important;
+    background:var(--card)!important;border-bottom:1px solid var(--line);
+  }
+  #mobileDrawer .drawer-palette-title{display:block!important;margin:8px 2px 9px!important;font-size:10px;letter-spacing:.12em;font-weight:900;opacity:.62}
+  #mobileDrawer .drawer-palette-title::after{content:"SCROLL FOR MORE ↓";float:right;font-size:9px;letter-spacing:.06em;opacity:.7}
+  /* Do not flex-shrink or internally scroll the palette: its full natural height
+     contributes to the drawer's scrollHeight, so every category is reachable. */
+  #mobileDrawer #pal{
+    display:block!important;position:static!important;float:none!important;
+    width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;
+    flex:none!important;overflow:visible!important;overscroll-behavior:visible!important;
+    padding:0 0 8px!important;margin:0!important;background:transparent!important;border:0!important;
+  }
+  #mobileDrawer #pal details,#mobileDrawer #pal details[open]{
+    display:block!important;position:static!important;float:none!important;
+    width:100%!important;height:auto!important;min-width:0!important;max-height:none!important;
+    flex:none!important;overflow:visible!important;visibility:visible!important;
+    margin:0 0 8px!important;padding:0 0 9px!important;
+    border:0!important;border-bottom:1px solid var(--line)!important;
+  }
+  #mobileDrawer #pal details>summary{
+    display:block!important;position:relative!important;width:100%!important;height:auto!important;
+    min-height:44px!important;box-sizing:border-box!important;white-space:normal!important;
+    padding:12px 38px 12px 13px!important;font-size:13px!important;line-height:1.25!important;
+    font-weight:850!important;border-radius:11px!important;cursor:pointer;touch-action:manipulation;
+  }
+  #mobileDrawer #pal details>summary::after{content:"＋";position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:16px}
+  #mobileDrawer #pal details[open]>summary::after{content:"−"}
+  #mobileDrawer #pal details[open]>summary{background:var(--ac)!important;color:#fff!important}
+  #mobileDrawer #pal .tc{
+    display:flex!important;position:relative!important;float:none!important;
+    width:100%!important;min-width:0!important;min-height:48px!important;height:auto!important;
+    max-height:none!important;box-sizing:border-box!important;flex:none!important;
+    flex-direction:row!important;align-items:center!important;justify-content:flex-start!important;
+    gap:11px!important;margin:6px 0 0!important;padding:7px 11px!important;
+    font-size:13px!important;line-height:1.25!important;text-align:left!important;
+    white-space:normal!important;border-radius:10px!important;touch-action:manipulation;
+  }
+  #mobileDrawer #pal .tc canvas{display:block!important;width:30px!important;height:30px!important;min-width:30px!important;flex:0 0 30px!important}
+  #mobileDrawer #pal .tc.on{background:color-mix(in srgb,var(--ac) 18%,var(--bg))!important;border-color:var(--ac)!important}
+  #mobileDrawer #pal #info{display:none!important}
+  #mobileDrawer #mobileActions{display:grid!important;position:static!important;float:none!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important;min-height:0!important;height:auto!important;flex:none!important;margin:12px 0 4px!important;padding:12px 0 0!important;border-top:1px solid var(--line)}
+  #mobileDrawer #mobileActions button{display:block!important;min-width:0!important;min-height:42px!important;height:auto!important;padding:8px!important;white-space:normal!important;font-size:12px!important}
+  #mobileDrawer #mobileActions .mobile-range{grid-column:1/-1!important;display:flex!important;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px}
+  #mobileDrawer #mobileActions #pan{display:none!important}
+  #mobileDrawer::-webkit-scrollbar{width:6px}
+  #mobileDrawer::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--fg) 30%,transparent);border-radius:8px}
+}
+@media (pointer:coarse) and (max-height:420px){
+  #mobileDrawer #pal .tc{min-height:43px!important;padding:5px 9px!important}
+  #mobileDrawer #pal .tc canvas{width:26px!important;height:26px!important;flex-basis:26px!important}
+  #mobileDrawer #pal details>summary{min-height:40px!important;padding-top:9px!important;padding-bottom:9px!important}
+}
+
+/* Day/night appearance is applied consistently to the shell and the landing page. */
+#mobileHome{align-items:center;justify-content:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box;background:radial-gradient(ellipse at 75% 20%,#35216e 0%,transparent 42%),radial-gradient(ellipse at 10% 90%,#142f55 0%,transparent 42%),linear-gradient(145deg,#090a1b,#11102b 58%,#090a1b);color:#fff;}
+:root[data-theme="light"]{--bg:#f3f6ff;--fg:#20233c;--card:#ffffff;--line:#d8def0;--ac:#6d28d9;color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
+#mobileHome .home-theme-button{min-height:38px!important;padding:6px 11px!important;font-size:11px!important;border-radius:10px!important;opacity:.92}
+:root[data-theme="light"] #mobileHome{background:radial-gradient(ellipse at 75% 20%,#c4b5fd 0%,transparent 42%),radial-gradient(ellipse at 10% 90%,#bae6fd 0%,transparent 42%),linear-gradient(145deg,#f8faff,#e9edff 58%,#f4f7ff);color:#20233c}
+:root[data-theme="light"] #mobileHome .home-copy{color:#20233c}
+:root[data-theme="light"] #mobileHome .eyebrow{color:#6d28d9}
+:root[data-theme="light"] #mobileHome .home-sub{color:#555b78}
+:root[data-theme="light"] #mobileHome .home-card{background:linear-gradient(150deg,#fff,#eef0ff);border-color:#cbd2ed;box-shadow:0 20px 55px #4c3b861c}
+:root[data-theme="light"] #mobileHome button:not(.home-primary){background:#ffffffd9;color:#252344;border-color:#cbd2ed}
+:root[data-theme="light"] #mobileHome button small{color:#626783}
+:root[data-theme="light"] #mobileHome .home-stats,:root[data-theme="light"] #mobileHome .home-foot,:root[data-theme="light"] #mobileHome .home-loading{color:#646985}
+
+/* Polished feedback: short, high-contrast toasts and celebratory ability/result cards. */
+#st{pointer-events:none;z-index:18;border:1px solid #ffffff35;border-radius:14px;padding:10px 16px;background:linear-gradient(135deg,#29204fef,#15132ff2);color:#fff;box-shadow:0 12px 32px #0006,0 0 0 1px #a78bfa22 inset;backdrop-filter:blur(12px);font-weight:800;letter-spacing:.01em;max-width:min(88%,420px);text-align:center;white-space:normal}
+#st.toast-pop{animation:toastPop .28s cubic-bezier(.2,.9,.25,1.3) both}
+#ban{z-index:19;border:1px solid #f5d0fe88;border-radius:18px;padding:14px 22px;background:linear-gradient(135deg,#7c3aedf5,#4c1d95f5 60%,#312e81f5);color:#fff;box-shadow:0 16px 44px #0008,0 0 32px #a78bfa55;backdrop-filter:blur(10px);font-weight:950;letter-spacing:.015em;text-shadow:0 2px 8px #160b36;white-space:pre-line}
+#ban.ability-pop{animation:abilityPop .42s cubic-bezier(.16,1.2,.3,1) both}
+#dlg .box{animation:modalPop .28s cubic-bezier(.2,.9,.25,1.2) both}
+#dlg.is-result .box{border:1px solid #c4b5fd;box-shadow:0 24px 90px #0009,0 0 0 2px #8b5cf644,0 0 42px #8b5cf655}
+#dlg.is-result .box h2{color:#8b5cf6;text-shadow:0 4px 22px #8b5cf633}
+#dlg.is-result .complete-note{padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--ac) 12%,var(--card));}
+@keyframes toastPop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes abilityPop{0%{opacity:0;transform:translate(-50%,-16px) scale(.82) rotate(-2deg)}65%{opacity:1;transform:translate(-50%,3px) scale(1.04) rotate(.5deg)}100%{opacity:1;transform:translate(-50%,0) scale(1) rotate(0)}}
+@keyframes modalPop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media (pointer:coarse){
+  #st{position:absolute;top:auto!important;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%!important;right:auto!important;transform:translateX(-50%);font-size:13px}
+  #ban{top:18%;left:50%;transform:translateX(-50%);max-width:88%;font-size:clamp(16px,2.8vw,22px);text-align:center}
+}
+@media (prefers-reduced-motion:reduce){#st.toast-pop,#ban.ability-pop,#dlg .box{animation:none!important}}
 </style></head>
 <body data-mode="edit" class="home-active">
 <div id="bootScreen" aria-label="Loading game"><div class="boot-mark">BUILD <span>&amp;</span> BREAK<div class="boot-track"><i></i></div><div style="font-size:10px;letter-spacing:.2em;color:#aaa8c8;margin-top:12px">LOADING ADVENTURE</div></div></div>
@@ -334,6 +435,7 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
         <button id="homeEditor"><span>▦ &nbsp;LEVEL EDITOR</span><small>Create or edit</small></button>
         <button id="homeSettings"><span>⚙ &nbsp;SETTINGS</span><small>Game preferences</small></button>
         <button id="homeHelp"><span>？ &nbsp;HOW TO PLAY</span><small>Controls & objectives</small></button>
+        <button id="homeTheme" class="home-theme-button"><span id="homeThemeLabel">☾ &nbsp;SWITCH TO NIGHT MODE</span><small>Day / night appearance</small></button>
       </div>
       <div class="home-foot">YOUR WORLD. YOUR RULES. YOUR NEXT CHALLENGE.</div>
     </div>
@@ -364,7 +466,7 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
   <div class="g"><button id="cust">🎨 Character</button><button id="help">?</button><span id="cnt" class="ed" style="font-size:12px;opacity:.7"></span></div>
   <div class="g pl"><button id="rs">Restart (R)</button><button id="back" class="pri">← Editor (Esc)</button></div>
 </div>
-<div id="main"><div id="pal" class="ed"></div><div id="wrap"><div id="game"></div><div id="hud"></div><div id="fx" class="ov"></div><div id="tip" class="ov"></div><div id="ban" class="ov"></div><div id="st" class="ov"></div><div id="rot" class="ov">↻ Rotate to landscape for the best view</div>
+<div id="main"><div id="pal" class="ed"></div><div id="wrap"><div id="game"></div><div id="hud"></div><div id="fx" class="ov"></div><div id="tip" class="ov"></div><div id="ban" class="ov" role="status" aria-live="polite"></div><div id="st" class="ov" role="status" aria-live="polite"></div><div id="rot" class="ov">↻ Rotate to landscape for the best view</div>
   <div id="mobilePan" aria-label="Move editor camera"><div class="pan-hint">CAMERA</div></div><div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><div class="g"><button data-k="s">⇄</button><button data-k="d">💨</button><button data-k="a">⚔</button><button data-k="j" class="jb">JUMP</button></div></div></div></div><div id="dlg"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
 <script>
@@ -442,13 +544,20 @@ const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const G={lv:(l=>l&&!validate(l)?l:def())(ld("bb2")),cur:null,mode:"edit",tool:"p",und:[],red:[],ch:ld("bb2c")||{c:0,h:0}};
 const save=()=>sv("bb2",G.lv),sc=()=>game.scene.getScene("main"),rng=()=>Math.max(1,Math.min(14,+$("rg").value||4));
 let ft;
-function flash(m){const t=$("st");t.textContent=m;t.style.display="block";clearTimeout(ft);ft=setTimeout(()=>{t.style.display="none"},2800)}
+function flash(m){
+  const t=$("st");t.textContent=String(m);t.style.display="block";
+  t.classList.remove("toast-pop");void t.offsetWidth;t.classList.add("toast-pop");
+  clearTimeout(ft);ft=setTimeout(()=>{t.style.display="none";t.classList.remove("toast-pop")},3000);
+}
 function hud(){$("cnt").textContent=G.mode==="edit"?G.lv.o.length+"/"+MAXO+" objects":""}
 function dlg(t,h,acts){
-  const d=$("dlg");d.innerHTML="<div class=box><h2>"+t+"</h2>"+h+"<div class=row></div></div>";
+  const d=$("dlg"),result=/LEVEL COMPLETE/i.test(String(t));
+  d.classList.toggle("is-result",result);
+  d.innerHTML="<div class=box role=dialog aria-modal=true tabindex=-1><h2>"+t+"</h2>"+h+"<div class=row></div></div>";
   const row=d.querySelector(".row");
-  acts.forEach(([l,f],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";b.onclick=()=>{const r=f&&f();if(r!==false){d.style.display="none";document.body.classList.remove("result-visible")}};row.appendChild(b)});
+  acts.forEach(([l,f],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";b.onclick=()=>{const r=f&&f();if(r!==false){d.style.display="none";d.classList.remove("is-result");document.body.classList.remove("result-visible")}};row.appendChild(b)});
   d.style.display="flex";
+  d.querySelector(".box")?.focus();
 }
 async function enterImmersivePlay(){
   if(!COARSE)return;
@@ -548,9 +657,24 @@ function mobileHomeAction(action){
     if(COARSE)setTimeout(()=>$("mobileMenuToggle")?.click(),180);
   }
 }
+function activeTheme(){
+  const saved=localStorage.getItem("bbtheme");
+  if(saved==="light"||saved==="dark")return saved;
+  return matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";
+}
+function applyTheme(theme){
+  const next=(theme==="light"||theme==="dark")?theme:"system";
+  if(next==="system")document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.dataset.theme=next;
+  localStorage.setItem("bbtheme",next);
+  const label=$("homeThemeLabel");
+  if(label)label.innerHTML=activeTheme()==="dark"?"☀ &nbsp;SWITCH TO DAY MODE":"☾ &nbsp;SWITCH TO NIGHT MODE";
+  try{const scene=game.scene.getScene("main");if(scene&&scene.sys.isActive()&&scene.applyWorldTheme)scene.applyWorldTheme()}catch(_){}
+}
+function toggleTheme(){applyTheme(activeTheme()==="dark"?"light":"dark");}
 function openMobileSettings(){
-  const theme=localStorage.getItem("bbtheme")||"system";
-  dlg("Settings",'<p>Build &amp; Break requests landscape fullscreen on supported mobile browsers.</p><p><b>Appearance</b></p><p>Current theme: '+theme+'</p><p><b>Controls</b><br>◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapons.</p>',[["Toggle theme",()=>{const cur=document.documentElement.dataset.theme||"system",next=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("bbtheme",next);return false}], ["Close"]]);
+  const theme=activeTheme(),next=theme==="dark"?"day":"night";
+  dlg("Settings",'<p>Build &amp; Break runs best in landscape on supported mobile browsers.</p><p><b>Appearance</b><br>Currently using <b>'+theme+'</b> mode.</p><p><b>Controls</b><br>◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapons.</p>',[["Switch to "+next+" mode",()=>{toggleTheme();openMobileSettings();return false}], ["Close"]]);
 }
 function setupMobileHome(){
   if(mobileHomeInitialized)return;
@@ -565,14 +689,17 @@ function setupMobileHome(){
     requestMobileEntry();
     dlg("How to play","<p>Collect every key, defeat every boss and reach the exit door.</p><p><b>Move</b> with ◀ ▶. Use <b>JUMP</b> to jump, ⚔ to attack, 💨 to dash and ⇄ to switch weapons when available.</p><p>In the level editor, open Level Tools to choose building pieces, place hazards, undo changes, share levels or load a level code.</p>",[["BACK TO MENU",()=>{showMobileHome();}]]);
   });
+  bind("homeTheme",()=>toggleTheme());
   bind("mobileHomeBtn",()=>showMobileHome());
   bind("homeReturn",()=>showMobileHome());
-  const saved=localStorage.getItem("bbtheme");if(saved)document.documentElement.dataset.theme=saved;
+  const saved=localStorage.getItem("bbtheme");applyTheme(saved||"system");
   showMobileHome();
 }
 // Mobile editor: keep the canvas clean and reveal tools in a proper slide-out drawer.
+let mobileEditorInitialized=false;
 function setupMobileEditor(){
-  if(!COARSE)return;
+  if(!COARSE||mobileEditorInitialized)return;
+  mobileEditorInitialized=true;
   const actions=$("mobileActions");
   ["undo","redo","clear","demo","rg","share","load","cust","help"].forEach(id=>{
     const el=$(id);if(!el)return;
@@ -582,11 +709,25 @@ function setupMobileEditor(){
   });
   // Camera navigation stays on the editor canvas, not buried in the tool drawer.
   const pan=$("pan");if(pan)$("mobilePan").appendChild(pan);
-  const pal=$("pal");$("mobileDrawer").appendChild(pal);
-  const open=()=>{document.body.classList.add("drawer-open");$("mobileMenuToggle").setAttribute("aria-expanded","true")};
+  const drawer=$("mobileDrawer"),pal=$("pal"),paletteTitle=drawer.querySelector(".drawer-palette-title");
+  // Order the drawer for a mobile editor: tools first, utility actions afterwards.
+  if(paletteTitle)drawer.insertBefore(paletteTitle,actions);
+  drawer.insertBefore(pal,actions);
+  const open=()=>{document.body.classList.add("drawer-open");$("mobileMenuToggle").setAttribute("aria-expanded","true");drawer.scrollTop=0};
   const close=()=>{document.body.classList.remove("drawer-open");$("mobileMenuToggle").setAttribute("aria-expanded","false")};
   $("mobileMenuToggle").onclick=()=>document.body.classList.contains("drawer-open")?close():open();
   $("drawerClose").onclick=close;$("drawerScrim").onclick=close;
+  // In the CSS-rotated portrait fallback, the app's vertical axis is sideways
+  // relative to the physical display. Map an ordinary up/down finger swipe to
+  // scrollTop so the lower tool groups remain discoverable without rotating.
+  let lastTouchY=0,dragged=false;
+  drawer.addEventListener("touchstart",e=>{if(e.touches.length===1){lastTouchY=e.touches[0].clientY;dragged=false;}},{passive:true});
+  drawer.addEventListener("touchmove",e=>{
+    if(!matchMedia("(orientation:portrait)").matches||e.touches.length!==1)return;
+    const y=e.touches[0].clientY,dy=lastTouchY-y;
+    if(Math.abs(dy)>2){dragged=true;drawer.scrollTop+=dy;lastTouchY=y;e.preventDefault();}
+  },{passive:false});
+  drawer.addEventListener("touchend",()=>{if(dragged)drawer.dataset.scrolled="true";},{passive:true});
   $("mobilePlay").onclick=()=>{close();startTest()};
   $("mobileBack").onclick=()=>go("edit");
   $("mobileRestart").onclick=()=>sc().scene.restart();
@@ -678,11 +819,20 @@ class Main extends Phaser.Scene{
   }
   create(){
     this.tex();initPal(this);setupMobileEditor();setupMobileHome();this.spr=[];this.down=false;this.dead=false;this.over=false;this.p=null;
-    const cam=this.cameras.main;cam.setBackgroundColor("#1b1f3b").setBounds(0,0,W*S,H*S);
-    ["#0f172a","#1e1b4b","#312e81","#4c1d95"].forEach((c,i)=>this.add.rectangle(0,i*135,960,136,Phaser.Display.Color.HexStringToColor(c).color).setOrigin(0).setScrollFactor(0).setDepth(-10));
-    for(let i=0;i<70;i++)this.add.circle(Math.random()*960*2,Math.random()*540,Math.random()*1.5+.5,0xffffff,Math.random()*.7+.2).setScrollFactor(.25).setDepth(-9);
+    const cam=this.cameras.main;cam.setBounds(0,0,W*S,H*S);
+    this.bgBands=[];this.bgStars=[];
+    ["#0f172a","#1e1b4b","#312e81","#4c1d95"].forEach((c,i)=>this.bgBands.push(this.add.rectangle(0,i*135,960,136,Phaser.Display.Color.HexStringToColor(c).color).setOrigin(0).setScrollFactor(0).setDepth(-10)));
+    for(let i=0;i<70;i++){const star=this.add.circle(Math.random()*960*2,Math.random()*540,Math.random()*1.5+.5,0xffffff,Math.random()*.7+.2).setScrollFactor(.25).setDepth(-9);star.setData("baseAlpha",star.alpha);this.bgStars.push(star)}
+    this.applyWorldTheme();
     this.k=this.input.keyboard.addKeys("W,A,S,D,UP,LEFT,RIGHT,DOWN,SPACE,X,J,SHIFT,Q",false);
     G.mode==="edit"?this.edit():this.play();
+  }
+  applyWorldTheme(){
+    const night=activeTheme()==="dark";
+    const bands=night?["#0f172a","#1e1b4b","#312e81","#4c1d95"]:["#dbeafe","#bfdbfe","#93c5fd","#60a5fa"];
+    this.cameras?.main?.setBackgroundColor(night?"#1b1f3b":"#e0f2fe");
+    (this.bgBands||[]).forEach((band,i)=>band.setFillStyle(Phaser.Display.Color.HexStringToColor(bands[i]).color));
+    (this.bgStars||[]).forEach(star=>star.setAlpha(night?(star.getData("baseAlpha")??.5):.12));
   }
   /* ---------- EDITOR ---------- */
   edit(){
@@ -771,7 +921,7 @@ class Main extends Phaser.Scene{
   got(t){const a=COARSE?"Tap ⚔":"Press X";
     if("ZFY".includes(t)){this.wep=FX[t];this.banner({Z:"⚔ SWORD acquired! It's yours until the end.\n"+a+" to slash",F:"🔥 FIREBALLS acquired! Yours until the end.\n"+a+" to throw",Y:"🔥 FLAMETHROWER acquired! Yours until the end.\n"+(COARSE?"Hold ⚔":"Hold X")+" to spray"}[t])}
     else this.banner(FXN[FX[t]]+"!"+(t==="A"?"\nPress jump again in mid-air":t==="H"?"\n"+(COARSE?"Tap 💨":"Press Shift")+" to dash":""))}
-  banner(m){const b=$("ban");b.textContent=m;b.style.display="block";clearTimeout(this.bt);this.bt=setTimeout(()=>{b.style.display="none"},4200)}
+  banner(m){const b=$("ban");b.textContent=m;b.style.display="block";b.classList.remove("ability-pop");void b.offsetWidth;b.classList.add("ability-pop");clearTimeout(this.bt);this.bt=setTimeout(()=>{b.style.display="none";b.classList.remove("ability-pop")},4200)}
   shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm"})}
   dmg(e,n){if(e.dead)return;e.hp-=n;e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>e.s.clearTint());
     if(e.hp<=0){e.dead=e.gone=true;e.bar.setVisible(false);this.cameras.main.shake(350,.02);this.tweens.add({targets:e.s,scale:2,alpha:0,duration:500,onComplete:()=>e.s.setVisible(false).setScale(1).setAlpha(1)});flash("Boss defeated! 🎉")}}
