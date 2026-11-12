@@ -55,3 +55,11 @@ Serve this folder from a static web server and open `index.html`. Phaser 3.80.1 
 - ZIP archive integrity checked after packaging.
 
 A full interactive browser/device test could not be completed in this environment because Chromium navigation to the local test server is blocked by the execution environment. Please test the editor drag workflow and touch controls on an actual phone before publishing.
+
+
+## Update: Creative tools, compact sharing, and weather themes
+
+- Added Storm Serpent boss (boss #6), with a sweeping aerial pattern and five-shot projectile fan.
+- Added Mega Trampoline, Wind Vent, and Shock Mine builder tools with gameplay interactions.
+- Added Night, Day, Rain, Winter, and Thunder atmosphere modes. Weather effects are lightweight screen-space visuals.
+- Replaced newly generated share codes with a compact bit-packed format. Codes are variable length (small/medium levels can fit roughly 50–100 characters); existing LZW and legacy Base64 JSON codes remain readable.
