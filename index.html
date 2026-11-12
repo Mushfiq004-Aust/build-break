@@ -107,6 +107,8 @@ body{height:100%;height:100dvh;padding:0;box-sizing:border-box}
 #dlg .box{max-height:min(88dvh,560px);overflow:auto;box-shadow:0 18px 70px #0009}
 #dlg .box h2{font-size:clamp(20px,3vw,28px)}
 #dlg .complete-note{font-weight:700;color:var(--ac)}
+#dlg .settings-list p{margin:9px 0;padding:9px 11px;border-radius:10px;background:color-mix(in srgb,var(--ac) 7%,var(--card));}
+#dlg .settings-list p:first-child{margin-top:0;}
 @media (pointer:coarse){
   html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none}
   body{position:fixed;inset:0;height:100dvh;min-height:0;padding:0}
@@ -389,6 +391,7 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
 #mobileHome{align-items:center;justify-content:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box;background:radial-gradient(ellipse at 75% 20%,#35216e 0%,transparent 42%),radial-gradient(ellipse at 10% 90%,#142f55 0%,transparent 42%),linear-gradient(145deg,#090a1b,#11102b 58%,#090a1b);color:#fff;}
 :root[data-theme="light"]{--bg:#f3f6ff;--fg:#20233c;--card:#ffffff;--line:#d8def0;--ac:#6d28d9;color-scheme:light}
 :root[data-theme="dark"]{color-scheme:dark}
+#mobileHome #homeTheme{display:none!important}
 #mobileHome .home-theme-button{min-height:38px!important;padding:6px 11px!important;font-size:11px!important;border-radius:10px!important;opacity:.92}
 :root[data-theme="light"] #mobileHome{background:radial-gradient(ellipse at 75% 20%,#c4b5fd 0%,transparent 42%),radial-gradient(ellipse at 10% 90%,#bae6fd 0%,transparent 42%),linear-gradient(145deg,#f8faff,#e9edff 58%,#f4f7ff);color:#20233c}
 :root[data-theme="light"] #mobileHome .home-copy{color:#20233c}
@@ -411,11 +414,45 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
 @keyframes toastPop{from{opacity:0;transform:translateY(12px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes abilityPop{0%{opacity:0;transform:translate(-50%,-16px) scale(.82) rotate(-2deg)}65%{opacity:1;transform:translate(-50%,3px) scale(1.04) rotate(.5deg)}100%{opacity:1;transform:translate(-50%,0) scale(1) rotate(0)}}
 @keyframes modalPop{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+/* Keep feedback in a dedicated top notification lane, away from the player and touch controls. */
+#st{top:58px!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%);width:max-content;max-width:min(86vw,440px);}
+#ban{top:112px!important;left:50%!important;right:auto!important;bottom:auto!important;transform:translateX(-50%);width:max-content;max-width:min(86vw,520px);box-sizing:border-box;}
 @media (pointer:coarse){
-  #st{position:absolute;top:auto!important;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%!important;right:auto!important;transform:translateX(-50%);font-size:13px}
-  #ban{top:18%;left:50%;transform:translateX(-50%);max-width:88%;font-size:clamp(16px,2.8vw,22px);text-align:center}
+  #st{top:calc(56px + env(safe-area-inset-top,0px))!important;font-size:12px;padding:9px 13px;}
+  #ban{top:calc(108px + env(safe-area-inset-top,0px))!important;max-width:min(84vw,500px);padding:11px 16px;font-size:clamp(14px,2.5vw,19px);}
+}
+@media (pointer:coarse) and (max-height:420px){
+  #st{top:50px!important;max-width:64vw;}
+  #ban{top:96px!important;max-width:70vw;padding:8px 12px;}
 }
 @media (prefers-reduced-motion:reduce){#st.toast-pop,#ban.ability-pop,#dlg .box{animation:none!important}}
+
+/* Mobile HUD: controls hug the lower corners and stay visually lighter than the player. */
+@media (pointer:coarse){
+  #pad{align-items:flex-end;padding-bottom:max(8px,env(safe-area-inset-bottom));}
+  #pad .g{gap:clamp(7px,1.5vw,13px);}
+  #pad button{width:clamp(48px,7vw,64px);height:clamp(48px,7vw,64px);font-size:clamp(18px,2.6vw,23px);background:rgba(12,10,30,.42);border-color:#ffffff42;box-shadow:0 3px 12px #0004;}
+  #pad .jb{width:clamp(62px,8.5vw,78px);height:clamp(62px,8.5vw,78px);font-size:12px;}
+  #mobileBar .mobile-head-actions{gap:6px;}
+  #mobileBar .mobile-icon-btn{min-width:38px;padding:5px 7px;font-size:12px;}
+  #mobileBar .mobile-icon-btn span{font-size:10px;}
+}
+@media (pointer:coarse) and (max-height:420px){
+  #pad button{width:46px;height:46px;font-size:18px;}
+  #pad .jb{width:58px;height:58px;font-size:11px;}
+}
+/* Bounded range stepper */
+.desktop-range{display:flex;align-items:center;gap:5px;font-size:12px!important;}
+.desktop-range button{width:28px;height:28px;padding:0;font-size:17px;font-weight:900;}
+.desktop-range input{width:34px!important;text-align:center;}
+#mobileActions .mobile-range{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:13px;}
+#mobileActions .range-stepper{display:flex;align-items:center;gap:8px;flex:none;}
+.range-stepper button{width:34px;height:34px;min-height:34px!important;padding:0!important;font-size:20px!important;font-weight:900;}
+.range-stepper input{width:42px!important;height:34px;min-height:34px!important;text-align:center;font-weight:900;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--fg);}
+.range-stepper input::-webkit-inner-spin-button,.range-stepper input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.range-stepper input{-moz-appearance:textfield;}
+@media (pointer:coarse){#mobileBar .mobile-head-actions{gap:5px;}#mobileBar .mobile-icon-btn{min-height:34px;}}
+
 </style></head>
 <body data-mode="edit" class="home-active">
 <div id="bootScreen" aria-label="Loading game"><div class="boot-mark">BUILD <span>&amp;</span> BREAK<div class="boot-track"><i></i></div><div style="font-size:10px;letter-spacing:.2em;color:#aaa8c8;margin-top:12px">LOADING ADVENTURE</div></div></div>
@@ -446,6 +483,8 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
   <div class="mobile-head-actions">
     <button id="mobileMenuToggle" class="mobile-icon-btn edit-only" aria-label="Open level tools" aria-expanded="false">☰ <span>Level tools</span></button>
     <button id="mobileHomeBtn" class="mobile-icon-btn">⌂ <span>Home</span></button>
+    <button id="mobileSettings" class="mobile-icon-btn">⚙ <span>Settings</span></button>
+    <button id="mobileTheme" class="mobile-icon-btn" aria-label="Toggle day and night">☾ <span>Theme</span></button>
     <button id="mobileRestart" class="mobile-icon-btn play-only">↻</button>
     <button id="mobileBack" class="mobile-icon-btn play-only">✕ <span>Editor</span></button>
     <button id="mobilePlay" class="mobile-play-btn edit-only">▶ PLAY</button>
@@ -459,8 +498,8 @@ body.home-active #bar,body.home-active #main,body.home-active #mobileBar,body.ho
 </aside>
 <div id="bar">
   <b class="brand">Build &amp; Break</b>
-  <div class="g"><button id="homeReturn">⌂ Home</button></div>
-  <div class="g ed"><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button id="clear">Clear</button><button id="demo">Demo level</button><label>Range <input id="rg" type="number" min="1" max="14" value="4"></label></div>
+  <div class="g"><button id="homeReturn">⌂ Home</button><button id="barSettings">⚙ Settings</button><button id="barTheme">☾ Day / Night</button></div>
+  <div class="g ed"><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button id="clear">Clear</button><button id="demo">Demo level</button><label class="desktop-range">Range <button id="rgDown" type="button" aria-label="Decrease movement range">−</button><input id="rg" type="number" min="1" max="12" step="1" value="4" readonly><button id="rgUp" type="button" aria-label="Increase movement range">+</button></label></div>
   <div class="g ed" id="pan"><span>Scroll</span><button data-p="0,-1">▲</button><button data-p="0,1">▼</button><button data-p="-1,0">◀</button><button data-p="1,0">▶</button></div>
   <div class="g ed"><button id="test" class="pri">▶ Play</button><button id="share">Share</button><button id="load">Load code</button></div>
   <div class="g"><button id="cust">🎨 Character</button><button id="help">?</button><span id="cnt" class="ed" style="font-size:12px;opacity:.7"></span></div>
@@ -542,9 +581,34 @@ const enc=L=>btoa(JSON.stringify(L)),dec=s=>{try{return JSON.parse(atob(String(s
 const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const G={lv:(l=>l&&!validate(l)?l:def())(ld("bb2")),cur:null,mode:"edit",tool:"p",und:[],red:[],ch:ld("bb2c")||{c:0,h:0}};
-const save=()=>sv("bb2",G.lv),sc=()=>game.scene.getScene("main"),rng=()=>Math.max(1,Math.min(14,+$("rg").value||4));
+const save=()=>sv("bb2",G.lv),sc=()=>game.scene.getScene("main");
+const clampRange=v=>Math.max(1,Math.min(12,Math.round(Number(v)||4)));
+const rng=()=>{const el=$("rg"),v=clampRange(el?.value);if(el)el.value=v;return v};
+function setRange(delta){const el=$("rg");if(!el)return;el.value=Math.max(1,Math.min(12,clampRange(el.value)+delta));el.dispatchEvent(new Event("change",{bubbles:true}));sfx("tap")}
 let ft;
+const rangeInput=$("rg");if(rangeInput){rangeInput.readOnly=true;rangeInput.min="1";rangeInput.max="12";rangeInput.step="1";rangeInput.value=clampRange(rangeInput.value);}
+$("rgDown")?.addEventListener("click",()=>setRange(-1));$("rgUp")?.addEventListener("click",()=>setRange(1));
+let audioCtx=null;
+const pref=(key,def)=>{const v=localStorage.getItem(key);return v===null?def:v==="1"};
+let soundEnabled=pref("bbsound",true),vibrationEnabled=pref("bbvibrate",true);
+function sfx(kind="tap"){
+  if(!soundEnabled)return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    audioCtx=audioCtx||new AC();if(audioCtx.state==="suspended")audioCtx.resume();
+    const now=audioCtx.currentTime,osc=audioCtx.createOscillator(),gain=audioCtx.createGain();
+    const presets={tap:[520,680,.055,"sine"],toast:[620,820,.09,"triangle"],pickup:[520,980,.16,"sine"],ability:[420,880,.2,"triangle"],jump:[260,430,.09,"square"],attack:[180,120,.07,"sawtooth"],hurt:[150,75,.18,"sawtooth"],win:[520,1040,.34,"triangle"]};
+    const [a,b,d,w]=presets[kind]||presets.tap;osc.type=w;osc.frequency.setValueAtTime(a,now);osc.frequency.exponentialRampToValueAtTime(Math.max(40,b),now+d);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.075,now+.012);gain.gain.exponentialRampToValueAtTime(.0001,now+d);
+    osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now);osc.stop(now+d+.02);
+  }catch(_){ }
+}
+function buzz(pattern=14){if(vibrationEnabled&&navigator.vibrate){try{navigator.vibrate(pattern)}catch(_){}}}
+function setSound(on){soundEnabled=!!on;localStorage.setItem("bbsound",soundEnabled?"1":"0");if(soundEnabled)sfx("tap");}
+function setVibration(on){vibrationEnabled=!!on;localStorage.setItem("bbvibrate",vibrationEnabled?"1":"0");if(vibrationEnabled)buzz(12);}
+
 function flash(m){
+  sfx("toast");
   const t=$("st");t.textContent=String(m);t.style.display="block";
   t.classList.remove("toast-pop");void t.offsetWidth;t.classList.add("toast-pop");
   clearTimeout(ft);ft=setTimeout(()=>{t.style.display="none";t.classList.remove("toast-pop")},3000);
@@ -553,6 +617,7 @@ function hud(){$("cnt").textContent=G.mode==="edit"?G.lv.o.length+"/"+MAXO+" obj
 function dlg(t,h,acts){
   const d=$("dlg"),result=/LEVEL COMPLETE/i.test(String(t));
   d.classList.toggle("is-result",result);
+  if(result){sfx("win");buzz([35,45,70]);}
   d.innerHTML="<div class=box role=dialog aria-modal=true tabindex=-1><h2>"+t+"</h2>"+h+"<div class=row></div></div>";
   const row=d.querySelector(".row");
   acts.forEach(([l,f],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";b.onclick=()=>{const r=f&&f();if(r!==false){d.style.display="none";d.classList.remove("is-result");document.body.classList.remove("result-visible")}};row.appendChild(b)});
@@ -669,12 +734,20 @@ function applyTheme(theme){
   localStorage.setItem("bbtheme",next);
   const label=$("homeThemeLabel");
   if(label)label.innerHTML=activeTheme()==="dark"?"☀ &nbsp;SWITCH TO DAY MODE":"☾ &nbsp;SWITCH TO NIGHT MODE";
+  const themeText=activeTheme()==="dark"?"☀ Day":"☾ Night";
+  ["barTheme","mobileTheme"].forEach(id=>{const b=$(id);if(b){b.title="Switch to "+(activeTheme()==="dark"?"day":"night")+" mode";const span=b.querySelector("span");if(span)span.textContent=themeText;else b.textContent=themeText;}});
   try{const scene=game.scene.getScene("main");if(scene&&scene.sys.isActive()&&scene.applyWorldTheme)scene.applyWorldTheme()}catch(_){}
 }
 function toggleTheme(){applyTheme(activeTheme()==="dark"?"light":"dark");}
 function openMobileSettings(){
   const theme=activeTheme(),next=theme==="dark"?"day":"night";
-  dlg("Settings",'<p>Build &amp; Break runs best in landscape on supported mobile browsers.</p><p><b>Appearance</b><br>Currently using <b>'+theme+'</b> mode.</p><p><b>Controls</b><br>◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapons.</p>',[["Switch to "+next+" mode",()=>{toggleTheme();openMobileSettings();return false}], ["Close"]]);
+  const state=on=>on?"ON":"OFF";
+  dlg("Settings",'<div class="settings-list"><p>Build &amp; Break runs best in landscape on supported mobile browsers.</p><p><b>Appearance</b><br>Currently using <b>'+theme+'</b> mode.</p><p><b>Sound effects</b><br>Sound is <b>'+state(soundEnabled)+'</b>.</p><p><b>Vibration</b><br>Haptic feedback is <b>'+state(vibrationEnabled)+'</b>.</p><p><b>Controls</b><br>◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapons.</p></div>',[
+    ["Switch to "+next+" mode",()=>{toggleTheme();openMobileSettings();return false}],
+    ["Sound: "+state(soundEnabled),()=>{setSound(!soundEnabled);openMobileSettings();return false}],
+    ["Vibration: "+state(vibrationEnabled),()=>{setVibration(!vibrationEnabled);openMobileSettings();return false}],
+    ["Close"]
+  ]);
 }
 function setupMobileHome(){
   if(mobileHomeInitialized)return;
@@ -682,14 +755,17 @@ function setupMobileHome(){
   if($("bootScreen"))$("bootScreen").style.display="none";
   if(COARSE){try{const r=screen.orientation?.lock?.("landscape");if(r?.catch)r.catch(()=>{});}catch(_){}}
   const bind=(id,fn)=>{const el=$(id);if(el){el.addEventListener("click",e=>{e.preventDefault();fn();});el.disabled=false;}};
-  bind("homePlay",()=>mobileHomeAction("play"));
-  bind("homeEditor",()=>mobileHomeAction("editor"));
-  bind("homeSettings",()=>{requestMobileEntry();openMobileSettings();});
+  bind("homePlay",()=>{sfx("tap");mobileHomeAction("play")});
+  bind("homeEditor",()=>{sfx("tap");mobileHomeAction("editor")});
+  bind("homeSettings",()=>{sfx("tap");requestMobileEntry();openMobileSettings();});
   bind("homeHelp",()=>{
     requestMobileEntry();
     dlg("How to play","<p>Collect every key, defeat every boss and reach the exit door.</p><p><b>Move</b> with ◀ ▶. Use <b>JUMP</b> to jump, ⚔ to attack, 💨 to dash and ⇄ to switch weapons when available.</p><p>In the level editor, open Level Tools to choose building pieces, place hazards, undo changes, share levels or load a level code.</p>",[["BACK TO MENU",()=>{showMobileHome();}]]);
   });
-  bind("homeTheme",()=>toggleTheme());
+  bind("mobileSettings",()=>{sfx("tap");openMobileSettings()});
+  bind("mobileTheme",()=>{sfx("tap");toggleTheme()});
+  bind("barSettings",()=>{sfx("tap");openMobileSettings()});
+  bind("barTheme",()=>{sfx("tap");toggleTheme()});
   bind("mobileHomeBtn",()=>showMobileHome());
   bind("homeReturn",()=>showMobileHome());
   const saved=localStorage.getItem("bbtheme");applyTheme(saved||"system");
@@ -704,7 +780,14 @@ function setupMobileEditor(){
   ["undo","redo","clear","demo","rg","share","load","cust","help"].forEach(id=>{
     const el=$(id);if(!el)return;
     if(id==="rg"){
-      const wrap=document.createElement("label");wrap.className="mobile-range";wrap.textContent="Movement range";wrap.appendChild(el);actions.appendChild(wrap);
+      el.min="1";el.max="12";el.step="1";el.value=clampRange(el.value);el.readOnly=true;el.setAttribute("aria-label","Movement range, 1 to 12");
+      const wrap=document.createElement("div");wrap.className="mobile-range";const title=document.createElement("strong");title.textContent="Movement range";
+      const stepper=document.createElement("div");stepper.className="range-stepper";
+      const down=document.createElement("button"),up=document.createElement("button");down.type=up.type="button";down.textContent="−";up.textContent="+";down.setAttribute("aria-label","Decrease movement range");up.setAttribute("aria-label","Increase movement range");
+      down.onclick=()=>setRange(-1);
+      up.onclick=()=>setRange(1);
+      stepper.append(down,el,up);wrap.append(title,stepper);actions.appendChild(wrap);
+      el.addEventListener("change",()=>{el.value=clampRange(el.value)});
     }else actions.appendChild(el);
   });
   // Camera navigation stays on the editor canvas, not buried in the tool drawer.
@@ -732,8 +815,9 @@ function setupMobileEditor(){
   $("mobileBack").onclick=()=>go("edit");
   $("mobileRestart").onclick=()=>sc().scene.restart();
   document.querySelectorAll("#pal .tc").forEach(b=>b.addEventListener("click",close));
+  $("rg").addEventListener("change",()=>{$("rg").value=clampRange($("rg").value)});
 }
-$("help").onclick=()=>{const t=COARSE;dlg("How to play",G.mode==="edit"?"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"Tap or drag to place. Use the on-screen ▲▼◀▶ camera pad at the right side to move around the level. <b>Erase</b> removes objects. ↶ ↷ undo and redo.":"Click or drag to place, right-click erases. Scroll with WASD, arrows, mouse wheel (Shift = sideways) or middle-drag. Ctrl+Z / Ctrl+Y undo and redo. Keys 1–9 pick tools, T plays.")+"</p><p>Movers, saws, boulders and moving spikes use the <b>Range</b> box. Boss flags use Range as the boss number.</p>":"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapon.":"A/D or arrows move · Space/W jump · X or J attack · Shift dash · Q switch weapon · R restart · Esc editor.")+"</p>",[["Got it"]])};
+$("help").onclick=()=>{const t=COARSE;dlg("How to play",G.mode==="edit"?"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"Tap or drag to place. Use the on-screen ▲▼◀▶ camera pad at the right side to move around the level. <b>Erase</b> removes objects. ↶ ↷ undo and redo.":"Click or drag to place, right-click erases. Scroll with WASD, arrows, mouse wheel (Shift = sideways) or middle-drag. Ctrl+Z / Ctrl+Y undo and redo. Keys 1–9 pick tools, T plays.")+"</p><p>Movers, saws, boulders and moving spikes use the <b>Movement range</b> control (1–12). Boss flags use Range as the boss number.</p>":"<p>Goal: collect every key, beat every boss, reach the door.</p><p>"+(t?"◀ ▶ move · JUMP · ⚔ attack · 💨 dash · ⇄ switch weapon.":"A/D or arrows move · Space/W jump · X or J attack · Shift dash · Q switch weapon · R restart · Esc editor.")+"</p>",[["Got it"]])};
 $("test").onclick=startTest;$("rs").onclick=()=>sc().scene.restart();$("back").onclick=()=>go("edit");$("cust").onclick=custom;
 const undo=()=>{if(!G.und.length)return;G.red.push(JSON.stringify(G.lv));G.lv=JSON.parse(G.und.pop());sc().draw();save()},redo=()=>{if(!G.red.length)return;G.und.push(JSON.stringify(G.lv));G.lv=JSON.parse(G.red.pop());sc().draw();save()};
 $("undo").onclick=undo;$("redo").onclick=redo;
@@ -907,7 +991,8 @@ class Main extends Phaser.Scene{
     this.physics.add.collider(p,this.solid);this.physics.add.collider(p,this.crates);
     this.physics.add.collider(this.crates,this.solid);this.physics.add.collider(this.crates,this.crates);
     this.sl.forEach(m=>{this.physics.add.collider(p,m.s);this.physics.add.collider(this.crates,m.s)});
-    this.cameras.main.startFollow(p,true,.12,.12).setDeadzone(80,60);
+    this.cameras.main.setZoom(COARSE?1.13:1);
+    this.cameras.main.startFollow(p,true,.12,.12).setDeadzone(COARSE?64:80,COARSE?48:60);
     const fxo={setText(t){$("fx").textContent=t;return fxo},setVisible(v){$("fx").style.display=v?"block":"none";return fxo}};this.fxT=fxo;
     this.tip={setText:t=>{const d=$("tip");d.textContent=t;d.style.display=t?"block":"none"}};this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;
   }
@@ -918,10 +1003,10 @@ class Main extends Phaser.Scene{
     this.die();
   }
   hitW(x,y,hw,hh){for(const sx of[x-hw,x,x+hw-1])for(const sy of[y-hh,y-hh/2,y+hh/2,y+hh-1])if(this.sol.has(Math.floor(sx/S)+","+Math.floor(sy/S)))return true;return false}
-  got(t){const a=COARSE?"Tap ⚔":"Press X";
+  got(t){sfx("pickup");buzz(12);const a=COARSE?"Tap ⚔":"Press X";
     if("ZFY".includes(t)){this.wep=FX[t];this.banner({Z:"⚔ SWORD acquired! It's yours until the end.\n"+a+" to slash",F:"🔥 FIREBALLS acquired! Yours until the end.\n"+a+" to throw",Y:"🔥 FLAMETHROWER acquired! Yours until the end.\n"+(COARSE?"Hold ⚔":"Hold X")+" to spray"}[t])}
     else this.banner(FXN[FX[t]]+"!"+(t==="A"?"\nPress jump again in mid-air":t==="H"?"\n"+(COARSE?"Tap 💨":"Press Shift")+" to dash":""))}
-  banner(m){const b=$("ban");b.textContent=m;b.style.display="block";b.classList.remove("ability-pop");void b.offsetWidth;b.classList.add("ability-pop");clearTimeout(this.bt);this.bt=setTimeout(()=>{b.style.display="none";b.classList.remove("ability-pop")},4200)}
+  banner(m){sfx("ability");buzz(18);const b=$("ban");b.textContent=m;b.style.display="block";b.classList.remove("ability-pop");void b.offsetWidth;b.classList.add("ability-pop");clearTimeout(this.bt);this.bt=setTimeout(()=>{b.style.display="none";b.classList.remove("ability-pop")},4200)}
   shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm"})}
   dmg(e,n){if(e.dead)return;e.hp-=n;e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>e.s.clearTint());
     if(e.hp<=0){e.dead=e.gone=true;e.bar.setVisible(false);this.cameras.main.shake(350,.02);this.tweens.add({targets:e.s,scale:2,alpha:0,duration:500,onComplete:()=>e.s.setVisible(false).setScale(1).setAlpha(1)});flash("Boss defeated! 🎉")}}
@@ -959,8 +1044,8 @@ class Main extends Phaser.Scene{
     if(now<this.dsh){vx=this.dd*520;p.setVelocityY(0)}
     p.setVelocityX(vx);if(tv)p.setFlipX(tv<0);if(g)this.jc=0;
     this.coy=g?.1:this.coy-s;this.buf=jd?.12:this.buf-s;
-    if(this.buf>0&&this.coy>0){p.setVelocityY(jb?-700:-600);this.buf=0;this.coy=0;this.jmp=true}
-    else if(this.buf>0&&fx.dj>now&&!g&&this.jc<1){p.setVelocityY(-560);this.jc++;this.buf=0;this.jmp=true}
+    if(this.buf>0&&this.coy>0){sfx("jump");buzz(10);p.setVelocityY(jb?-700:-600);this.buf=0;this.coy=0;this.jmp=true}
+    else if(this.buf>0&&fx.dj>now&&!g&&this.jc<1){sfx("jump");p.setVelocityY(-560);this.jc++;this.buf=0;this.jmp=true}
     if(this.jmp&&!j&&b.velocity.y<-220)p.setVelocityY(-220);if(b.velocity.y>=0)this.jmp=false;
     const px=b.x,py=b.y,pw=b.width,ph=b.height,hit=(x,y,w,h)=>px<x+w&&px+pw>x&&py<y+h&&py+ph>y,ghost=fx.ghost>now;
     const open=this.keysGot.size>=this.nk&&this.bosses.every(bb=>bb.dead);this.gf.clear();
@@ -968,9 +1053,9 @@ class Main extends Phaser.Scene{
     const dir=p.flipX?-1:1,att=!fr&&(k.X.isDown||k.J.isDown||T.a);
     const hs=this.wep==="sword"&&fx.sword>now;this.sw.setVisible(hs);if(hs){const tt=(now-this.sws)/220;this.sw.setPosition(px+pw/2+dir*8,py+20).setAngle(dir*(tt<1?-50+tt*170:40))}
     if(att&&now>this.acd){const cx=px+pw/2;
-      if(this.wep==="flame"){this.acd=now+85;this.shoot(cx+dir*14,py+16,dir*340+b.velocity.x*.3,(Math.random()-.5)*70,false,"flm",.38,.4)}
-      else if(this.wep==="fb"){this.acd=now+380;this.shoot(cx+dir*14,py+14,dir*520,0,false,"fball",1.4,2)}
-      else if(this.wep==="sword"){this.acd=now+300;this.sws=now;const sx=dir>0?cx:cx-48,rc=this.add.rectangle(sx+24,py+16,48,34,0xe2e8f0,.8).setDepth(4);this.tweens.add({targets:rc,alpha:0,scaleX:1.3,duration:160,onComplete:()=>rc.destroy()});
+      if(this.wep==="flame"){if(now>(this.lastAttackSfx||0)){sfx("attack");this.lastAttackSfx=now+280;}this.acd=now+85;this.shoot(cx+dir*14,py+16,dir*340+b.velocity.x*.3,(Math.random()-.5)*70,false,"flm",.38,.4)}
+      else if(this.wep==="fb"){sfx("attack");this.acd=now+380;this.shoot(cx+dir*14,py+14,dir*520,0,false,"fball",1.4,2)}
+      else if(this.wep==="sword"){sfx("attack");this.acd=now+300;this.sws=now;const sx=dir>0?cx:cx-48,rc=this.add.rectangle(sx+24,py+16,48,34,0xe2e8f0,.8).setDepth(4);this.tweens.add({targets:rc,alpha:0,scaleX:1.3,duration:160,onComplete:()=>rc.destroy()});
         this.bosses.forEach(bb=>{if(!bb.dead&&Math.abs(bb.x-(sx+24))<56&&Math.abs(bb.y-py)<46)this.dmg(bb,3)});this.proj.forEach(q=>{if(q.en&&Math.abs(q.x-(sx+24))<40&&Math.abs(q.y-py-16)<30)q.life=0})}
       else if(!this.hinted){this.hinted=1;flash("Find a weapon: sword, fireball or flamethrower!")}}
     for(const e of this.ents){
@@ -1026,7 +1111,7 @@ class Main extends Phaser.Scene{
     $("hud").textContent="Deaths "+this.deaths+" · "+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?" · Keys "+this.keysGot.size+"/"+this.nk:"")+(this.bosses.length?" · Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:"");
   }
   die(){
-    if(this.dead)return;this.dead=true;this.deaths++;
+    if(this.dead)return;sfx("hurt");buzz([35,30,55]);this.dead=true;this.deaths++;
     this.cameras.main.shake(150,.012);this.sw.setVisible(false);this.p.setVisible(false);this.p.body.enable=false;
     this.time.delayedCall(450,()=>{
       this.p.enableBody(true,this.spawn[0],this.spawn[1],true,true);this.p.setVelocity(0,0).clearTint();
