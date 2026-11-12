@@ -178,12 +178,88 @@ body{height:100%;height:100dvh;padding:0;box-sizing:border-box}
 }
 @media (prefers-reduced-motion:reduce){#mobileDrawer{transition:none}}
 
+
+/* Mobile game app shell: home, editor and gameplay are distinct screens. */
+#mobileHome{display:none}
+#bootScreen{display:none}
+#mobileHome .home-inner{width:min(760px,100%);margin:auto;padding:clamp(18px,4vw,42px);box-sizing:border-box;display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(18px,4vw,44px);align-items:center}
+#mobileHome .home-copy{color:#f8f7ff}
+#mobileHome .eyebrow{font-size:11px;letter-spacing:.22em;font-weight:900;color:#b7a5ff}
+#mobileHome h1{font-size:clamp(34px,6vw,66px);line-height:.98;letter-spacing:-.055em;margin:12px 0 10px;font-weight:1000}
+#mobileHome .home-sub{font-size:clamp(13px,1.7vw,17px);color:#b9b9d5;max-width:34ch;margin:0}
+#mobileHome .home-actions{display:grid;gap:10px}
+#mobileHome button{min-height:54px;border-radius:15px;padding:12px 18px;font-weight:850;font-size:15px;letter-spacing:.02em;border:1px solid #ffffff22;background:#ffffff0d;color:#f8f7ff;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:14px}
+#mobileHome button small{font-size:11px;color:#aaa8c8;font-weight:550;letter-spacing:0}
+#mobileHome button.home-primary{background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-color:#a78bfa;box-shadow:0 10px 30px #6d28d955;color:white;min-height:66px;font-size:19px}
+#mobileHome .home-card{background:linear-gradient(150deg,#211e48,#15132f);border:1px solid #ffffff20;border-radius:24px;padding:clamp(18px,3vw,30px);box-shadow:0 24px 70px #0007;position:relative;overflow:hidden}
+#mobileHome .home-card:before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;background:#7c3aed22;right:-90px;top:-110px}
+#mobileHome .game-art{height:clamp(130px,24vh,210px);position:relative;display:flex;align-items:center;justify-content:center;isolation:isolate}
+#mobileHome .game-art .moon{position:absolute;width:clamp(76px,12vw,120px);aspect-ratio:1;border-radius:50%;background:linear-gradient(135deg,#c4b5fd,#7c3aed);box-shadow:0 0 70px #8b5cf677;right:14%;top:5%}
+#mobileHome .game-art .hero{position:absolute;z-index:2;width:38px;height:48px;left:43%;top:35%;border-radius:11px 11px 7px 7px;background:#38bdf8;box-shadow:inset 0 7px #bae6fd,0 8px 0 #155e75;transform:rotate(-7deg)}
+#mobileHome .game-art .hero:before{content:"";position:absolute;left:7px;top:12px;width:6px;height:6px;background:#111827;border-radius:50%;box-shadow:15px 0 #111827}
+#mobileHome .game-art .platform{position:absolute;bottom:18%;height:13px;border-radius:5px;background:linear-gradient(#86efac 0 30%,#8b5a2b 30%);box-shadow:0 8px 0 #0003}
+#mobileHome .game-art .platform.one{width:75%;left:10%}.platform.two{width:25%;right:7%;bottom:40%}
+#mobileHome .home-stats{display:flex;gap:14px;flex-wrap:wrap;margin-top:22px;color:#aaa8c8;font-size:11px;font-weight:700;letter-spacing:.08em}
+#mobileHome .home-stats span:before{content:"◆";color:#a78bfa;margin-right:6px}
+#mobileHome .home-foot{margin-top:14px;color:#777596;font-size:10px;text-align:center}
+#mobileHome .home-loading{color:#aaa8c8;font-size:12px;margin-top:16px}
+#mobileHome .home-settings{display:grid;gap:9px;margin-top:12px}
+#mobileHome .home-settings button{min-height:46px;font-size:13px}
+#dlg{position:fixed!important;inset:0!important;z-index:10000!important}
+@media (pointer:coarse){
+  #bootScreen{display:flex;position:fixed;z-index:11000;inset:0;align-items:center;justify-content:center;background:linear-gradient(145deg,#090a1b,#171238);color:#fff;font-weight:900;letter-spacing:.18em}
+  #bootScreen .boot-mark{font-size:clamp(24px,5vw,42px);text-align:center}
+  #bootScreen .boot-mark span{color:#a78bfa}
+  #bootScreen .boot-track{width:150px;height:4px;border-radius:8px;background:#ffffff20;margin:18px auto 0;overflow:hidden}
+  #bootScreen .boot-track i{display:block;width:42%;height:100%;background:#a78bfa;border-radius:8px;animation:bootLoad 1s ease-in-out infinite alternate}
+  @keyframes bootLoad{from{transform:translateX(-10%)}to{transform:translateX(150%)}}
+  #mobileHome{display:flex;position:fixed;z-index:9000;inset:0;overflow:auto;background:radial-gradient(ellipse at 75% 20%,#35216e 0%,transparent 42%),radial-gradient(ellipse at 10% 90%,#142f55 0%,transparent 42%),linear-gradient(145deg,#090a1b,#11102b 58%,#090a1b);color:#fff;align-items:center;justify-content:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box}
+  body.home-active #mobileBar,body.home-active #main,body.home-active #mobileDrawer,body.home-active #drawerScrim{visibility:hidden;pointer-events:none}
+  body.home-active #mobileHome{visibility:visible;pointer-events:auto}
+  #mobileHome .home-inner{grid-template-columns:1fr 1fr}
+  #mobileHome .home-card{grid-column:2;grid-row:1}
+  #mobileHome .home-copy{grid-column:1;grid-row:1}
+}
+@media (pointer:coarse) and (orientation:portrait){
+  #mobileHome{width:100%!important;height:100%!important;min-height:0!important;left:0!important;top:0!important;right:0!important;bottom:0!important;transform:none!important}
+  #mobileHome .home-inner{width:100%;max-width:900px;padding:14px 24px;gap:24px}
+  #mobileHome h1{font-size:clamp(30px,6vw,54px)}
+  #mobileHome .game-art{height:clamp(105px,25vh,170px)}
+  #mobileHome .home-card{padding:18px}
+}
+@media (pointer:coarse) and (orientation:landscape){#mobileHome .home-inner{max-width:1000px}}
+@media (pointer:coarse) and (max-height:390px){#mobileHome .home-inner{padding:10px 20px;gap:16px}#mobileHome h1{font-size:30px}#mobileHome .home-sub{font-size:12px}#mobileHome .home-card{padding:12px}#mobileHome .game-art{height:100px}#mobileHome button{min-height:43px}#mobileHome button.home-primary{min-height:50px}}
+@media (pointer:coarse) and (max-width:560px) and (orientation:landscape){#mobileHome .home-inner{grid-template-columns:.9fr 1.1fr}#mobileHome .home-card{grid-column:2}#mobileHome .home-copy{grid-column:1}}
+
 </style></head>
 <body data-mode="edit">
+<div id="bootScreen" aria-label="Loading game"><div class="boot-mark">BUILD <span>&amp;</span> BREAK<div class="boot-track"><i></i></div><div style="font-size:10px;letter-spacing:.2em;color:#aaa8c8;margin-top:12px">LOADING ADVENTURE</div></div></div>
+<section id="mobileHome" aria-label="Build and Break main menu">
+  <div class="home-inner">
+    <div class="home-copy">
+      <div class="eyebrow">A PIXEL PLATFORMING ADVENTURE</div>
+      <h1>BUILD<br>&amp; BREAK<span style="color:#a78bfa">.</span></h1>
+      <p class="home-sub">Build your own challenge. Master every obstacle. Make it to the exit.</p>
+      <div class="home-stats"><span>BUILD</span><span>PLAY</span><span>CREATE</span></div>
+      <div class="home-loading" id="homeStatus">Preparing your adventure…</div>
+    </div>
+    <div class="home-card">
+      <div class="game-art"><div class="moon"></div><div class="platform one"></div><div class="platform two"></div><div class="hero"></div></div>
+      <div class="home-actions">
+        <button class="home-primary" id="homePlay"><span>▶ &nbsp;PLAY</span><small>Start adventure</small></button>
+        <button id="homeEditor"><span>▦ &nbsp;LEVEL EDITOR</span><small>Create or edit</small></button>
+        <button id="homeSettings"><span>⚙ &nbsp;SETTINGS</span><small>Game preferences</small></button>
+        <button id="homeHelp"><span>？ &nbsp;HOW TO PLAY</span><small>Controls & objectives</small></button>
+      </div>
+      <div class="home-foot">YOUR WORLD. YOUR RULES. YOUR NEXT CHALLENGE.</div>
+    </div>
+  </div>
+</section>
 <div id="mobileBar" aria-label="Mobile game controls">
   <div class="mobile-brand">BUILD <span>&amp;</span> BREAK</div>
   <div class="mobile-head-actions">
     <button id="mobileMenuToggle" class="mobile-icon-btn edit-only" aria-label="Open level tools" aria-expanded="false">☰ <span>Level tools</span></button>
+    <button id="mobileHomeBtn" class="mobile-icon-btn">⌂ <span>Home</span></button>
     <button id="mobileRestart" class="mobile-icon-btn play-only">↻</button>
     <button id="mobileBack" class="mobile-icon-btn play-only">✕ <span>Editor</span></button>
     <button id="mobilePlay" class="mobile-play-btn edit-only">▶ PLAY</button>
@@ -204,7 +280,7 @@ body{height:100%;height:100dvh;padding:0;box-sizing:border-box}
   <div class="g pl"><button id="rs">Restart (R)</button><button id="back" class="pri">← Editor (Esc)</button></div>
 </div>
 <div id="main"><div id="pal" class="ed"></div><div id="wrap"><div id="game"></div><div id="hud"></div><div id="fx" class="ov"></div><div id="tip" class="ov"></div><div id="ban" class="ov"></div><div id="st" class="ov"></div><div id="rot" class="ov">↻ Rotate to landscape for the best view</div>
-  <div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><div class="g"><button data-k="s">⇄</button><button data-k="d">💨</button><button data-k="a">⚔</button><button data-k="j" class="jb">JUMP</button></div></div><div id="dlg"></div></div></div>
+  <div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><div class="g"><button data-k="s">⇄</button><button data-k="d">💨</button><button data-k="a">⚔</button><button data-k="j" class="jb">JUMP</button></div></div></div></div><div id="dlg"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
 <script>
 const W=60,H=30,S=32,MAXO=700,DUR=8000,MV="gumzb";
@@ -286,7 +362,7 @@ function hud(){$("cnt").textContent=G.mode==="edit"?G.lv.o.length+"/"+MAXO+" obj
 function dlg(t,h,acts){
   const d=$("dlg");d.innerHTML="<div class=box><h2>"+t+"</h2>"+h+"<div class=row></div></div>";
   const row=d.querySelector(".row");
-  acts.forEach(([l,f],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";b.onclick=()=>{const r=f&&f();if(r!==false)d.style.display="none"};row.appendChild(b)});
+  acts.forEach(([l,f],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";b.onclick=()=>{const r=f&&f();if(r!==false){d.style.display="none";document.body.classList.remove("result-visible")}};row.appendChild(b)});
   d.style.display="flex";
 }
 async function enterImmersivePlay(){
@@ -309,7 +385,7 @@ function leaveImmersivePlay(){
   try{if(screen.orientation?.unlock)screen.orientation.unlock();}catch(_){}
   try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});else if(document.webkitFullscreenElement&&document.webkitExitFullscreen)document.webkitExitFullscreen();}catch(_){}
 }
-function go(m){if(m==="edit")leaveImmersivePlay();else enterImmersivePlay();G.mode=m;document.body.dataset.mode=m;document.body.classList.toggle("mobile-playing",m!=="edit");document.body.classList.remove("drawer-open");setTimeout(()=>game.scale.refresh(),100);["fx","tip","ban","st"].forEach(i=>$(i).style.display="none");hud();sc().scene.restart()}
+function go(m){hideMobileHome();if(m==="edit"&&!COARSE)leaveImmersivePlay();else if(COARSE)enterImmersivePlay();else enterImmersivePlay();G.mode=m;document.body.dataset.mode=m;document.body.classList.toggle("mobile-playing",m!=="edit");document.body.classList.remove("drawer-open");setTimeout(()=>game.scale.refresh(),100);["fx","tip","ban","st"].forEach(i=>$(i).style.display="none");hud();sc().scene.restart()}
 function startTest(){const e=validate(G.lv);if(e)return flash(e);G.cur=JSON.parse(JSON.stringify(G.lv));go("test")}
 function custom(){
   dlg("Customize your runner",'<canvas id=cp width=88 height=112 style="display:block;margin:0 auto 10px;image-rendering:pixelated"></canvas><div class=g id=sws></div><div class=g id=hts style="margin-top:8px"></div>',[["Done"]]);
@@ -332,6 +408,49 @@ function initPal(sc){
   pal.insertAdjacentHTML("beforeend",'<div id="info"><b id="inm"></b><p id="ids"></p></div>');pick(G.tool);
 }
 function pick(t){G.tool=t;const x=TOOLS.find(a=>a[0]===t);document.querySelectorAll("#pal .tc").forEach(b=>b.classList.toggle("on",b.dataset.t===t));if($("inm")){$("inm").textContent=x[1];$("ids").textContent=x[3]}if(COARSE)flash(x[1]+": "+x[3])}
+// Mobile app navigation: a real home screen with distinct Play and Editor destinations.
+let mobileHomeReady=false, mobileHomeInitialized=false;
+function showMobileHome(){
+  if(!COARSE)return;
+  document.body.classList.add("home-active");document.body.classList.remove("mobile-playing","drawer-open");
+  const st=$("homeStatus");if(st)st.textContent="Ready when you are.";
+  if($("mobileHome"))$("mobileHome").setAttribute("aria-hidden","false");
+  mobileHomeReady=true;
+  setTimeout(()=>game.scale.refresh(),80);
+}
+function hideMobileHome(){
+  document.body.classList.remove("home-active");if($("mobileHome"))$("mobileHome").setAttribute("aria-hidden","true");
+  setTimeout(()=>game.scale.refresh(),80);
+}
+function requestMobileEntry(){
+  if(!COARSE)return;
+  // The request is made from the player's menu tap, satisfying browser gesture requirements.
+  try{if(!document.fullscreenElement){const el=document.documentElement,fn=el.requestFullscreen||el.webkitRequestFullscreen;if(fn){const r=fn.call(el);if(r?.catch)r.catch(()=>{});}}}catch(_){}
+  try{const lock=screen.orientation?.lock;if(lock){const r=lock.call(screen.orientation,"landscape");if(r?.catch)r.catch(()=>{});}}catch(_){}
+}
+function mobileHomeAction(action){
+  requestMobileEntry();hideMobileHome();
+  if(action==="play"){startTest();return}
+  if(action==="editor"){go("edit");setTimeout(()=>$("mobileMenuToggle")?.click(),120);return}
+}
+function openMobileSettings(){
+  const theme=localStorage.getItem("bbtheme")||"system";
+  dlg("Settings",'<p>Build &amp; Break adapts its layout to your phone and requests landscape fullscreen when the browser allows it.</p><p><b>Appearance</b></p><p id="themeValue">Current theme: '+theme+'</p><p><b>Mobile controls</b><br>Left / right to move · JUMP to jump · ⚔ to attack · 💨 to dash · ⇄ to switch weapons.</p>',[["Toggle theme",()=>{const cur=document.documentElement.dataset.theme||"system",next=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=next;localStorage.setItem("bbtheme",next);return false}],["Close"]]);
+}
+function setupMobileHome(){
+  if(!COARSE||mobileHomeInitialized)return;
+  mobileHomeInitialized=true;
+  if($("bootScreen"))$("bootScreen").style.display="none";
+  // Best-effort early landscape request; the rotated app shell is the fallback.
+  try{const r=screen.orientation?.lock?.("landscape");if(r?.catch)r.catch(()=>{});}catch(_){}
+  $("homePlay").onclick=()=>mobileHomeAction("play");
+  $("homeEditor").onclick=()=>mobileHomeAction("editor");
+  $("homeSettings").onclick=()=>{requestMobileEntry();openMobileSettings()};
+  $("homeHelp").onclick=()=>{requestMobileEntry();dlg("How to play","<p>Collect every key, defeat every boss and reach the exit door.</p><p><b>Move</b> with ◀ ▶. Use <b>JUMP</b> to jump, ⚔ to attack, 💨 to dash and ⇄ to switch weapons when available.</p><p>In the level editor, open Level Tools to choose building pieces, place hazards, undo changes, share levels or load a level code.</p>",[["BACK TO MENU",()=>{showMobileHome()}]]);};
+  $("mobileHomeBtn").onclick=()=>{go("edit");showMobileHome()};
+  const saved=localStorage.getItem("bbtheme");if(saved)document.documentElement.dataset.theme=saved;
+  showMobileHome();
+}
 // Mobile editor: keep the canvas clean and reveal tools in a proper slide-out drawer.
 function setupMobileEditor(){
   if(!COARSE)return;
@@ -437,7 +556,7 @@ class Main extends Phaser.Scene{
     this.mkP();
   }
   create(){
-    this.tex();initPal(this);setupMobileEditor();this.spr=[];this.down=false;this.dead=false;this.over=false;this.p=null;
+    this.tex();initPal(this);setupMobileEditor();setupMobileHome();this.spr=[];this.down=false;this.dead=false;this.over=false;this.p=null;
     const cam=this.cameras.main;cam.setBackgroundColor("#1b1f3b").setBounds(0,0,W*S,H*S);
     ["#0f172a","#1e1b4b","#312e81","#4c1d95"].forEach((c,i)=>this.add.rectangle(0,i*135,960,136,Phaser.Display.Color.HexStringToColor(c).color).setOrigin(0).setScrollFactor(0).setDepth(-10));
     for(let i=0;i<70;i++)this.add.circle(Math.random()*960*2,Math.random()*540,Math.random()*1.5+.5,0xffffff,Math.random()*.7+.2).setScrollFactor(.25).setDepth(-9);
@@ -656,7 +775,7 @@ class Main extends Phaser.Scene{
   win(){
     this.over=true;this.p.body.enable=false;
     const t=((this.time.now-(this.t0==null?this.time.now:this.t0))/1000).toFixed(1),txt="<p>Time <b>"+t+"s</b> · Deaths <b>"+this.deaths+"</b></p>";
-    this.time.delayedCall(350,()=>dlg("LEVEL COMPLETE! 🎉",txt+"<p class=complete-note>Every key collected. Every boss defeated. Nice work.</p>",[["PLAY AGAIN",()=>go(G.mode)],["EDIT LEVEL",()=>go("edit")]]));
+    this.time.delayedCall(350,()=>{document.body.classList.add("result-visible");dlg("LEVEL COMPLETE! 🎉",txt+"<p class=complete-note>Every key collected. Every boss defeated. Nice work.</p>",[["PLAY AGAIN",()=>{document.body.classList.remove("result-visible");go(G.mode)}],["EDIT LEVEL",()=>{document.body.classList.remove("result-visible");go("edit")}]]);const box=$("dlg").querySelector(".box");if(box){box.setAttribute("role","dialog");box.setAttribute("aria-modal","true");box.focus?.();}});
   }
 }
 // CSS-rotated landscape fallback: Phaser normally reads clientX/clientY from the
