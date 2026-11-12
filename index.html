@@ -1370,6 +1370,62 @@ body.home-active #drawerScrim {
 #mobileQuickTools .quick-tool[data-t="x"] { color:#ff718c; border:2px solid #f43f5e; background:rgba(244,63,94,.16); font-weight:900; }
 
 #mobileQuickTools { position:static; top:auto; z-index:auto; }
+
+/* V3 responsive polish: desktop keeps the compact mobile-inspired shell, but tool groups
+   are laid out in two rows and the actual tool list gets a visible scrollbar. */
+@media (pointer: fine) and (min-width: 821px) {
+  #toolCats {
+    display: flex;
+    flex-wrap: wrap;
+    overflow-x: visible;
+    overflow-y: visible;
+    white-space: normal;
+    scrollbar-width: auto;
+    gap: 6px;
+    padding: 8px 4px;
+  }
+  #toolCats button {
+    flex: 1 0 calc(25% - 8px);
+    min-width: 76px;
+    justify-content: center;
+  }
+  #mobileToolScroll {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ac) var(--bg);
+    padding-right: 8px;
+  }
+  #mobileToolScroll::-webkit-scrollbar { width: 10px; }
+  #mobileToolScroll::-webkit-scrollbar-track { background: var(--bg); border-radius: 8px; }
+  #mobileToolScroll::-webkit-scrollbar-thumb { background: var(--ac); border: 2px solid var(--bg); border-radius: 8px; }
+}
+@media (pointer: coarse) {
+  #toolCats { flex-wrap: nowrap; overflow-x: auto; }
+}
+/* Keep the home-screen heading clear of the fixed day/night control on narrow phones. */
+@media (max-width: 720px) {
+  #mobileHome .home-inner {
+    padding-top: max(72px, calc(var(--safe-t) + 58px));
+    align-content: start;
+  }
+  #mobileHome .home-copy { min-width: 0; }
+  #mobileHome .eyebrow {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    padding-right: 8px;
+  }
+  .home-top-bar {
+    top: max(8px, var(--safe-t));
+    right: max(10px, var(--safe-r));
+  }
+  .theme-switch-btn {
+    padding: 7px 10px;
+    gap: 6px;
+    font-size: 12px;
+  }
+}
+
 </style>
 </head>
 <body data-mode="edit" class="home-active">
@@ -1867,6 +1923,8 @@ function closeSheets(){
   const toggle=$("mobileMenuToggle");if(toggle)toggle.setAttribute("aria-expanded","false");
 }
 function dlg(t,h,acts){
+  clearTimeout(banTimer);banTimer=null;
+  const banner=$("ban");if(banner){banner.style.display="none";banner.replaceChildren();}
   const d=$("dlg");d.innerHTML="<div class=box role=dialog aria-modal=true><h2>"+t+"</h2>"+h+"<div class=row></div></div>";
   const row=d.querySelector(".row");
   acts.forEach(([l,f],i)=>{
@@ -1891,11 +1949,22 @@ async function enterImmersivePlay(){
   setTimeout(()=>window.game?.scale?.refresh(),120);
 }
 
-function go(m){
-  // Close gameplay dialogs before switching scenes/modes so overlays cannot get stranded.
-  const dialog=$("dlg");if(dialog)dialog.style.display="none";
+function dismissTransientUI(){
+  // Power-up cards, event banners, tips and toast messages must never survive a mode change.
+  clearTimeout(banTimer);banTimer=null;
+  clearTimeout(ft);ft=null;
+  ["dlg","ban","st","tip","fx"].forEach(id=>{
+    const el=$(id);
+    if(!el)return;
+    el.style.display="none";
+    if(id==="dlg")el.replaceChildren();
+    if(id==="ban")el.replaceChildren();
+  });
   document.body.classList.remove("result-visible");
-  clearTimeout(ft);
+}
+function go(m){
+  // Always dismiss gameplay UI before changing scenes. This also invalidates pending popup timers.
+  dismissTransientUI();
   hideMobileHome();
   if(COARSE)enterImmersivePlay();
   G.mode=m;
@@ -2165,7 +2234,7 @@ function setupNavigation(){
   bind("mobilePlay",()=>{closeSheets();startTest();});
   bind("mobilePause",()=>openPauseMenu());
   bind("mobileRestart",()=>sc()?.scene.restart());
-  bind("mobileBack",()=>go("edit"));
+  bind("mobileBack",()=>{dismissTransientUI();go("edit");});
   bind("mUndo",()=>undo());
   bind("mRedo",()=>redo());
   bind("mRgDec",()=>changeRange(-1));
