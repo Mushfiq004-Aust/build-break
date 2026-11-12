@@ -47,6 +47,59 @@ textarea{width:100%;height:110px;box-sizing:border-box;font:12px monospace;backg
 @media (pointer:coarse){body{user-select:none;-webkit-user-select:none}input,textarea{font-size:16px}#bar button{padding:6px 9px;font-size:13px}}
 @media (max-width:760px){.brand{display:none}#hud{font-size:12px;padding:3px 8px;max-width:60%}#fx,#tip,#st{font-size:12px}#ban{font-size:15px}}
 @media (pointer:coarse) and (max-height:480px){#pad button{width:58px;height:58px;font-size:22px}#pad .jb{width:76px;height:76px;font-size:13px}#pad .g{gap:8px}}
+
+/* Responsive game layout: compact editor and full-screen touch play */
+:root{--safe-b:env(safe-area-inset-bottom,0px);--safe-t:env(safe-area-inset-top,0px)}
+html,body{width:100%;min-width:0;overscroll-behavior:none}
+body{height:100%;height:100dvh;padding:0;box-sizing:border-box}
+#bar{padding:calc(6px + var(--safe-t)) 10px 6px;gap:6px 10px;min-height:42px;box-sizing:border-box}
+#main{min-width:0;min-height:0}
+#wrap,#game{min-width:0;min-height:0}
+#game canvas{display:block;max-width:100%;max-height:100%}
+#pal{overscroll-behavior:contain}
+#pad{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+#pad button{box-shadow:0 2px 8px #0005;-webkit-tap-highlight-color:transparent}
+#pad button:focus{outline:none}
+#rot{pointer-events:none}
+@media (pointer:coarse){
+  body{touch-action:pan-x pan-y}
+  body:not([data-mode="edit"]){height:100dvh}
+  body:not([data-mode="edit"]) #bar{min-height:38px;padding:calc(3px + var(--safe-t)) 8px 3px;gap:5px}
+  body:not([data-mode="edit"]) #main{flex:1;min-height:0}
+  body:not([data-mode="edit"]) #wrap{flex:1}
+  body:not([data-mode="edit"]) #pad{display:flex}
+  body:not([data-mode="edit"]) #rot{top:50%;bottom:auto;left:50%;transform:translate(-50%,-50%);white-space:normal;text-align:center;max-width:80%;font-size:14px}
+  body[data-mode="edit"] #main{flex-direction:column}
+  body[data-mode="edit"] #wrap{order:1;flex:1;min-height:120px}
+  body[data-mode="edit"] #pal{order:2;width:100%;height:clamp(88px,19dvh,132px);flex:none;flex-direction:row;align-items:stretch;gap:6px;padding:7px 8px calc(7px + var(--safe-b));border-top:1px solid var(--line);border-bottom:0;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity}
+  body[data-mode="edit"] #pal details{height:100%;flex:none;display:flex;flex-direction:column;align-items:stretch;gap:4px;scroll-snap-align:start}
+  body[data-mode="edit"] #pal details[open]{flex-direction:row;align-items:center}
+  body[data-mode="edit"] #pal summary{font-size:12px;padding:6px 8px}
+  body[data-mode="edit"] #pal .tc{min-width:54px;width:54px;min-height:58px;flex-direction:column;justify-content:center;gap:2px;font-size:10px}
+  body[data-mode="edit"] #pal .tc canvas{width:26px;height:26px}
+  body[data-mode="edit"] #bar{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+  body[data-mode="edit"] #bar>.g{flex:none}
+  body[data-mode="edit"] #bar label{font-size:12px}
+  body[data-mode="edit"] #bar button{min-height:34px}
+}
+@media (pointer:coarse) and (orientation:landscape){
+  body:not([data-mode="edit"]) #bar{min-height:34px}
+  body:not([data-mode="edit"]) #pad{padding-bottom:calc(6px + var(--safe-b))}
+  body:not([data-mode="edit"]) #pad button{width:clamp(48px,8vw,66px);height:clamp(48px,8vw,66px);font-size:22px}
+  body:not([data-mode="edit"]) #pad .jb{width:clamp(62px,10vw,80px);height:clamp(62px,10vw,80px);font-size:13px}
+  body[data-mode="edit"] #pal{height:clamp(76px,16dvh,108px)}
+}
+@media (pointer:coarse) and (orientation:portrait){
+  body:not([data-mode="edit"]) #pad button{width:clamp(54px,13vw,72px);height:clamp(54px,13vw,72px)}
+  body:not([data-mode="edit"]) #pad .jb{width:clamp(68px,16vw,88px);height:clamp(68px,16vw,88px)}
+}
+@media (max-height:420px){
+  #bar{padding-top:3px;padding-bottom:3px}
+  body[data-mode="edit"] #pal{height:72px}
+}
+@media (hover:none){
+  button{ -webkit-tap-highlight-color:transparent}
+}
 </style></head>
 <body data-mode="edit">
 <div id="bar">
@@ -57,7 +110,7 @@ textarea{width:100%;height:110px;box-sizing:border-box;font:12px monospace;backg
   <div class="g"><button id="cust">🎨 Character</button><button id="help">?</button><span id="cnt" class="ed" style="font-size:12px;opacity:.7"></span></div>
   <div class="g pl"><button id="rs">Restart (R)</button><button id="back" class="pri">← Editor (Esc)</button></div>
 </div>
-<div id="main"><div id="pal" class="ed"></div><div id="wrap"><div id="game"></div><div id="hud"></div><div id="fx" class="ov"></div><div id="tip" class="ov"></div><div id="ban" class="ov"></div><div id="st" class="ov"></div><div id="rot" class="ov">↻ Rotate your phone sideways for a bigger view</div>
+<div id="main"><div id="pal" class="ed"></div><div id="wrap"><div id="game"></div><div id="hud"></div><div id="fx" class="ov"></div><div id="tip" class="ov"></div><div id="ban" class="ov"></div><div id="st" class="ov"></div><div id="rot" class="ov">↻ Rotate to landscape for the best view</div>
   <div id="pad"><div class="g"><button data-k="l">◀</button><button data-k="r">▶</button></div><div class="g"><button data-k="s">⇄</button><button data-k="d">💨</button><button data-k="a">⚔</button><button data-k="j" class="jb">JUMP</button></div></div></div></div>
 <div id="dlg"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
@@ -144,7 +197,18 @@ function dlg(t,h,acts){
   acts.forEach(([l,f],i)=>{const b=document.createElement("button");b.textContent=l;if(!i)b.className="pri";b.onclick=()=>{const r=f&&f();if(r!==false)d.style.display="none"};row.appendChild(b)});
   d.style.display="flex";
 }
-function go(m){G.mode=m;document.body.dataset.mode=m;$("dlg").style.display="none";setTimeout(()=>game.scale.refresh(),0);["fx","tip","ban","st"].forEach(i=>$(i).style.display="none");hud();sc().scene.restart()}
+function enterImmersivePlay(){
+  if(!COARSE)return;
+  const el=$("wrap");
+  const fs=el.requestFullscreen||el.webkitRequestFullscreen;
+  const lock=()=>{try{const o=screen.orientation;if(o&&o.lock)o.lock("landscape").catch(()=>{});}catch(_){}};
+  try{if(fs){const result=fs.call(el);if(result&&result.then)result.then(lock).catch(()=>{});else lock();}else lock();}catch(_){}
+}
+function leaveImmersivePlay(){
+  try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock();}catch(_){}
+  try{if(document.fullscreenElement&&document.exitFullscreen)document.exitFullscreen().catch(()=>{});}catch(_){}
+}
+function go(m){if(m==="edit")leaveImmersivePlay();else enterImmersivePlay();G.mode=m;document.body.dataset.mode=m;setTimeout(()=>game.scale.refresh(),80);["fx","tip","ban","st"].forEach(i=>$(i).style.display="none");hud();sc().scene.restart()}
 function startTest(){const e=validate(G.lv);if(e)return flash(e);G.cur=JSON.parse(JSON.stringify(G.lv));go("test")}
 function custom(){
   dlg("Customize your runner",'<canvas id=cp width=88 height=112 style="display:block;margin:0 auto 10px;image-rendering:pixelated"></canvas><div class=g id=sws></div><div class=g id=hts style="margin-top:8px"></div>',[["Done"]]);
@@ -181,10 +245,13 @@ document.querySelectorAll("#pan button").forEach(b=>{const[x,y]=b.dataset.p.spli
   b.addEventListener("pointerdown",e=>{e.preventDefault();PAN.x=x;PAN.y=y});
   ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,()=>{PAN.x=PAN.y=0}))});
 const T={l:0,r:0,j:0,jd:0,a:0,d:0,s:0};
+function releaseTouchButton(b){const k=b.dataset.k;if(!k)return;T[k]=0;b.classList.remove("dn");}
 document.querySelectorAll("#pad button").forEach(b=>{const k=b.dataset.k;
-  b.addEventListener("pointerdown",e=>{e.preventDefault();T[k]=1;if(k==="j")T.jd=1;b.classList.add("dn")});
-  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,e=>{e.preventDefault();T[k]=0;b.classList.remove("dn")}));
+  b.addEventListener("pointerdown",e=>{e.preventDefault();if(b.setPointerCapture){try{b.setPointerCapture(e.pointerId)}catch(_){}}T[k]=1;if(k==="j")T.jd=1;b.classList.add("dn")});
+  ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>b.addEventListener(ev,e=>{if(e.cancelable)e.preventDefault();releaseTouchButton(b)}));
   b.addEventListener("contextmenu",e=>e.preventDefault())});
+addEventListener("blur",()=>document.querySelectorAll("#pad button").forEach(releaseTouchButton));
+document.addEventListener("visibilitychange",()=>{if(document.hidden)document.querySelectorAll("#pad button").forEach(releaseTouchButton)});
 addEventListener("keydown",e=>{
   if($("dlg").style.display==="flex"||e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT")return;
   const k=e.key.toLowerCase();
