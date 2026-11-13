@@ -69,3 +69,13 @@ A full interactive browser/device test could not be completed in this environmen
 - Added Mega Trampoline, Wind Vent, and Shock Mine builder tools with gameplay interactions.
 - Added Night, Day, Rain, Winter, and Thunder atmosphere modes. Weather effects are lightweight screen-space visuals.
 - Replaced newly generated share codes with a compact bit-packed format. Codes are variable length (small/medium levels can fit roughly 50–100 characters); existing LZW and legacy Base64 JSON codes remain readable.
+
+## Update: Mobile layout v2
+
+- **Controls below the screen:** On touch devices the game canvas now gets its own area above a dedicated control strip, so the buttons no longer cover the platforms, sword swings or enemies. Settings → *Controls Position* switches back to floating buttons (⬆ Over).
+- **Larger tap targets:** Move buttons are about 54–66px, Jump about 68–82px and Attack is slightly larger. The top bar is 56px tall with 44px buttons and 14.5px labels. Settings → *Button Size* scales the whole pad from 80% to 140%.
+- **Left-handed layout:** Settings → *Left-Handed Layout* mirrors the pad.
+- **Camera look-ahead:** The camera leans toward the direction of travel so more of the path ahead is visible. In Over mode the player is also lifted higher on screen.
+- **Bigger HUD text** for deaths, time and keys.
+- Preferences persist in localStorage (`bbctl`, `bbctlsz`, `bblefty`).
+- Not yet tested in a real browser or on a device. Please check on a phone.
