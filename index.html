@@ -1657,7 +1657,15 @@ body.home-active #drawerScrim {
 const W=60,H=30,S=32,MAXO=700,DUR=8000,MV="gumzb";
 const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine"};
 const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash"},FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash"};
-const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,dj:0,dash:0}),BH={1:6,2:6,3:7,4:10,5:12,6:14};
+const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,dj:0,dash:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40},
+BOSS={
+1:{n:"Gloop the Glutton",t:"Hungry, hungry, HOP!",c:0x22c55e,q:["Mine! All mine!","You look crunchy...","GLOOP IS HUNGRY!!"],d:"Gloop... melts..."},
+2:{n:"Count Vesper",t:"Lord of the Dusk Swarm",c:0x7c3aed,q:["Fresh blood... delightful.","You amuse me, little one.","ENOUGH! DARKNESS, CONSUME!"],d:"Back to... the dark..."},
+3:{n:"Mourna the Veiled",t:"Whisper Between Walls",c:0xc4b5fd,q:["You can hear me, can't you?","Now you see me...","SEE ALL OF ME!"],d:"I only wanted... company..."},
+4:{n:"Grumm the Unmoved",t:"Mountain with a Grudge",c:0x78716c,q:["GRUMM. SMASH.","Pebble hurts Grumm.","GRUMM... ANGRY!"],d:"Grumm... rests."},
+5:{n:"Ignarax",t:"The Last Ember Wyrm",c:0xdc2626,q:["Burn, tiny knight.","My flames never fade!","BEHOLD THE INFERNO!"],d:"The fire... dims..."},
+6:{n:"Zephyra",t:"Storm-Coiled Serpent",c:0x6366f1,q:["The sky obeys me.","Feel the thunder coil.","TEMPEST UNBOUND!"],d:"The sky... is calm now."}
+}
 const TOOLS=[
 ["p","Block","Build","Solid platform. Click or drag to paint."],
 ["a","Ice","Build","Slippery. You slide and can't stop quickly."],
@@ -1688,7 +1696,7 @@ const TOOLS=[
 ["L","Laser","Traps","Beam fires downward on a timer, glows first."],
 ["P","Pendulum","Traps","Swinging spiked mace."],
 ["R","Fire bar","Traps","Rotating bar of fireballs. Fireproof ignores it."],
-["G","Boss flag","Bosses","Activation point. Choose the boss number (1–6) when placing the flag. That boss sleeps until you touch it. Bosses without a flag wake when you get close."],
+["G","Boss flag","Bosses","Arena trigger. Place it near a boss (within ~18 cells): that boss sleeps until you touch the flag. Bosses with no flag nearby wake when you get close."],
 ["1","Slime King","Bosses","Hops at you. The door stays locked until every boss is beaten."],
 ["2","Bat Lord","Bosses","Flies and dive-bombs."],
 ["3","Ghost Mage","Bosses","Teleports and fires 3 bolts."],
@@ -1866,7 +1874,7 @@ function def(){
   rg("p",50,52,26);rg("p",55,58,23);a("n",56,22);a("r",58,22);rg("p",53,57,17);a("t",53,16);a("h",54,16);a("k",56,16);
   a("g",47,17,5);rg("p",38,45,17);a("m",40,16,4);rg("p",34,36,15);rg("p",30,32,13);rg("p",25,28,11);
   rg("a",15,21,10);a("i",18,9);a("e",15,9);a("f",19,9);rg("p",9,12,8);a("j",12,7);rg("p",2,8,6);a("u",13,3,5);
-  a("Z",46,28);a("1",56,28);a("A",5,28);a("H",16,28);a("G",52,28,1);
+  a("Z",46,28);a("1",56,28);a("A",5,28);a("H",16,28);a("G",52,28);
   return{v:2,s:[2,28],e:[3,5],o};
 }
 const ok=a=>Array.isArray(a)&&Number.isInteger(a[0])&&Number.isInteger(a[1])&&a[0]>=0&&a[1]>=0&&a[0]<W&&a[1]<H;
@@ -1934,7 +1942,7 @@ const rng=()=>{const el=$("rg"),v=clampRange(el?.value,12);if(el)el.value=v;retu
 const rangeMaxAt=(t,c,r)=>t==="G"?6:Math.max(0,Math.min(12,t==="u"?H-1-r:W-1-c));
 function changeRange(delta){
   const selected=G.sel!=null?G.lv.o[G.sel]:null;
-  if(selected&&(MV.includes(selected[0])||selected[0]==="G")){
+  if(selected&&MV.includes(selected[0])){
     const max=rangeMaxAt(selected[0],selected[1],selected[2]);
     const before=JSON.stringify(G.lv);
     const next=clampRange((selected[3]||3)+delta,max);
@@ -2121,8 +2129,8 @@ function initMobileTools(s){
 
 function updateRangeStepper(){
   const selected=G.sel!=null?G.lv.o[G.sel]:null;
-  const target=selected&&(MV.includes(selected[0])||selected[0]==="G")?selected:null;
-  const uses=!!target||MV.includes(G.tool)||G.tool==="G";
+  const target=selected&&MV.includes(selected[0])?selected:null;
+  const uses=!!target||MV.includes(G.tool);
   const max=target?rangeMaxAt(target[0],target[1],target[2]):12;
   const value=target?clampRange(target[3]||3,max):clampRange(rng(),G.tool==="G"?6:12);
   if($("rg"))$("rg").value=value;
@@ -2508,20 +2516,21 @@ class Main extends Phaser.Scene{
       for(let x=-100;x<1800;x+=220)hills.fillCircle(x,585,150);
       this.bgObjs.push(hills);
     }else{
+      const wx=Theme.cur!=="night";
       // Night Sky Bands
-      ["#090d1f","#151336","#231d54","#362269"].forEach((c,i)=>{
+      (Theme.cur==="rain"?["#0b1220","#172033","#243247","#35465c"]:Theme.cur==="winter"?["#1e2f4d","#3b5b86","#8fb0d3","#dbeafe"]:Theme.cur==="thunder"?["#05060f","#10112a","#1c1838","#2b2246"]:["#090d1f","#151336","#231d54","#362269"]).forEach((c,i)=>{
         this.bgObjs.push(this.add.rectangle(-400,i*160-80,1800,170,Phaser.Display.Color.HexStringToColor(c).color).setOrigin(0).setScrollFactor(0).setDepth(-12));
       });
       // Glowing Moon
       const moonGlow=this.add.circle(810,92,56,0xa78bfa,0.22).setScrollFactor(0).setDepth(-11);
       const moon=this.add.circle(810,92,34,0xede9fe,0.96).setScrollFactor(0).setDepth(-11);
       const crater=this.add.circle(820,84,7,0xc4b5fd,0.5).setScrollFactor(0).setDepth(-11);
-      this.bgObjs.push(moonGlow,moon,crater);
+      if(wx){[moonGlow,moon,crater].forEach(o=>o.setVisible(false));}this.bgObjs.push(moonGlow,moon,crater);
 
       // Twinkling Stars
       for(let i=0;i<75;i++){
         const st=this.add.circle(Math.random()*1920,Math.random()*380,Math.random()*1.6+0.6,0xffffff,Math.random()*0.7+0.25).setScrollFactor(0.18).setDepth(-11);
-        this.bgObjs.push(st);
+        st.setVisible(!wx);this.bgObjs.push(st);
         this.bgStars.push({s:st,ph:Math.random()*6.28,sp:1.5+Math.random()*2.5});
       }
 
@@ -2563,6 +2572,7 @@ class Main extends Phaser.Scene{
         }
         cx+=bw+6+((Math.random()*14)|0);
       }
+      if(wx){const th=Theme.cur,cc=th==="winter"?0xe2e8f0:th==="thunder"?0x1e1b3a:0x475569;for(let i=0;i<10;i++){const cg=this.add.graphics().setScrollFactor(.1+Math.random()*.12).setDepth(-8).setPosition(i*180+Math.random()*80,30+Math.random()*130).setScale(1.5+Math.random());cg.fillStyle(cc,th==="winter"?.55:.85).fillRoundedRect(-36,-10,72,22,11).fillCircle(-14,-10,14).fillCircle(10,-12,17);this.bgObjs.push(cg);this.bgClouds.push({g:cg,sp:(th==="thunder"?26:14)+Math.random()*12});}}
       this.bgObjs.push(city);
     }
 
@@ -2575,21 +2585,56 @@ class Main extends Phaser.Scene{
   }
 
   applyTheme(){
-    if(this.weatherG){this.weatherG.destroy();this.weatherG=null;this.weatherDrops=null;}
-    this.buildBg();
+    this.buildBg();this.mkWeather();
     if(G.mode==="edit"&&this.spr)this.draw();
     else if(this.solid){
       const texture=Theme.cur==="day"?"platDay":"plat";
       this.solid.getChildren().forEach(tile=>{if(tile.texture?.key==="plat"||tile.texture?.key==="platDay")tile.setTexture(texture);});
     }
-    // Lightweight screen-space weather particles: no physics bodies, so gameplay stays smooth.
-    if(["rain","winter","thunder"].includes(Theme.cur)){
-      this.weatherDrops=[];
-      const count=Theme.cur==="winter"?55:Theme.cur==="thunder"?95:85;
-      const g=this.add.graphics().setScrollFactor(0).setDepth(4);
-      this.weatherG=g;
-      for(let i=0;i<count;i++)this.weatherDrops.push({x:Math.random()*1600,y:Math.random()*900,v:Theme.cur==="winter"?25+Math.random()*45:260+Math.random()*260,len:Theme.cur==="winter"?2+Math.random()*3:8+Math.random()*12,drift:Theme.cur==="thunder"?-80:-28});
-      if(Theme.cur==="thunder")this.nextLightning=1800+Math.random()*2600;
+  }
+
+  mkWeather(){
+    [this.wxG,this.wxF].forEach(o=>o&&o.destroy());this.wxL=null;this.wxG=this.wxF=null;this.bolt=null;this.rip=[];
+    if(!["rain","winter","thunder"].includes(Theme.cur))return;
+    this.wxF=this.add.graphics().setScrollFactor(0).setDepth(3);this.wxG=this.add.graphics().setScrollFactor(0).setDepth(4);
+    this.nextLightning=this.time.now+1500+Math.random()*2500;
+  }
+  strike(x0,x1,y0,y1){
+    const cam=this.cameras.main;let x=x0+Math.random()*(x1-x0),y=y0;const pts=[[x,y]];
+    while(y<y1-60){y+=30+Math.random()*30;x+=(Math.random()-.5)*60;pts.push([x,y]);}
+    const bi=2+((Math.random()*Math.max(1,pts.length-4))|0),br=[pts[bi]];let bx=pts[bi][0],by=pts[bi][1];
+    for(let i=0;i<4;i++){bx+=(Math.random()<.5?-1:1)*(15+Math.random()*25);by+=22+Math.random()*20;br.push([bx,by]);}
+    this.bolt={t:this.time.now,life:340,pts,br};
+    cam.flash(70,225,230,255,true);this.time.delayedCall(140,()=>cam.flash(110,225,230,255,true));
+    this.time.delayedCall(350+Math.random()*600,()=>{Sfx.tone(62,1,"sawtooth",.09,-25);cam.shake(320,.005);});
+  }
+  tickWeather(now,s){
+    const m=Theme.cur,g=this.wxG;if(!g||!g.scene)return;
+    s=Math.min(s,.05);
+    const cam=this.cameras.main,cx=cam.width/2,cy=cam.height/2,hw=cx/cam.zoom+60,hh=cy/cam.zoom+60,x0=cx-hw,x1=cx+hw,y0=cy-hh,y1=cy+hh,snow=m==="winter",st=m==="thunder"?1.7:1;
+    if(!this.wxL){
+      const cnt=snow?[50,40,25]:m==="thunder"?[80,65,40]:[60,50,30];
+      this.wxL=cnt.map((n,li)=>{const z=(li+1)/3,a=[];for(let i=0;i<n;i++)a.push({x:x0+Math.random()*(x1-x0),y:y0+Math.random()*(y1-y0),v:(snow?18+z*38+Math.random()*18:(330+z*330+Math.random()*120)*(m==="thunder"?1.2:1)),ph:Math.random()*6.28,sz:1+Math.random()*1.4});return a;});
+    }
+    const wind=(Math.sin(now/3100)*.6+Math.sin(now/1300)*.3+(snow?0:-.45))*st;
+    g.clear();const f=this.wxF;f.clear();
+    for(let i=0;i<4;i++){f.fillStyle(snow?0xffffff:0x94a3b8,(snow?.05:.045)*(1+.4*Math.sin(now/1700+i)));f.fillRect(x0,y1-(i+1)*38,x1-x0,(i+1)*38);}
+    this.wxL.forEach((L,li)=>{
+      const z=(li+1)/3;
+      if(snow)g.fillStyle(0xffffff,.35+.5*z);else g.lineStyle(.7+z*1.3,m==="thunder"?0xc7d2fe:0xbfdbfe,.22+.4*z);
+      L.forEach(d=>{
+        const vx=snow?wind*35*z+Math.sin(now/800+d.ph)*20:wind*150*z;
+        if(snow)g.fillCircle(d.x,d.y,d.sz*z+.8);else g.lineBetween(d.x,d.y,d.x+vx*.04,d.y+d.v*.04);
+        d.x+=vx*s;d.y+=d.v*s;
+        if(d.y>y1){d.y=y0-Math.random()*40;d.x=x0+Math.random()*(x1-x0);if(!snow&&li>0&&this.rip.length<40&&Math.random()<.4)this.rip.push({x:d.x,y:y1-6-Math.random()*50,t:0});}
+        if(d.x<x0-20)d.x=x1;else if(d.x>x1+20)d.x=x0;
+      });
+    });
+    this.rip=this.rip.filter(r=>{r.t+=s;const k=r.t/.45;if(k>=1)return false;g.lineStyle(1,0xdbeafe,.5*(1-k));g.strokeEllipse(r.x,r.y,8+k*26,3+k*9);return true;});
+    if(m==="thunder"){
+      if(now>this.nextLightning){this.nextLightning=now+2800+Math.random()*5200;this.strike(x0,x1,y0,y1);}
+      const b=this.bolt;
+      if(b){const a=1-(now-b.t)/b.life;if(a<=0)this.bolt=null;else[[7,0xc4b5fd,.35],[2.5,0xffffff,1]].forEach(([w,c,al])=>{g.lineStyle(w,c,a*al);[b.pts,b.br].forEach(P=>{g.beginPath();g.moveTo(P[0][0],P[0][1]);P.slice(1).forEach(q=>g.lineTo(q[0],q[1]));g.strokePath();});});}
     }
   }
 
@@ -2615,6 +2660,7 @@ class Main extends Phaser.Scene{
         b.g.strokePath();
       });
     }else{
+      this.bgClouds?.forEach(c=>{c.g.x+=c.sp*s;if(c.g.x>1750)c.g.x=-220;});
       this.bgStars?.forEach(st=>{
         st.s.setAlpha(0.3+0.65*(0.5+0.5*Math.sin(now/400*st.sp+st.ph)));
       });
@@ -2626,30 +2672,14 @@ class Main extends Phaser.Scene{
         }
       });
     }
-    if(this.weatherG&&this.weatherDrops){
-      this.weatherG.clear();
-      const snow=Theme.cur==="winter",col=snow?0xffffff:Theme.cur==="thunder"?0xc4b5fd:0x93c5fd;
-      this.weatherG.lineStyle(snow?1.5:1, col, snow?.72:.48);
-      this.weatherG.fillStyle(col,snow?.75:.5);
-      this.weatherDrops.forEach(d=>{
-        if(snow)this.weatherG.fillCircle(d.x,d.y,d.len*.45);
-        else this.weatherG.lineBetween(d.x,d.y,d.x+d.drift*.025,d.y+d.len);
-        d.x+=d.drift*s;d.y+=d.v*s;
-        if(d.y>900){d.y=-20;d.x=Math.random()*1600;}
-        if(d.x<-30)d.x=1630;if(d.x>1630)d.x=-20;
-      });
-      if(Theme.cur==="thunder"&&now>(this.nextLightning||0)){
-        this.cameras.main.flash(95,210,220,255,.18);
-        this.nextLightning=now+2600+Math.random()*4800;
-      }
-    }
+    this.tickWeather(now,s);
   }
 
   create(){
     this.tex();initPal(this);setupNavigation();
     this.spr=[];this.down=false;this.dead=false;this.over=false;this.p=null;this.editGrid=null;
     const cam=this.cameras.main;cam.setBounds(0,0,W*S,H*S);
-    this.buildBg();
+    this.buildBg();this.mkWeather();
     this.k=this.input.keyboard.addKeys("W,A,S,D,UP,LEFT,RIGHT,DOWN,SPACE,X,J,SHIFT,Q",false);
     G.mode==="edit"?this.edit():this.play();
   }
@@ -2704,7 +2734,7 @@ class Main extends Phaser.Scene{
         if(idx>=0)this.dragObject={index:idx,lastC:c,lastR:r};
         this.draw();updateRangeStepper();return;
       }
-      if(MV.includes(G.tool)||G.tool==="G"){
+      if(MV.includes(G.tool)){
         this.down=false;this.pend=null;
         if(rangeMaxAt(G.tool,c,r)<1){flash("There isn't enough room for that movement range here.");return;}
         askRangeForPlacement(G.tool,c,r);return;
@@ -2750,7 +2780,6 @@ class Main extends Phaser.Scene{
     L.o.forEach(([t,c,r,R],idx)=>{
       const texture=t==="p"&&Theme.cur==="day"?"platDay":TYPES[t];
       const im=this.add.image(c*S+16,r*S+16,texture);this.spr.push(im);
-      if(t==="G")this.spr.push(this.add.text(c*S+16,r*S+4,String(R||1),{font:"bold 13px system-ui",color:"#fff",backgroundColor:"#b91c1c"}).setOrigin(.5,0).setDepth(5));
       if(t==="i")im.setAlpha(.5).setTint(0xa5b4fc);if(t==="w")im.setFlipX(true);if(t==="g"||t==="u")im.y-=10;
       if(MV.includes(t)){R=R||3;const v=t==="u";this.spr.push(this.add.rectangle(v?c*S+16:c*S+16+R*S/2,v?r*S+16+R*S/2:r*S+(t==="g"?6:16),v?3:R*S,v?R*S:3,0xfacc15,.7));}
       if(t==="l"){let rr=r+1;while(rr<H&&!L.o.some(o=>"pavw".includes(o[0])&&o[1]===c&&o[2]===rr))rr++;this.spr.push(this.add.rectangle(c*S+16,(r+1+rr)*S/2,2,(rr-r-1)*S,0xf97316,.45));}
@@ -2767,7 +2796,7 @@ class Main extends Phaser.Scene{
     else{
       if(sp(L.s)||sp(L.e))return;
       let R=0;
-      if(MV.includes(t)||t==="G"){
+      if(MV.includes(t)){
         const max=rangeMaxAt(t,c,r);if(max<1)return flash("There isn't enough room for that range here.");
         R=clampRange(rangeOverride??rng(),t==="G"?6:max);
         if(t!=="G"&&R>max)return flash("That movement range would go outside the map.");
@@ -2784,7 +2813,7 @@ class Main extends Phaser.Scene{
   /* ---------- PLAY ---------- */
   play(){
     const L=G.cur;this.t00=this.time.now;this.t0=null;this.deaths=0;this.bosses=[];
-    this.flagged=new Set(L.o.filter(o=>o[0]==="G").map(o=>String(o[3]||1)));this.activatedBosses=new Set();
+    this.activatedBosses=new Set();
     this.dsh=0;this.dcd=0;this.acd=0;this.jc=0;this.pd=0;this.hinted=0;this.unlockedShown=false;
     this.gf=this.add.graphics().setDepth(1);this.coy=0;this.buf=0;this.lastGroundedAt=-9999;this.jmp=false;this.frz=0;this.fcd=0;this.inv=0;
     this.fx=FX0();this.mud=new Set();this.dyn=[];this.proj=[];this.ice=new Set();this.belt=new Map();this.sl=[];this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];this.cpState=null;this.cpDyn=null;
@@ -2801,11 +2830,13 @@ class Main extends Phaser.Scene{
         const s=this.add.image(x,y,TYPES[t]).setDepth(1);if(t==="h")s.setTint(0xff8a8a);if(t==="i")s.setVisible(false);if(t==="n")s.setAlpha(.3);
         if(t==="b")s.setDepth(2);
         const e={t,i,x,y,s,cd:0,y0:y,vy:0,R};
-        if("123456".includes(t)){e.hp=e.max=BH[t];e.y=y-12;e.by=e.y;e.fx=x;e.vx=0;e.tm=0;e.ph=0;s.setY(e.y).setDepth(2);e.bar=this.add.rectangle(x,e.y-42,50,6,0xef4444).setDepth(6);this.bosses.push(e);}
+        if("123456".includes(t)){e.hp=e.max=BH[t];e.y=y-12;e.by=e.y;e.fx=x;e.vx=0;e.tm=0;e.ph=0;s.setY(e.y).setDepth(2);e.phase=0;e.awake=false;e.bg=this.add.rectangle(x,e.y-42,52,8,0x000000,.65).setDepth(5).setVisible(false);e.bar=this.add.rectangle(x-25,e.y-42,50,6,BOSS[t].c).setOrigin(0,.5).setDepth(6).setVisible(false);e.nm=this.add.text(x,e.y-55,BOSS[t].n,{font:"bold 11px system-ui",color:"#fff",stroke:"#000",strokeThickness:3}).setOrigin(.5).setDepth(6).setVisible(false);e.say=this.add.text(x,e.y-78,"",{font:"bold 12px system-ui",color:"#fde68a",stroke:"#000",strokeThickness:3,align:"center",wordWrap:{width:200}}).setOrigin(.5,1).setDepth(7).setVisible(false);s.setAlpha(.75);this.bosses.push(e);}
         if(t==="l"||t==="L"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break;}if(t==="L"){e.fy=Math.min(e.fy,H*S);e.bm=this.add.rectangle(x,(y+16+e.fy)/2,6,e.fy-y-16,0xff2d55,0).setDepth(1);}}
         this.ents.push(e);
       }
     });
+    this.ents.forEach(f=>{if(f.t==="G")f.bosses=[];});
+    this.bosses.forEach(b=>{let best=null,bd=1e9;this.ents.forEach(f=>{if(f.t!=="G")return;const dx=Math.abs(f.x-b.fx)/S,dy=Math.abs(f.y-b.by)/S;if(dx<=18&&dy<=12&&dx+dy<bd){bd=dx+dy;best=f;}});if(best){b.flag=best;best.bosses.push(b);}});
     this.portals=this.ents.filter(e=>e.t==="Q");
     this.portals.forEach((portal,i)=>{portal.pair=i%2===0?(this.portals[i+1]||null):this.portals[i-1];});
     this.portalNeedsExit=false;this.portalCooldown=0;this.portalWarningAt=0;
@@ -2854,36 +2885,101 @@ class Main extends Phaser.Scene{
   }
 
   shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm"});}
+  say(e,t,ms=1900){if(e.say){e.say.setText(t).setVisible(true);e.sayT=this.time.now+ms;}}
+  wake(e,card){
+    const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;
+    this.say(e,B.q[0],2400);Sfx.play("boss");Sfx.vib([40,30,60]);
+    if(card)Juice.card({icon:"👹",tag:"BOSS FIGHT",title:B.n,hint:B.t,color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3400});
+  }
+  aimAt(sx,sy,n,spr,v,tx,life){
+    const p=this.p;if(!p||this.dead)return;const a=Math.atan2(p.y-sy,p.x-sx);
+    for(let i=0;i<n;i++){const d=(i-(n-1)/2)*spr;this.shoot(sx,sy,Math.cos(a+d)*v,Math.sin(a+d)*v,true,tx,life,0);}
+  }
   dmg(e,n){
-    if(e.dead)return;e.hp-=n;e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>e.s.clearTint());
+    if(e.dead||!e.awake)return;
+    const B=BOSS[e.t];e.hp-=n;e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>{if(!e.dead)e.s.clearTint();});
+    const f=e.hp/e.max,np=f<=.33?2:f<=.66?1:0;
+    if(e.hp>0&&np>e.phase){
+      e.phase=np;e.tm=this.time.now+900;e.wd=0;
+      this.cameras.main.shake(260,.012);this.cameras.main.flash(120,255,80,80);Sfx.play("boss");
+      Juice.burst(this,e.x,e.y,B.c,np>1?"ENRAGED!":"PHASE 2");this.say(e,B.q[np],2200);
+    }
     if(e.hp<=0){
-      e.dead=e.gone=true;e.bar.setVisible(false);
-      this.cameras.main.shake(350,.02);
-      this.tweens.add({targets:e.s,scale:2,alpha:0,duration:500,onComplete:()=>e.s.setVisible(false).setScale(1).setAlpha(1)});
+      e.dead=e.gone=true;e.bar.setVisible(false);e.bg.setVisible(false);e.nm.setVisible(false);
+      this.say(e,B.d,2300);this.time.delayedCall(2400,()=>e.say&&e.say.scene&&e.say.setVisible(false));
+      this.cameras.main.shake(500,.025);
+      for(let i=0;i<5;i++)this.time.delayedCall(i*140,()=>Juice.burst(this,e.x+(Math.random()-.5)*50,e.y+(Math.random()-.5)*50,i%2?0xfacc15:B.c,i===4?"BOSS DEFEATED!":""));
+      this.tweens.add({targets:e.s,scale:2,alpha:0,angle:25,duration:800,onComplete:()=>e.s.setVisible(false).setScale(1).setAlpha(1).setAngle(0)});
       Sfx.play("bossDown");Sfx.vib([40,50,70]);
-      Juice.burst(this,e.x,e.y,0xfacc15,"BOSS DEFEATED!");
-      Juice.card({icon:"🏆",tag:"VICTORY",title:"BOSS DEFEATED!",hint:"The path grows clearer!",color:"#eab308",glow:"rgba(234,179,8,0.55)",ms:3200});
+      Juice.card({icon:"🏆",tag:B.n.toUpperCase(),title:"DEFEATED!",hint:B.t,color:"#eab308",glow:"rgba(234,179,8,0.55)",ms:3200});
     }
   }
 
   boss(e,s,now,px,py,pw,ph,hit){
-    const k=e.t,cx=px+pw/2,sg=cx>e.x?1:-1;
-    if(this.flagged.has(k)?!e.awake:(Math.abs(cx-e.fx)>600||Math.abs(py-e.by)>420)){if(Math.abs(e.x-e.fx)+Math.abs(e.y-e.by)>1){e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setPosition(e.x,e.y-42);}return;}
-    e.ph+=s;const ox=e.x,oy=e.y,st=this.hitW(ox,oy,20,28);
-    if(k==="1"||k==="4"){e.vy+=1500*s;e.y+=e.vy*s;}
-    if(k==="1"){if(e.g){e.vx=0;if(now>e.tm){e.tm=now+1500;e.vy=-600;e.vx=sg*150;}}e.x+=e.vx*s;}
-    if(k==="4"){e.x+=sg*35*s;if(now>e.tm){e.tm=now+3600;this.shoot(e.x,e.y+20,-200,0,true,"ebul",2.5,0);this.shoot(e.x,e.y+20,200,0,true,"ebul",2.5,0);this.cameras.main.shake(150,.01);}}
-    if(k==="2"){const d=e.ph%6>4.6;e.x+=((d?cx:e.fx+Math.sin(e.ph*1.1)*180)-e.x)*Math.min(1,(d?1.6:1.2)*s);e.y+=((d?py:e.by-90+Math.sin(e.ph*2)*25)-e.y)*Math.min(1,(d?1.8:1.6)*s);}
-    if(k==="3"&&now>e.tm){e.tm=now+3200;e.x=e.fx+(Math.random()-.5)*340;e.y=e.by-Math.random()*100;e.s.setAlpha(.35);this.time.delayedCall(250,()=>e.s.setAlpha(1));const a=Math.atan2(py-e.y,cx-e.x);[-.3,0,.3].forEach(d=>this.shoot(e.x,e.y,Math.cos(a+d)*190,Math.sin(a+d)*190,true,"ebul",4,0));}
-    if(k==="5"){e.x=e.fx+Math.sin(e.ph*.8)*220;e.y=e.by-70+Math.sin(e.ph*1.7)*25;if(now>e.tm){e.tm=now+3000;const a=Math.atan2(py-e.y,cx-e.x);[-.35,0,.35].forEach(d=>this.shoot(e.x,e.y,Math.cos(a+d)*240,Math.sin(a+d)*240,true,"fball",3,0));}}
-    if(k==="6"){e.x=e.fx+Math.sin(e.ph*1.15)*185;e.y=e.by-85+Math.sin(e.ph*2.1)*32;if(now>e.tm){e.tm=now+2700;const a=Math.atan2(py-e.y,cx-e.x);[-.52,-.26,0,.26,.52].forEach(d=>this.shoot(e.x,e.y,Math.cos(a+d)*265,Math.sin(a+d)*265,true,"ebul",3.2,0));this.cameras.main.shake(90,.004);}}
-    if(!st){if(this.hitW(e.x,oy,20,28)){e.x=ox;e.vx=0;}if(this.hitW(e.x,e.y,20,28)){e.g=e.vy>0?1:0;e.y=oy;e.vy=0;}else if(k==="1"||k==="4")e.g=0;}
-    e.x=Math.max(Math.max(e.fx-220,40),Math.min(Math.min(e.fx+220,W*S-40),e.x));if(k==="2"||k==="3"||k==="5"||k==="6")e.y=Math.max(60,Math.min(e.by,e.y));if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}e.s.setPosition(e.x,e.y).setFlipX(sg<0);e.bar.setPosition(e.x,e.y-42).setSize(50*Math.max(0,e.hp)/e.max,6);
+    const k=e.t,cx=px+pw/2;
+    if(!e.awake){
+      if(!e.flag&&Math.abs(cx-e.fx)<520&&Math.abs(py-e.by)<380)this.wake(e,true);
+      else{e.x=e.fx;e.y=e.by+Math.sin(now/500+e.fx)*2;e.vy=0;e.s.setPosition(e.x,e.y);return;}
+    }
+    const sg=cx>e.x?1:-1,p2=e.phase,sp=1+p2*.3,cd=[1,.78,.58][p2],gnd=k==="1"||k==="4";
+    e.bg.setVisible(true);e.bar.setVisible(true);e.nm.setVisible(true);
+    if(e.sayT&&now>e.sayT){e.say.setVisible(false);e.sayT=0;}
+    const ox=e.x,oy=e.y,st=this.hitW(ox,oy,20,28),air=!e.g,vy0=e.vy;
+    let go=false;
+    // every attack: red flicker telegraph first, then the move
+    if(e.wd){if(now>e.wd){e.wd=0;go=true;e.s.clearTint();}else e.s.setTint(Math.floor(now/60)%2?0xff5a5a:0xffffff);}
+    else if(now>e.tm&&(!gnd||e.g))e.wd=now+(k==="2"?700:480);
+    if(!e.wd)e.ph+=s*sp;
+    if(gnd){e.vy+=1500*s;e.y+=e.vy*s;}
+    if(k==="1"){ // Gloop: hops, every 3rd hop is a slam that sends ground ripples
+      if(e.g&&!e.wd&&!go)e.vx=0;
+      if(go){e.hc=(e.hc||0)+1;e.big=e.hc%3===0||p2>1;e.vy=e.big?-820:-560;e.vx=sg*(e.big?210:170)*sp;e.tm=now+cd*1300;}
+      e.x+=e.vx*s;
+      if(e.wd)e.s.setScale(1.14,.8);else e.s.setScale(1-Math.min(.16,Math.abs(e.vy)/5000),1+Math.min(.2,Math.abs(e.vy)/3800));
+    }
+    if(k==="4"){ // Grumm: slow walker, never walks off ledges, stomp = two jumpable ground waves
+      const ahead=this.sol.has(Math.floor((e.x+sg*26)/S)+","+Math.floor((e.y+34)/S));
+      if(!e.wd&&e.g&&ahead)e.x+=sg*34*sp*s;
+      if(go){this.cameras.main.shake(230,.014);const v=210*sp;this.shoot(e.x-20,e.y+18,-v,0,true,"ebul",2.4,0);this.shoot(e.x+20,e.y+18,v,0,true,"ebul",2.4,0);if(p2>0)for(let i=-1;i<=1;i++)this.shoot(cx+i*70,py-280,0,280,true,"ebul",1.8,0);e.tm=now+cd*3000;}
+      e.s.setScale(1,e.wd?1.12:1);
+    }
+    if(k==="2"){ // Vesper: locks a dive target (dodgeable), can now dive below his perch; chains dives when hurt
+      if(go){e.dx=cx;e.dy=py;e.dv=now+600;e.dn=(e.dn||0)+1;e.tm=(p2>0&&e.dn%2)?now+250:now+cd*2800;if(p2>1)this.aimAt(e.x,e.y,3,.3,230,"ebul",3);}
+      if(e.dv>now){const t=Math.min(1,6*s);e.x+=(e.dx-e.x)*t;e.y+=(e.dy-e.y)*t;}
+      else if(e.wd)e.x+=(Math.random()-.5)*3;
+      else{const t=Math.min(1,1.3*s);e.x+=(e.fx+Math.sin(e.ph*1.1)*180-e.x)*t;e.y+=(e.by-90+Math.sin(e.ph*2)*25-e.y)*t;}
+    }
+    if(k==="3"){ // Mourna: fades out, reappears near you, fans of bolts (3 -> 5 -> 7)
+      if(e.wd)e.s.setAlpha(Math.max(.25,(e.wd-now)/480));
+      if(go){e.x=e.fx+Math.max(-200,Math.min(200,(cx-e.fx)+(Math.random()<.5?-1:1)*(120+Math.random()*100)));e.y=e.by-Math.random()*100;e.s.setAlpha(1);this.aimAt(e.x,e.y,3+p2*2,.26,190+p2*25,"ebul",4);e.tm=now+cd*3000;}
+      else if(!e.wd)e.s.setAlpha(1);
+    }
+    if(k==="5"){ // Ignarax: hover, aimed fireball volley; enraged = fire rain too
+      if(!e.wd){e.x=e.fx+Math.sin(e.ph*.8)*220;e.y=e.by-70+Math.sin(e.ph*1.7)*25;}
+      if(go){const n=3+p2*2;for(let i=0;i<n;i++)this.time.delayedCall(i*150,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,1,0,260,"fball",3);});if(p2>1)for(let i=0;i<4;i++)this.shoot(cx+(i-1.5)*80,py-300,0,230,true,"fball",2.4,0);e.tm=now+cd*3000;this.cameras.main.shake(140,.006);}
+    }
+    if(k==="6"){ // Zephyra: sweeping lightning fans, second fan when hurt
+      if(!e.wd){e.x=e.fx+Math.sin(e.ph*1.15)*185;e.y=e.by-85+Math.sin(e.ph*2.1)*32;}
+      if(go){const n=5+p2*2;this.aimAt(e.x,e.y,n,.24,265,"ebul",3.2);if(p2>0)this.time.delayedCall(380,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,n,.24,300,"ebul",3.2);});e.tm=now+cd*2700;this.cameras.main.shake(90,.004);}
+    }
+    if(!st){
+      if(this.hitW(e.x,oy,20,28)){e.x=ox;e.vx=0;}
+      if(this.hitW(e.x,e.y,20,28)){
+        e.g=e.vy>0?1:0;e.y=oy;e.vy=0;
+        if(k==="1"&&air&&e.g&&e.big&&vy0>300){e.big=false;this.cameras.main.shake(200,.012);this.shoot(e.x-20,e.y+18,-220,0,true,"ebul",1.6,0);this.shoot(e.x+20,e.y+18,220,0,true,"ebul",1.6,0);}
+      }else if(gnd)e.g=0;
+    }
+    e.x=Math.max(Math.max(e.fx-220,40),Math.min(Math.min(e.fx+220,W*S-40),e.x));
+    if(k==="2")e.y=Math.max(60,Math.min(H*S-60,e.y));else if(!gnd)e.y=Math.max(60,Math.min(e.by,e.y));
+    if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}
+    e.s.setPosition(e.x,e.y).setFlipX(sg<0);
+    e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,e.hp)/e.max,6);
+    e.nm.setPosition(e.x,e.y-54);e.say.setPosition(e.x,e.y-64);
     if(hit(e.x-19,e.y-19,38,38))this.hurt();
   }
 
   update(_,dt){
-    const now=this.time.now,s=dt/1000,k=this.k;
+    const now=this.time.now,s=Math.min(dt/1000,.05),k=this.k;
     this.updateBg(now,s);
     if(G.mode==="edit"){
       const c=this.cameras.main,v=700*s/c.zoom;
@@ -2946,7 +3042,7 @@ class Main extends Phaser.Scene{
       if(this.wep==="flame"){this.acd=now+85;this.shoot(cx+dir*14,py+16,dir*340+b.velocity.x*.3,(Math.random()-.5)*70,false,"flm",.38,.4);}
       else if(this.wep==="fb"){this.acd=now+380;this.shoot(cx+dir*14,py+14,dir*520,0,false,"fball",1.4,2);}
       else if(this.wep==="sword"){this.acd=now+300;this.sws=now;const sx=dir>0?cx:cx-48,rc=this.add.rectangle(sx+24,py+16,48,34,0xe2e8f0,.8).setDepth(4);this.tweens.add({targets:rc,alpha:0,scaleX:1.3,duration:160,onComplete:()=>rc.destroy()});
-        this.bosses.forEach(bb=>{if(!bb.dead&&Math.abs(bb.x-(sx+24))<56&&Math.abs(bb.y-py)<46)this.dmg(bb,3);});this.proj.forEach(q=>{if(q.en&&Math.abs(q.x-(sx+24))<40&&Math.abs(q.y-py-16)<30)q.life=0;});}
+        this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&Math.abs(bb.x-(sx+24))<56&&Math.abs(bb.y-py)<46)this.dmg(bb,3);});this.proj.forEach(q=>{if(q.en&&Math.abs(q.x-(sx+24))<40&&Math.abs(q.y-py-16)<30)q.life=0;});}
       else if(!this.hinted){this.hinted=1;flash("Find a weapon: sword, fireball or flamethrower!");}
     }
     for(const e of this.ents){
@@ -3005,17 +3101,17 @@ class Main extends Phaser.Scene{
         }
         case"1":case"2":case"3":case"4":case"5":case"6":this.boss(e,s,now,px,py,pw,ph,hit);break;
         case"G":if(!e.on&&hit(e.x-14,e.y-16,28,32)){
-          const targets=this.bosses.filter(bb=>bb.t===String(e.R));
-          const living=targets.filter(bb=>!bb.dead);
           e.on=true;e.s.setTint(0x4ade80);
-          if(living.length){this.activatedBosses.add(String(e.R));living.forEach(bb=>bb.awake=true);Sfx.play("boss");Sfx.vib([40,30,60]);this.cameras.main.shake(180,.012);Juice.card({icon:"👹",tag:"WARNING",title:"BOSS AWAKENED!",hint:"Use your weapon to defeat the boss!",color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3200});}
+          const lv=(e.bosses||[]).filter(bb=>!bb.dead&&!bb.awake);
+          if(lv.length){lv.forEach((bb,i)=>this.wake(bb,i===0));this.cameras.main.shake(180,.012);}
+          else flash("The flag is raised.");
         }break;
         case"E":e.s.setAlpha(open?1:.5);if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Collect all keys and defeat every boss!");}}break;
       }
     }
     this.proj=this.proj.filter(q=>{q.life-=s;q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);let kill=q.life<=0||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S));
       if(!kill&&q.en&&hit(q.x-6,q.y-6,12,12)){this.hurt(q.fire);kill=true;}
-      if(!kill&&!q.en)for(const bb of this.bosses)if(!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);kill=true;break;}
+      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);kill=true;break;}
       if(kill)q.s.destroy();return!kill;});
     this.crates.getChildren().forEach(c=>{if(c.y>H*S+40){c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);}});
     if(p.y>H*S+40)return this.die();
@@ -3028,7 +3124,7 @@ class Main extends Phaser.Scene{
       if(ow.length>1)tp.push((cm?"⇄":"Q")+" switch weapon");
       if(fx.dash>now)tp.push((cm?"💨":"Shift")+" dash");
       const lb=this.bosses.filter(bb=>!bb.dead);
-      if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(this.flagged.has(nb.t)&&!nb.awake?" (asleep until you touch its 🚩 flag)":""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 Bosses left: "+lb.length+" (door stays locked)");}
+      if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 Bosses left: "+lb.length+" (door stays locked)");}
       this.tip.setText(tp.join("   ·   "));}
     setText($("hud"),"Deaths "+this.deaths+" · "+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?" · Keys "+this.keysGot.size+"/"+this.nk:"")+(this.bosses.length?" · Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:""));
   }
@@ -3045,11 +3141,9 @@ class Main extends Phaser.Scene{
         if(e.t==="k"){e.gone=this.keysGot.has(e.i);e.s.setVisible(!e.gone);}
         else if("eotjAH".includes(e.t)){e.gone=false;e.s.setVisible(true);}
         else if(e.t==="G"){
-          const bosses=this.bosses.filter(bb=>bb.t===String(e.R));
-          e.on=this.activatedBosses.has(String(e.R))||(bosses.length>0&&bosses.every(bb=>bb.dead));
-          if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
+                    if(!e.on)e.on=!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
         }
-        else if("123456".includes(e.t)&&!e.dead){e.awake=this.activatedBosses.has(e.t);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);e.bar.setSize(50,6);}
+        else if("123456".includes(e.t)&&!e.dead){e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);e.bar.setSize(50,6);}
         else if(e.t==="l"){e.fall=false;e.done=false;e.vy=0;e.y=e.y0;e.s.setY(e.y0);}
         else if(e.t==="i"){e.up=false;e.s.setVisible(false);}
       });
@@ -3066,8 +3160,7 @@ class Main extends Phaser.Scene{
           e.s.setVisible(!e.gone);
           if(e.t==="h")e.on=true;
           if(e.t==="G"){
-            const boss=this.bosses.find(bb=>bb.t===String(e.R));
-            e.on=this.activatedBosses.has(String(e.R))||!!(boss&&boss.dead)||st.on;e.s.setTint(e.on?0x4ade80:0xffffff);
+            e.on=st.on||!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));e.s.setTint(e.on?0x4ade80:0xffffff);
           }
           if(e.t==="i")e.s.setVisible(!!e.up).setY(e.y);
           if(e.t==="l")e.s.setY(e.y);
@@ -3086,9 +3179,9 @@ class Main extends Phaser.Scene{
     const rawT=(this.time.now-(this.t0==null?this.time.now:this.t0))/1000;
     const t=rawT.toFixed(1);
     const stars=this.deaths===0?3:this.deaths<=3?2:1;
-    const prevBest=parseFloat(localStorage.getItem("bb_best")||"99999");
+    const bk="bb_best_"+(JSON.stringify(G.cur.o).split("").reduce((h,c)=>(h*31+c.charCodeAt(0))|0,7)>>>0),prevBest=parseFloat(localStorage.getItem(bk)||"99999");
     const isNewBest=rawT<prevBest;
-    if(isNewBest)try{localStorage.setItem("bb_best",String(rawT.toFixed(1)));}catch(_){}
+    if(isNewBest)try{localStorage.setItem(bk,String(rawT.toFixed(1)));}catch(_){}
     const bestStr=isNewBest?t:prevBest<9999?prevBest.toFixed(1):t;
 
     this.time.delayedCall(320,()=>{
