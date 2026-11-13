@@ -1483,8 +1483,8 @@ body.home-active #drawerScrim {
   #pad .jb{width:var(--jb);height:var(--jb);font-size:calc(var(--jb) * .2);}
   #pad .g{gap:calc(var(--mv) * .16);}
   /* Controls below the screen: the game canvas gets its own area above the pad */
-  body[data-ctl="below"][data-mode="play"] #game{bottom:var(--pad-zone);}
-  body[data-ctl="below"][data-mode="play"] #pad{
+  body[data-ctl="below"]:not([data-mode="edit"]) #game{bottom:var(--pad-zone);}
+  body[data-ctl="below"]:not([data-mode="edit"]) #pad{
     height:var(--pad-zone);padding-top:6px;padding-bottom:calc(6px + var(--safe-b));align-items:center;
     background:linear-gradient(to top,rgba(8,6,24,.72),rgba(8,6,24,.38));
     border-top:1px solid rgba(255,255,255,.1);
@@ -1492,6 +1492,32 @@ body.home-active #drawerScrim {
   body.lefty #pad{flex-direction:row-reverse;}
   body.lefty #pad > .g:last-child{flex-direction:row-reverse;}
 }
+
+/* Mobile interaction fixes: reserve a real viewport above the control shelf. */
+@media (pointer:coarse),(max-width:820px){
+  #main{overflow:hidden;}
+  #wrap{min-height:0;}
+  body[data-ctl="below"]:not([data-mode="edit"]) #game{
+    inset:0 0 var(--pad-zone) 0 !important;
+  }
+  body[data-ctl="below"]:not([data-mode="edit"]) #pad{
+    position:absolute;left:0;right:0;bottom:0;top:auto;
+    height:var(--pad-zone);min-height:var(--pad-zone);
+    box-sizing:border-box;z-index:9;
+  }
+  body[data-mode="edit"] #mobilePan{
+    top:auto;bottom:12px;right:max(10px,var(--safe-r));
+    transform:none;z-index:9;
+  }
+  #mobilePan .pan-grid{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px;}
+  #mobilePan button{width:42px;height:42px;font-size:18px;touch-action:none;}
+  #mobilePan .zoom-row button{height:36px;}
+}
+@media (orientation:landscape) and (pointer:coarse){
+  :root{--pad-zone:calc(var(--jb) + 8px + var(--safe-b));}
+  body[data-mode="edit"] #mobilePan{bottom:8px;}
+}
+
 </style>
 </head>
 <body data-mode="edit" class="home-active">
@@ -1804,7 +1830,8 @@ const Ctl={
     this[k]=v;
     try{localStorage.setItem(k==="mode"?"bbctl":k==="size"?"bbctlsz":"bblefty",k==="lefty"?(v?"1":"0"):String(v));}catch(_){}
     this.apply();
-    setTimeout(()=>window.game?.scale?.refresh(),60);
+    requestAnimationFrame(()=>window.game?.scale?.refresh());
+    setTimeout(()=>window.game?.scale?.refresh(),120);
   }
 };
 
@@ -2405,13 +2432,41 @@ $("share").onclick=()=>{const e=validate(G.lv);if(e)return flash(e);dlg("Share y
 $("load").onclick=()=>dlg("Load a level code","<textarea id=ta placeholder='Paste level code here…'></textarea>",[["Play it",()=>{const L=dec($("ta").value),e=validate(L);if(e){flash(e);return false}G.cur=L;go("play")}],["Edit a copy",()=>{const L=dec($("ta").value),e=validate(L);if(e){flash(e);return false}G.und.push(JSON.stringify(G.lv));G.red=[];G.lv=L;G.sel=null;save();go("edit")}],["Cancel"]]);
 document.addEventListener("click",e=>{if(e.isTrusted){Sfx.init();}if(e.target.tagName==="BUTTON")e.target.blur()});
 
-/* Camera D-pad bindings */
+/* Camera D-pad bindings — capture the pointer so up/down/left/right keep
+   working for the entire press on touchscreens. pointerleave is deliberately
+   not used: browsers can emit it during normal touch movement. */
 const PAN={x:0,y:0};
+const panPointers=new Map();
+function refreshPan(){
+  let x=0,y=0;
+  for(const v of panPointers.values()){x+=v.x;y+=v.y;}
+  PAN.x=Math.max(-1,Math.min(1,x));PAN.y=Math.max(-1,Math.min(1,y));
+}
 document.querySelectorAll("[data-p]").forEach(b=>{
-  const[x,y]=b.dataset.p.split(",").map(Number);
-  b.addEventListener("pointerdown",e=>{e.preventDefault();PAN.x=x;PAN.y=y;});
-  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,()=>{PAN.x=PAN.y=0;}));
+  const [x,y]=b.dataset.p.split(",").map(Number);
+  b.style.touchAction="none";
+  b.addEventListener("pointerdown",e=>{
+    e.preventDefault();
+    try{b.setPointerCapture(e.pointerId);}catch(_){}
+    panPointers.set(e.pointerId,{x,y,button:b});b.classList.add("dn");refreshPan();
+  });
+  const stop=e=>{
+    if(!panPointers.has(e.pointerId))return;
+    const entry=panPointers.get(e.pointerId);panPointers.delete(e.pointerId);
+    entry.button.classList.remove("dn");refreshPan();
+  };
+  ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>b.addEventListener(ev,stop));
 });
+addEventListener("blur",()=>{panPointers.clear();PAN.x=PAN.y=0;document.querySelectorAll("[data-p].dn").forEach(b=>b.classList.remove("dn"));});
+
+
+// Keep Phaser's FIT canvas dimensions synchronized with the reserved mobile control zone.
+if(typeof ResizeObserver!=="undefined"){
+  const layoutObserver=new ResizeObserver(()=>window.game?.scale?.refresh());
+  const wrapEl=$("wrap"),gameEl=$("game");
+  if(wrapEl)layoutObserver.observe(wrapEl);if(gameEl)layoutObserver.observe(gameEl);
+}
+addEventListener("orientationchange",()=>setTimeout(()=>window.game?.scale?.refresh(),180));
 
 /* Touch Gameplay Pad with Thumb-Slide Support between Left & Right */
 const T={l:0,r:0,j:0,jd:0,a:0,d:0,s:0};
@@ -2947,6 +3002,54 @@ class Main extends Phaser.Scene{
     this.die();
   }
   hitW(x,y,hw,hh){for(const sx of[x-hw,x,x+hw-1])for(const sy of[y-hh,y-hh/2,y+hh/2,y+hh-1])if(this.sol.has(Math.floor(sx/S)+","+Math.floor(sy/S)))return true;return false;}
+  bossBlocked(x,y,hw=20,hh=28){
+    const c0=Math.floor((x-hw+1)/S),c1=Math.floor((x+hw-1)/S);
+    const r0=Math.floor((y-hh+1)/S),r1=Math.floor((y+hh-1)/S);
+    for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++)if(this.sol.has(c+","+r))return true;
+    return x-hw<0||x+hw>W*S||y-hh<0||y+hh>H*S;
+  }
+  safeBossSpot(x,y,hw=20,hh=28,minX=hw+1,maxX=W*S-hw-1){
+    x=Math.max(minX,Math.min(maxX,x));
+    if(!this.bossBlocked(x,y,hw,hh))return {x,y};
+    // Search outward in small rings; never place a boss inside a solid tile.
+    for(let radius=1;radius<=9;radius++){
+      const d=radius*S;
+      const candidates=[
+        [x+d,y],[x-d,y],[x,y-d],[x,y+d],
+        [x+d,y-d],[x-d,y-d],[x+d,y+d],[x-d,y+d],
+        [x+d*.5,y-d],[x-d*.5,y-d],[x+d*.5,y+d],[x-d*.5,y+d]
+      ];
+      for(const [tx,ty] of candidates){
+        const cx=Math.max(minX,Math.min(maxX,tx));
+        const cy=Math.max(hh+1,Math.min(H*S-hh-1,ty));
+        if(!this.bossBlocked(cx,cy,hw,hh))return {x:cx,y:cy};
+      }
+    }
+    return null;
+  }
+  constrainBossMove(e,oldX,oldY){
+    if(e.teleported){
+      const safe=this.safeBossSpot(e.x,e.y,20,28,Math.max(21,e.fx-220),Math.min(W*S-21,e.fx+220));
+      if(safe){e.x=safe.x;e.y=safe.y;}else{e.x=oldX;e.y=oldY;}
+      e.teleported=false;return;
+    }
+    const dx=e.x-oldX,dy=e.y-oldY;
+    const steps=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))/7));
+    let x=oldX,y=oldY;
+    for(let i=1;i<=steps;i++){
+      const tx=oldX+dx*i/steps;
+      if(!this.bossBlocked(tx,y))x=tx;else e.vx=0;
+      const ty=oldY+dy*i/steps;
+      if(!this.bossBlocked(x,ty))y=ty;
+      else if(dy>0){e.g=1;e.vy=0;}else if(dy<0)e.vy=0;
+    }
+    e.x=x;e.y=y;
+  }
+  hasBossLineOfSight(x1,y1,x2,y2){
+    const dx=x2-x1,dy=y2-y1,steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/8));
+    for(let i=1;i<steps;i++){const t=i/steps;if(this.bossBlocked(x1+dx*t,y1+dy*t,3,3))return false;}
+    return true;
+  }
 
   got(t,ex,ey){
     if("ZFY".includes(t))this.wep=FX[t];
@@ -2970,7 +3073,8 @@ class Main extends Phaser.Scene{
     if(card)Juice.card({icon:"👹",tag:"BOSS FIGHT",title:B.n,hint:B.t,color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3400});
   }
   aimAt(sx,sy,n,spr,v,tx,life){
-    const p=this.p;if(!p||this.dead)return;const a=Math.atan2(p.y-sy,p.x-sx);
+    const p=this.p;if(!p||this.dead||!this.hasBossLineOfSight(sx,sy,p.x+p.width/2,p.y+p.height/2))return;
+    const a=Math.atan2(p.y+p.height/2-sy,p.x+p.width/2-sx);
     for(let i=0;i<n;i++){const d=(i-(n-1)/2)*spr;this.shoot(sx,sy,Math.cos(a+d)*v,Math.sin(a+d)*v,true,tx,life,0);}
   }
   dmg(e,n){
@@ -3027,10 +3131,19 @@ class Main extends Phaser.Scene{
       else if(e.wd)e.x+=(Math.random()-.5)*3;
       else{const t=Math.min(1,1.3*s);e.x+=(e.fx+Math.sin(e.ph*1.1)*180-e.x)*t;e.y+=(e.by-90+Math.sin(e.ph*2)*25-e.y)*t;}
     }
-    if(k==="3"){ // Mourna: fades out, reappears near you, fans of bolts (3 -> 5 -> 7)
+    if(k==="3"){ // Mourna: safe, collision-checked teleport; never materializes in walls.
       if(e.wd)e.s.setAlpha(Math.max(.25,(e.wd-now)/480));
-      if(go){e.x=e.fx+Math.max(-200,Math.min(200,(cx-e.fx)+(Math.random()<.5?-1:1)*(120+Math.random()*100)));e.y=e.by-Math.random()*100;e.s.setAlpha(1);this.aimAt(e.x,e.y,3+p2*2,.26,190+p2*25,"ebul",4);e.tm=now+cd*3000;}
-      else if(!e.wd)e.s.setAlpha(1);
+      if(go){
+        const side=cx>=e.x?-1:1;
+        const tx=Math.max(e.fx-200,Math.min(e.fx+200,cx+side*(115+Math.random()*65)));
+        const ty=Math.max(70,Math.min(H*S-70,py-35+(Math.random()-.5)*90));
+        const safe=this.safeBossSpot(tx,ty,20,28,Math.max(21,e.fx-220),Math.min(W*S-21,e.fx+220));
+        if(safe){e.x=safe.x;e.y=safe.y;e.teleported=true;}
+        e.s.setAlpha(1);
+        // Re-check line of sight after moving; bolts cannot originate through walls.
+        this.aimAt(e.x,e.y,3+p2*2,.26,190+p2*25,"ebul",4);
+        e.tm=now+cd*3000;
+      }else if(!e.wd)e.s.setAlpha(1);
     }
     if(k==="5"){ // Ignarax: hover, aimed fireball volley; enraged = fire rain too
       if(!e.wd){e.x=e.fx+Math.sin(e.ph*.8)*220;e.y=e.by-70+Math.sin(e.ph*1.7)*25;}
@@ -3050,6 +3163,8 @@ class Main extends Phaser.Scene{
     }
     e.x=Math.max(Math.max(e.fx-220,40),Math.min(Math.min(e.fx+220,W*S-40),e.x));
     if(k==="2")e.y=Math.max(60,Math.min(H*S-60,e.y));else if(!gnd)e.y=Math.max(60,Math.min(e.by,e.y));
+    // Collision-resolve the complete frame movement (not just a few sample points).
+    this.constrainBossMove(e,ox,oy);
     if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}
     e.s.setPosition(e.x,e.y).setFlipX(sg<0);
     e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,e.hp)/e.max,6);
@@ -3194,10 +3309,19 @@ class Main extends Phaser.Scene{
         case"E":e.s.setAlpha(open?1:.5);if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Collect all keys and defeat every boss!");}}break;
       }
     }
-    this.proj=this.proj.filter(q=>{q.life-=s;q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);let kill=q.life<=0||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S));
-      if(!kill&&q.en&&hit(q.x-6,q.y-6,12,12)){this.hurt(q.fire);kill=true;}
-      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);kill=true;break;}
-      if(kill)q.s.destroy();return!kill;});
+    this.proj=this.proj.filter(q=>{
+      q.life-=s;const ox=q.x,oy=q.y,nx=q.x+q.vx*s,ny=q.y+q.vy*s;
+      const steps=Math.max(1,Math.ceil(Math.hypot(nx-ox,ny-oy)/4));let kill=q.life<=0;
+      for(let i=1;!kill&&i<=steps;i++){
+        const t=i/steps,x=ox+(nx-ox)*t,y=oy+(ny-oy)*t;
+        if(this.bossBlocked(x,y,6,6)){kill=true;break;}
+        if(q.en&&hit(x-6,y-6,12,12)){this.hurt(q.fire);kill=true;break;}
+        if(!q.en){for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(x-bb.x)<26&&Math.abs(y-bb.y)<34){this.dmg(bb,q.d);kill=true;break;}}
+      }
+      q.x=nx;q.y=ny;q.s.setPosition(q.x,q.y);
+      if(kill){q.s.destroy();return false;}
+      return true;
+    });
     this.crates.getChildren().forEach(c=>{if(c.y>H*S+40){c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);}});
     if(p.y>H*S+40)return this.die();
     p.setAlpha(ghost?.35:now<this.inv&&Math.floor(now/80)%2?.4:1);
