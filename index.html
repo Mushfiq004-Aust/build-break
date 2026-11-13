@@ -1787,8 +1787,82 @@ const setDisp=(el,v)=>{if(el&&el._lastDisp!==v){el._lastDisp=v;el.style.display=
 const Sfx={
   on:localStorage.getItem("bbsfx")!=="0",
   hap:localStorage.getItem("bbhap")!=="0",
-  ctx:null,
-  init(){if(!this.ctx){const C=window.AudioContext||window.webkitAudioContext;if(C)this.ctx=new C();}if(this.ctx?.state==="suspended")this.ctx.resume().catch(()=>{});},
+  ctx:null, ambienceMode:"night", ambienceNodes:[], ambienceGain:null, ambienceTimer:null,
+  init(){
+    if(!this.ctx){const C=window.AudioContext||window.webkitAudioContext;if(C)this.ctx=new C();}
+    if(this.ctx?.state==="suspended")this.ctx.resume().catch(()=>{});
+    if(this.ctx&&this.on&&!this.ambienceGain)this.startAmbience();
+  },
+  stopAmbience(){
+    if(this.ambienceTimer){clearTimeout(this.ambienceTimer);clearInterval(this.ambienceTimer);this.ambienceTimer=null;}
+    const t=this.ctx?.currentTime||0;
+    const oldNodes=this.ambienceNodes.slice();
+    if(this.ambienceGain){try{this.ambienceGain.gain.cancelScheduledValues(t);this.ambienceGain.gain.setTargetAtTime(0,t,.12);}catch(_){}}
+    oldNodes.forEach(n=>{try{if(n!==this.ambienceGain&&n.stop)n.stop(t+.45);}catch(_){}});
+    setTimeout(()=>oldNodes.forEach(n=>{try{n.disconnect();}catch(_){}}),500);
+    this.ambienceNodes=[];this.ambienceGain=null;
+  },
+  setAmbience(mode){
+    this.ambienceMode=mode||"night";
+    if(!this.ctx||!this.on)return;
+    this.stopAmbience();this.startAmbience();
+  },
+  startAmbience(){
+    if(!this.ctx||!this.on||this.ambienceGain)return;
+    const c=this.ctx,t=c.currentTime,nodes=this.ambienceNodes;
+    const master=c.createGain();master.gain.setValueAtTime(.0001,t);master.gain.linearRampToValueAtTime(.052,t+1.4);master.connect(c.destination);this.ambienceGain=master;nodes.push(master);
+    const keep=n=>{nodes.push(n);return n;};
+    const noise=(kind,cutoff,level,highpass=0)=>{
+      const len=2*c.sampleRate,buf=c.createBuffer(1,len,c.sampleRate),data=buf.getChannelData(0);
+      for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*.7;
+      const src=keep(c.createBufferSource());src.buffer=buf;src.loop=true;
+      let last=src;
+      if(highpass){const hp=keep(c.createBiquadFilter());hp.type="highpass";hp.frequency.value=highpass;last.connect(hp);last=hp;}
+      if(cutoff){const lp=keep(c.createBiquadFilter());lp.type="lowpass";lp.frequency.value=cutoff;last.connect(lp);last=lp;}
+      const g=keep(c.createGain());g.gain.value=level;last.connect(g);g.connect(master);src.start();
+      return src;
+    };
+    const note=(freq,dur=.8,vol=.025,wave="sine")=>{
+      if(!this.on||!this.ctx||!this.ambienceGain)return;
+      const at=c.currentTime,o=keep(c.createOscillator()),g=keep(c.createGain());
+      o.type=wave;o.frequency.setValueAtTime(freq,at);
+      g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(vol,at+.06);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
+      o.connect(g);g.connect(master);o.start(at);o.stop(at+dur+.03);
+    };
+    const thunder=()=>{
+      if(!this.on||!this.ctx||!this.ambienceGain)return;
+      const at=c.currentTime,src=keep(c.createBufferSource()),buf=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=buf.getChannelData(0);
+      for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
+      src.buffer=buf;
+      const lp=keep(c.createBiquadFilter());lp.type="lowpass";lp.frequency.value=125;
+      const g=keep(c.createGain());g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(.22,at+.12);g.gain.exponentialRampToValueAtTime(.0001,at+1.8);
+      src.connect(lp);lp.connect(g);g.connect(master);src.start(at);src.stop(at+2);
+    };
+    const mode=this.ambienceMode;
+    if(mode==="rain"||mode==="thunder"){
+      noise("rain",1700,.42,260);noise("wind",420,.13,80);
+      if(mode==="thunder"){
+        const schedule=()=>{if(!this.on||!this.ambienceGain)return;thunder();this.ambienceTimer=setTimeout(schedule,9000+Math.random()*9000);};
+        this.ambienceTimer=setTimeout(schedule,5000+Math.random()*5000);
+      }
+    }else if(mode==="winter"){
+      // A gentle original bell-like arpeggio with a soft sustained pad.
+      noise("winter-wind",520,.045,100);
+      const pad=[196,246.94,293.66];
+      pad.forEach((f,i)=>{const o=keep(c.createOscillator()),g=keep(c.createGain());o.type="sine";o.frequency.value=f;g.gain.value=.012;o.connect(g);g.connect(master);o.start();});
+      const seq=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46];let ix=0;
+      const playNote=()=>{if(!this.on||!this.ambienceGain)return;note(seq[ix%seq.length],1.05,.024,"sine");if(ix%4===0)note(seq[ix%seq.length]/2,1.35,.012,"triangle");ix++;};
+      playNote();this.ambienceTimer=setInterval(playNote,760);
+    }else if(mode==="day"){
+      noise("breeze",650,.055,180);
+      const birds=()=>{if(!this.on||!this.ambienceGain)return;const f=1250+Math.random()*900;note(f,.18,.018,"sine");setTimeout(()=>note(f*1.18,.22,.014,"sine"),110);};
+      birds();this.ambienceTimer=setInterval(birds,3200);
+    }else{
+      // Night: quiet breeze under a pair of distant, pulsing crickets.
+      noise("night-breeze",520,.075,130);
+      [3920,4380].forEach((f,i)=>{const o=keep(c.createOscillator()),g=keep(c.createGain()),lfo=keep(c.createOscillator()),lg=keep(c.createGain());o.type="sine";o.frequency.value=f+i*13;g.gain.value=.0035;o.connect(g);g.connect(master);lfo.frequency.value=4.2+i*.7;lg.gain.value=.003;lfo.connect(lg);lg.connect(g.gain);o.start();lfo.start();});
+    }
+  },
   vib(ms){if(this.hap&&navigator.vibrate){try{navigator.vibrate(ms);}catch(_){}}},
   tone(freq,dur,type="triangle",vol=0.12,slide=0){
     if(!this.on)return;
@@ -1811,6 +1885,9 @@ const Sfx={
     else if(kind==="bossDown"){[440,554,659,880].forEach((n,i)=>setTimeout(()=>this.tone(n,0.18,"square",0.09),i*70));}
     else if(kind==="hurt"){this.tone(180,0.2,"sawtooth",0.12,-100);}
     else if(kind==="win"){[523,659,784,1046,1318].forEach((n,i)=>setTimeout(()=>this.tone(n,0.22,"triangle",0.14),i*85));}
+    else if(kind==="portal"){this.tone(420,.12,"sine",.08,520);}
+    else if(kind==="mode"){this.tone(520,.12,"sine",.065,180);setTimeout(()=>this.tone(780,.18,"triangle",.055),90);}
+    else if(kind==="place"){this.tone(240,.045,"square",.035,80);}
   }
 };
 
@@ -1867,7 +1944,8 @@ const Theme={
     if($("deskThemeBtn"))$("deskThemeBtn").textContent=info[2];
     if($("mobileThemeBtn"))$("mobileThemeBtn").textContent=info[0];
     try{const s=sc();if(s&&s.applyTheme)s.applyTheme();if(s)document.querySelectorAll("#pal [data-t] canvas, #mobileToolScroll [data-t] canvas").forEach(cv=>drawToolIcon(cv,s,cv.parentElement.dataset.t));}catch(_){}
-    if(announce)flash(info[0]+" "+info[1]+" atmosphere!");
+    Sfx.setAmbience(this.cur);
+    if(announce){Sfx.play("mode");flash(info[0]+" "+info[1]+" atmosphere!");}
   }
 };
 
@@ -2273,7 +2351,7 @@ function openMobileSettings(){
           <button id="stgTheme" class="pri">${isDay?"☀️ Day":"🌙 Night"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <div><b>Sound Effects</b><br><small style="color:var(--fg-muted)">Synthesized arcade chimes</small></div>
+          <div><b>Sound Effects</b><br><small style="color:var(--fg-muted)">Arcade effects + weather ambience / music</small></div>
           <button id="stgSfx" class="${Sfx.on?"pri":""}">${Sfx.on?"🔊 On":"🔇 Off"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
@@ -2296,7 +2374,7 @@ function openMobileSettings(){
       [["Close",()=>{if(resumeAfter){try{scene?.scene.resume();}catch(_){}}}]]
     );
     $("stgTheme").onclick=()=>{Theme.toggle();render();};
-    $("stgSfx").onclick=()=>{Sfx.on=!Sfx.on;localStorage.setItem("bbsfx",Sfx.on?"1":"0");if(Sfx.on)Sfx.play("key");render();};
+    $("stgSfx").onclick=()=>{Sfx.on=!Sfx.on;localStorage.setItem("bbsfx",Sfx.on?"1":"0");if(Sfx.on){Sfx.init();Sfx.setAmbience(Theme.cur);Sfx.play("key");}else Sfx.stopAmbience();render();};
     $("stgHap").onclick=()=>{Sfx.hap=!Sfx.hap;localStorage.setItem("bbhap",Sfx.hap?"1":"0");if(Sfx.hap)Sfx.vib(35);render();};
     if($("stgCtl")){
       $("stgCtl").onclick=()=>{Ctl.set("mode",Ctl.mode==="below"?"over":"below");render();};
@@ -2969,7 +3047,15 @@ class Main extends Phaser.Scene{
       }
     });
     this.ents.forEach(f=>{if(f.t==="G")f.bosses=[];});
-    this.bosses.forEach(b=>{let best=null,bd=1e9;this.ents.forEach(f=>{if(f.t!=="G")return;const dx=Math.abs(f.x-b.fx)/S,dy=Math.abs(f.y-b.by)/S;if(dx<=18&&dy<=12&&dx+dy<bd){bd=dx+dy;best=f;}});if(best){b.flag=best;best.bosses.push(b);}});
+    this.bosses.forEach(b=>{
+      let best=null,bd=1e9;
+      this.ents.forEach(f=>{if(f.t!=="G")return;const dx=Math.abs(f.x-b.fx)/S,dy=Math.abs(f.y-b.by)/S;if(dx<=18&&dy<=12&&dx+dy<bd){bd=dx+dy;best=f;}});
+      if(best){b.flag=best;best.bosses.push(b);}
+      const safe=this.safeBossSpot(b.fx,b.by,20,28,Math.max(21,b.fx-220),Math.min(W*S-21,b.fx+220));
+      if(safe){b.fx=safe.x;b.by=safe.y;b.x=safe.x;b.y=safe.y;b.s.setPosition(b.x,b.y);}
+      else{b.hp=0;b.dead=b.gone=true;b.s.setVisible(false);b.bg.setVisible(false);b.bar.setVisible(false);b.nm.setVisible(false);}
+      b.hp=Math.max(0,Math.min(b.max,b.hp));
+    });
     this.portals=this.ents.filter(e=>e.t==="Q");
     this.portals.forEach((portal,i)=>{portal.pair=i%2===0?(this.portals[i+1]||null):this.portals[i-1];});
     this.portalNeedsExit=false;this.portalCooldown=0;this.portalWarningAt=0;
@@ -3068,6 +3154,7 @@ class Main extends Phaser.Scene{
   shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm"});}
   say(e,t,ms=1900){if(e.say){e.say.setText(t).setVisible(true);e.sayT=this.time.now+ms;}}
   wake(e,card){
+    if(!e||e.dead||e.awake||!BOSS[e.t])return;
     const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;
     this.say(e,B.q[0],2400);Sfx.play("boss");Sfx.vib([40,30,60]);
     if(card)Juice.card({icon:"👹",tag:"BOSS FIGHT",title:B.n,hint:B.t,color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3400});
@@ -3078,8 +3165,9 @@ class Main extends Phaser.Scene{
     for(let i=0;i<n;i++){const d=(i-(n-1)/2)*spr;this.shoot(sx,sy,Math.cos(a+d)*v,Math.sin(a+d)*v,true,tx,life,0);}
   }
   dmg(e,n){
-    if(e.dead||!e.awake)return;
-    const B=BOSS[e.t];e.hp-=n;e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>{if(!e.dead)e.s.clearTint();});
+    if(!e||e.dead||!e.awake||!Number.isFinite(n)||n<=0||!BOSS[e.t])return;
+    const B=BOSS[e.t];e.hp=Math.max(0,e.hp-n);
+    if(e.s&&e.s.active){e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>{if(!e.dead&&e.s&&e.s.active)e.s.clearTint();});}
     const f=e.hp/e.max,np=f<=.33?2:f<=.66?1:0;
     if(e.hp>0&&np>e.phase){
       e.phase=np;e.tm=this.time.now+900;e.wd=0;
@@ -3167,7 +3255,7 @@ class Main extends Phaser.Scene{
     this.constrainBossMove(e,ox,oy);
     if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}
     e.s.setPosition(e.x,e.y).setFlipX(sg<0);
-    e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,e.hp)/e.max,6);
+    e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,Math.min(e.max,e.hp))/e.max,6);
     e.nm.setPosition(e.x,e.y-54);e.say.setPosition(e.x,e.y-64);
     if(hit(e.x-19,e.y-19,38,38))this.hurt();
   }
@@ -3218,7 +3306,7 @@ class Main extends Phaser.Scene{
     else if(this.buf>0&&fx.dj>now&&!g&&this.jc<1){p.setVelocityY(-560);this.jc++;this.buf=0;this.jmp=true;Sfx.play("jump");Juice.burst(this,p.x,p.y+12,0xf9a8d4);}
     if(this.jmp&&!j&&b.velocity.y<-220)p.setVelocityY(-220);if(b.velocity.y>=0)this.jmp=false;
     const px=b.x,py=b.y,pw=b.width,ph=b.height,hit=(x,y,w,h)=>px<x+w&&px+pw>x&&py<y+h&&py+ph>y,ghost=fx.ghost>now;
-    const open=this.keysGot.size>=this.nk&&this.bosses.every(bb=>bb.dead);
+    const open=this.keysGot.size>=this.nk&&this.bosses.every(bb=>bb.dead||bb.hp<=0);
     if(open&&!this.unlockedShown&&(this.nk>0||this.bosses.length>0)){
       this.unlockedShown=true;
       Juice.card({icon:"🚪",tag:"EXIT READY",title:"DOOR UNLOCKED!",hint:"Head to the exit door to complete the level!",color:"#4ade80",glow:"rgba(74,222,128,0.5)",ms:3200});
@@ -3352,7 +3440,11 @@ class Main extends Phaser.Scene{
         else if(e.t==="G"){
                     if(!e.on)e.on=!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
         }
-        else if("123456".includes(e.t)&&!e.dead){e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);e.bar.setSize(50,6);}
+        else if("123456".includes(e.t)&&!e.dead){
+          e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);
+          e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);
+          e.bg.setVisible(e.awake);e.bar.setVisible(e.awake);e.nm.setVisible(e.awake);e.say.setVisible(false);e.bar.setSize(50,6);
+        }
         else if(e.t==="l"){e.fall=false;e.done=false;e.vy=0;e.y=e.y0;e.s.setY(e.y0);}
         else if(e.t==="i"){e.up=false;e.s.setVisible(false);}
       });
@@ -3373,7 +3465,7 @@ class Main extends Phaser.Scene{
           }
           if(e.t==="i")e.s.setVisible(!!e.up).setY(e.y);
           if(e.t==="l")e.s.setY(e.y);
-          if("123456".includes(e.t)&&!e.dead){if(e.awake)this.activatedBosses.add(e.t);e.bar.setVisible(true);e.bar.setSize(50*Math.max(0,e.hp)/e.max,6);}
+          if("123456".includes(e.t)&&!e.dead){if(e.awake)this.activatedBosses.add(e.t);e.bg.setVisible(!!e.awake);e.bar.setVisible(!!e.awake);e.nm.setVisible(!!e.awake);e.bar.setSize(50*Math.max(0,Math.min(e.max,e.hp))/e.max,6);}
         });
       }
       this.crates.getChildren().forEach(c=>{c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);});
