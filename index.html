@@ -3003,7 +3003,7 @@ class Main extends Phaser.Scene{
     e.bg.setVisible(true);e.bar.setVisible(true);e.nm.setVisible(true);
     if(e.sayT&&now>e.sayT){e.say.setVisible(false);e.sayT=0;}
     const ox=e.x,oy=e.y,st=this.hitW(ox,oy,20,28),air=!e.g,vy0=e.vy;
-    let go=false;
+    let go=false,jumped=false;
     // every attack: red flicker telegraph first, then the move
     if(e.wd){if(now>e.wd){e.wd=0;go=true;e.s.clearTint();}else e.s.setTint(Math.floor(now/60)%2?0xff5a5a:0xffffff);}
     else if(now>e.tm&&(!gnd||e.g))e.wd=now+(k==="2"?700:480);
@@ -3011,7 +3011,7 @@ class Main extends Phaser.Scene{
     if(gnd){e.vy+=1500*s;e.y+=e.vy*s;}
     if(k==="1"){ // Gloop: hops, every 3rd hop is a slam that sends ground ripples
       if(e.g&&!e.wd&&!go)e.vx=0;
-      if(go){e.hc=(e.hc||0)+1;e.big=e.hc%3===0||p2>1;e.vy=e.big?-820:-560;e.vx=sg*(e.big?210:170)*sp;e.tm=now+cd*1300;}
+      if(go){e.hc=(e.hc||0)+1;e.big=e.hc%3===0||p2>1;e.vy=e.big?-820:-560;jumped=true;e.vx=sg*(e.big?210:170)*sp;e.tm=now+cd*1300;}
       e.x+=e.vx*s;
       if(e.wd)e.s.setScale(1.14,.8);else e.s.setScale(1-Math.min(.16,Math.abs(e.vy)/5000),1+Math.min(.2,Math.abs(e.vy)/3800));
     }
@@ -3043,7 +3043,8 @@ class Main extends Phaser.Scene{
     if(!st){
       if(this.hitW(e.x,oy,20,28)){e.x=ox;e.vx=0;}
       if(this.hitW(e.x,e.y,20,28)){
-        e.g=e.vy>0?1:0;e.y=oy;e.vy=0;
+        // A jump launched this frame must not be cancelled by the ground contact it is leaving.
+        e.g=(!jumped&&e.vy>0)?1:0;e.y=oy;if(!jumped)e.vy=0;
         if(k==="1"&&air&&e.g&&e.big&&vy0>300){e.big=false;this.cameras.main.shake(200,.012);this.shoot(e.x-20,e.y+18,-220,0,true,"ebul",1.6,0);this.shoot(e.x+20,e.y+18,220,0,true,"ebul",1.6,0);}
       }else if(gnd)e.g=0;
     }
