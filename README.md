@@ -79,3 +79,9 @@ A full interactive browser/device test could not be completed in this environmen
 - **Bigger HUD text** for deaths, time and keys.
 - Preferences persist in localStorage (`bbctl`, `bbctlsz`, `bblefty`).
 - Not yet tested in a real browser or on a device. Please check on a phone.
+
+## Update: Boss fix
+
+- **Slime King (Boss 1) never jumped.** The ground-contact step ran in the same frame the hop was launched and reset its upward velocity, so it only squashed and flickered in place. Hops are now preserved, so it jumps toward you, does a bigger slam hop every third jump (and every hop when enraged), and sends ground shockwaves on landing.
+- Verified all six bosses' movement and attack logic in a headless simulation across all three health phases. The other five bosses already behaved as designed.
+
