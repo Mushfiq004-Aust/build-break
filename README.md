@@ -1,5 +1,16 @@
 # Build & Break — ARGON + Mobile Editor Merge
 
+## Latest fixes (controls layout + boss rework)
+- **Controls Position (Below / Over) now works.** The game runs in mode `test`/`play`, but the CSS only targeted `play`, so the "below" layout never applied and the pad always covered the bottom of the screen. In Below mode the canvas now sits above a dedicated control strip; the camera zooms in part-way so the runner stays readable in the smaller window.
+- **Editor look-around pad no longer covers the level (touch devices).** In landscape it has its own right-hand gutter with larger 40px buttons; in portrait it sits in a strip under the canvas. The canvas shrinks to fit instead of being overlapped.
+- **Canvas double-centering removed** (Phaser autoCenter + flex centering pushed the canvas off-centre after a resize).
+- **Bosses can no longer pass through walls.** All six bosses now move through a swept collision step (max 4px per sub-step, per axis). Flying bosses glide toward their pattern positions at a capped speed and stop at walls; Vesper's dive aborts when it hits a wall. Ground bosses use swept gravity with a 900px/s fall cap (no tunnelling, no floating gap). A boss that ever ends up inside a block is pushed to the nearest free spot.
+- **Mourna's teleport** only picks free spots that have a clear line to her home position (same chamber) and, when possible, a clear line to you. She then reappears, flickers for ~0.45s, and only then fires, so the volley can be reacted to.
+- **Falling-rock attacks** (Grumm stomp, Ignarax fire rain) are skipped when a ceiling is in the way instead of spawning inside it and vanishing.
+- Ground bosses only launch an attack from the ground; boss phase/position are re-synced after respawn from a checkpoint.
+- Verified in headless Chromium (phone viewport): with a wall between boss and player the original build let bosses 2, 3, 5 and 6 cross it; the fixed build keeps all six on their side with 0 frames inside solid blocks, and 2000 random Mourna teleports never landed inside or beyond a wall.
+
+
 ## Latest stability fixes
 - Fixed Storm Serpent (Boss 6) not receiving its AI/update call, which could leave it inactive or broken during gameplay.
 - Reworked moving-platform motion to use the analytic velocity of its smooth back-and-forth path instead of per-frame position correction, reducing platform surges and player shaking.
