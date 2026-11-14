@@ -1045,7 +1045,7 @@ body.home-active #drawerScrim {
     position: fixed;
     inset: var(--bar-h, 56px) 0 0 0;
   }
-  body:not([data-mode="edit"]) #pad {
+  body:is([data-mode="test"],[data-mode="play"]) #pad {
     display: flex;
   }
 
@@ -1483,8 +1483,8 @@ body.home-active #drawerScrim {
   #pad .jb{width:var(--jb);height:var(--jb);font-size:calc(var(--jb) * .2);}
   #pad .g{gap:calc(var(--mv) * .16);}
   /* Controls below the screen: the game canvas gets its own area above the pad */
-  body[data-ctl="below"]:not([data-mode="edit"]) #game{bottom:var(--pad-zone);}
-  body[data-ctl="below"]:not([data-mode="edit"]) #pad{
+  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #game{bottom:var(--pad-zone);}
+  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #pad{
     height:var(--pad-zone);padding-top:6px;padding-bottom:calc(6px + var(--safe-b));align-items:center;
     background:linear-gradient(to top,rgba(8,6,24,.72),rgba(8,6,24,.38));
     border-top:1px solid rgba(255,255,255,.1);
@@ -1492,32 +1492,39 @@ body.home-active #drawerScrim {
   body.lefty #pad{flex-direction:row-reverse;}
   body.lefty #pad > .g:last-child{flex-direction:row-reverse;}
 }
-
-/* Mobile interaction fixes: reserve a real viewport above the control shelf. */
-@media (pointer:coarse),(max-width:820px){
-  #main{overflow:hidden;}
-  #wrap{min-height:0;}
-  body[data-ctl="below"]:not([data-mode="edit"]) #game{
-    inset:0 0 var(--pad-zone) 0 !important;
-  }
-  body[data-ctl="below"]:not([data-mode="edit"]) #pad{
-    position:absolute;left:0;right:0;bottom:0;top:auto;
-    height:var(--pad-zone);min-height:var(--pad-zone);
-    box-sizing:border-box;z-index:9;
-  }
+/* ==========================================================================
+   MOBILE EDITOR: look-around pad lives in its own gutter so it never covers the level
+   ========================================================================== */
+@media (pointer:coarse) and (orientation:landscape){
+  :root{--pan-w:calc(138px + var(--safe-r));}
+  body[data-mode="edit"] #game{right:var(--pan-w);}
   body[data-mode="edit"] #mobilePan{
-    top:auto;bottom:12px;right:max(10px,var(--safe-r));
-    transform:none;z-index:9;
+    right:0;top:0;bottom:0;transform:none;width:var(--pan-w);
+    justify-content:center;gap:10px;
+    padding:8px max(8px,var(--safe-r)) 8px 8px;
+    border-radius:0;border:0;border-left:1px solid var(--line);
+    background:var(--bar-bg);box-shadow:none;
   }
-  #mobilePan .pan-grid{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);gap:4px;}
-  #mobilePan button{width:42px;height:42px;font-size:18px;touch-action:none;}
-  #mobilePan .zoom-row button{height:36px;}
+  body[data-mode="edit"] #mobilePan .pan-grid{grid-template-columns:repeat(3,40px);grid-template-rows:repeat(3,40px);gap:4px;}
+  body[data-mode="edit"] #mobilePan button{width:40px;height:40px;font-size:16px;}
+  body[data-mode="edit"] #mobilePan .zoom-row{width:auto;gap:8px;border-top:0;padding-top:0;}
+  body[data-mode="edit"] #mobilePan .zoom-row button{flex:none;width:56px;height:40px;font-size:18px;}
 }
-@media (orientation:landscape) and (pointer:coarse){
-  :root{--pad-zone:calc(var(--jb) + 8px + var(--safe-b));}
-  body[data-mode="edit"] #mobilePan{bottom:8px;}
+@media (pointer:coarse) and (orientation:portrait){
+  :root{--pan-h:calc(132px + var(--safe-b));}
+  body[data-mode="edit"] #game{bottom:var(--pan-h);}
+  body[data-mode="edit"] #mobilePan{
+    top:auto;right:0;left:0;bottom:0;transform:none;height:var(--pan-h);
+    flex-direction:row;justify-content:space-around;align-items:center;gap:10px;
+    padding:6px 12px calc(6px + var(--safe-b));
+    border-radius:0;border:0;border-top:1px solid var(--line);
+    background:var(--bar-bg);box-shadow:none;
+  }
+  body[data-mode="edit"] #mobilePan .pan-grid{grid-template-columns:repeat(3,38px);grid-template-rows:repeat(3,38px);gap:3px;}
+  body[data-mode="edit"] #mobilePan button{width:38px;height:38px;font-size:15px;}
+  body[data-mode="edit"] #mobilePan .zoom-row{width:auto;gap:8px;border-top:0;padding-top:0;}
+  body[data-mode="edit"] #mobilePan .zoom-row button{flex:none;width:56px;height:44px;font-size:18px;}
 }
-
 </style>
 </head>
 <body data-mode="edit" class="home-active">
@@ -1787,82 +1794,8 @@ const setDisp=(el,v)=>{if(el&&el._lastDisp!==v){el._lastDisp=v;el.style.display=
 const Sfx={
   on:localStorage.getItem("bbsfx")!=="0",
   hap:localStorage.getItem("bbhap")!=="0",
-  ctx:null, ambienceMode:"night", ambienceNodes:[], ambienceGain:null, ambienceTimer:null,
-  init(){
-    if(!this.ctx){const C=window.AudioContext||window.webkitAudioContext;if(C)this.ctx=new C();}
-    if(this.ctx?.state==="suspended")this.ctx.resume().catch(()=>{});
-    if(this.ctx&&this.on&&!this.ambienceGain)this.startAmbience();
-  },
-  stopAmbience(){
-    if(this.ambienceTimer){clearTimeout(this.ambienceTimer);clearInterval(this.ambienceTimer);this.ambienceTimer=null;}
-    const t=this.ctx?.currentTime||0;
-    const oldNodes=this.ambienceNodes.slice();
-    if(this.ambienceGain){try{this.ambienceGain.gain.cancelScheduledValues(t);this.ambienceGain.gain.setTargetAtTime(0,t,.12);}catch(_){}}
-    oldNodes.forEach(n=>{try{if(n!==this.ambienceGain&&n.stop)n.stop(t+.45);}catch(_){}});
-    setTimeout(()=>oldNodes.forEach(n=>{try{n.disconnect();}catch(_){}}),500);
-    this.ambienceNodes=[];this.ambienceGain=null;
-  },
-  setAmbience(mode){
-    this.ambienceMode=mode||"night";
-    if(!this.ctx||!this.on)return;
-    this.stopAmbience();this.startAmbience();
-  },
-  startAmbience(){
-    if(!this.ctx||!this.on||this.ambienceGain)return;
-    const c=this.ctx,t=c.currentTime,nodes=this.ambienceNodes;
-    const master=c.createGain();master.gain.setValueAtTime(.0001,t);master.gain.linearRampToValueAtTime(.052,t+1.4);master.connect(c.destination);this.ambienceGain=master;nodes.push(master);
-    const keep=n=>{nodes.push(n);return n;};
-    const noise=(kind,cutoff,level,highpass=0)=>{
-      const len=2*c.sampleRate,buf=c.createBuffer(1,len,c.sampleRate),data=buf.getChannelData(0);
-      for(let i=0;i<len;i++)data[i]=(Math.random()*2-1)*.7;
-      const src=keep(c.createBufferSource());src.buffer=buf;src.loop=true;
-      let last=src;
-      if(highpass){const hp=keep(c.createBiquadFilter());hp.type="highpass";hp.frequency.value=highpass;last.connect(hp);last=hp;}
-      if(cutoff){const lp=keep(c.createBiquadFilter());lp.type="lowpass";lp.frequency.value=cutoff;last.connect(lp);last=lp;}
-      const g=keep(c.createGain());g.gain.value=level;last.connect(g);g.connect(master);src.start();
-      return src;
-    };
-    const note=(freq,dur=.8,vol=.025,wave="sine")=>{
-      if(!this.on||!this.ctx||!this.ambienceGain)return;
-      const at=c.currentTime,o=keep(c.createOscillator()),g=keep(c.createGain());
-      o.type=wave;o.frequency.setValueAtTime(freq,at);
-      g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(vol,at+.06);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
-      o.connect(g);g.connect(master);o.start(at);o.stop(at+dur+.03);
-    };
-    const thunder=()=>{
-      if(!this.on||!this.ctx||!this.ambienceGain)return;
-      const at=c.currentTime,src=keep(c.createBufferSource()),buf=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=buf.getChannelData(0);
-      for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);
-      src.buffer=buf;
-      const lp=keep(c.createBiquadFilter());lp.type="lowpass";lp.frequency.value=125;
-      const g=keep(c.createGain());g.gain.setValueAtTime(.0001,at);g.gain.linearRampToValueAtTime(.22,at+.12);g.gain.exponentialRampToValueAtTime(.0001,at+1.8);
-      src.connect(lp);lp.connect(g);g.connect(master);src.start(at);src.stop(at+2);
-    };
-    const mode=this.ambienceMode;
-    if(mode==="rain"||mode==="thunder"){
-      noise("rain",1700,.42,260);noise("wind",420,.13,80);
-      if(mode==="thunder"){
-        const schedule=()=>{if(!this.on||!this.ambienceGain)return;thunder();this.ambienceTimer=setTimeout(schedule,9000+Math.random()*9000);};
-        this.ambienceTimer=setTimeout(schedule,5000+Math.random()*5000);
-      }
-    }else if(mode==="winter"){
-      // A gentle original bell-like arpeggio with a soft sustained pad.
-      noise("winter-wind",520,.045,100);
-      const pad=[196,246.94,293.66];
-      pad.forEach((f,i)=>{const o=keep(c.createOscillator()),g=keep(c.createGain());o.type="sine";o.frequency.value=f;g.gain.value=.012;o.connect(g);g.connect(master);o.start();});
-      const seq=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46];let ix=0;
-      const playNote=()=>{if(!this.on||!this.ambienceGain)return;note(seq[ix%seq.length],1.05,.024,"sine");if(ix%4===0)note(seq[ix%seq.length]/2,1.35,.012,"triangle");ix++;};
-      playNote();this.ambienceTimer=setInterval(playNote,760);
-    }else if(mode==="day"){
-      noise("breeze",650,.055,180);
-      const birds=()=>{if(!this.on||!this.ambienceGain)return;const f=1250+Math.random()*900;note(f,.18,.018,"sine");setTimeout(()=>note(f*1.18,.22,.014,"sine"),110);};
-      birds();this.ambienceTimer=setInterval(birds,3200);
-    }else{
-      // Night: quiet breeze under a pair of distant, pulsing crickets.
-      noise("night-breeze",520,.075,130);
-      [3920,4380].forEach((f,i)=>{const o=keep(c.createOscillator()),g=keep(c.createGain()),lfo=keep(c.createOscillator()),lg=keep(c.createGain());o.type="sine";o.frequency.value=f+i*13;g.gain.value=.0035;o.connect(g);g.connect(master);lfo.frequency.value=4.2+i*.7;lg.gain.value=.003;lfo.connect(lg);lg.connect(g.gain);o.start();lfo.start();});
-    }
-  },
+  ctx:null,
+  init(){if(!this.ctx){const C=window.AudioContext||window.webkitAudioContext;if(C)this.ctx=new C();}if(this.ctx?.state==="suspended")this.ctx.resume().catch(()=>{});},
   vib(ms){if(this.hap&&navigator.vibrate){try{navigator.vibrate(ms);}catch(_){}}},
   tone(freq,dur,type="triangle",vol=0.12,slide=0){
     if(!this.on)return;
@@ -1885,9 +1818,6 @@ const Sfx={
     else if(kind==="bossDown"){[440,554,659,880].forEach((n,i)=>setTimeout(()=>this.tone(n,0.18,"square",0.09),i*70));}
     else if(kind==="hurt"){this.tone(180,0.2,"sawtooth",0.12,-100);}
     else if(kind==="win"){[523,659,784,1046,1318].forEach((n,i)=>setTimeout(()=>this.tone(n,0.22,"triangle",0.14),i*85));}
-    else if(kind==="portal"){this.tone(420,.12,"sine",.08,520);}
-    else if(kind==="mode"){this.tone(520,.12,"sine",.065,180);setTimeout(()=>this.tone(780,.18,"triangle",.055),90);}
-    else if(kind==="place"){this.tone(240,.045,"square",.035,80);}
   }
 };
 
@@ -1907,8 +1837,7 @@ const Ctl={
     this[k]=v;
     try{localStorage.setItem(k==="mode"?"bbctl":k==="size"?"bbctlsz":"bblefty",k==="lefty"?(v?"1":"0"):String(v));}catch(_){}
     this.apply();
-    requestAnimationFrame(()=>window.game?.scale?.refresh());
-    setTimeout(()=>window.game?.scale?.refresh(),120);
+    setTimeout(()=>window.game?.scale?.refresh(),60);
   }
 };
 
@@ -1944,8 +1873,7 @@ const Theme={
     if($("deskThemeBtn"))$("deskThemeBtn").textContent=info[2];
     if($("mobileThemeBtn"))$("mobileThemeBtn").textContent=info[0];
     try{const s=sc();if(s&&s.applyTheme)s.applyTheme();if(s)document.querySelectorAll("#pal [data-t] canvas, #mobileToolScroll [data-t] canvas").forEach(cv=>drawToolIcon(cv,s,cv.parentElement.dataset.t));}catch(_){}
-    Sfx.setAmbience(this.cur);
-    if(announce){Sfx.play("mode");flash(info[0]+" "+info[1]+" atmosphere!");}
+    if(announce)flash(info[0]+" "+info[1]+" atmosphere!");
   }
 };
 
@@ -2351,7 +2279,7 @@ function openMobileSettings(){
           <button id="stgTheme" class="pri">${isDay?"☀️ Day":"🌙 Night"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <div><b>Sound Effects</b><br><small style="color:var(--fg-muted)">Arcade effects + weather ambience / music</small></div>
+          <div><b>Sound Effects</b><br><small style="color:var(--fg-muted)">Synthesized arcade chimes</small></div>
           <button id="stgSfx" class="${Sfx.on?"pri":""}">${Sfx.on?"🔊 On":"🔇 Off"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
@@ -2374,7 +2302,7 @@ function openMobileSettings(){
       [["Close",()=>{if(resumeAfter){try{scene?.scene.resume();}catch(_){}}}]]
     );
     $("stgTheme").onclick=()=>{Theme.toggle();render();};
-    $("stgSfx").onclick=()=>{Sfx.on=!Sfx.on;localStorage.setItem("bbsfx",Sfx.on?"1":"0");if(Sfx.on){Sfx.init();Sfx.setAmbience(Theme.cur);Sfx.play("key");}else Sfx.stopAmbience();render();};
+    $("stgSfx").onclick=()=>{Sfx.on=!Sfx.on;localStorage.setItem("bbsfx",Sfx.on?"1":"0");if(Sfx.on)Sfx.play("key");render();};
     $("stgHap").onclick=()=>{Sfx.hap=!Sfx.hap;localStorage.setItem("bbhap",Sfx.hap?"1":"0");if(Sfx.hap)Sfx.vib(35);render();};
     if($("stgCtl")){
       $("stgCtl").onclick=()=>{Ctl.set("mode",Ctl.mode==="below"?"over":"below");render();};
@@ -2510,41 +2438,13 @@ $("share").onclick=()=>{const e=validate(G.lv);if(e)return flash(e);dlg("Share y
 $("load").onclick=()=>dlg("Load a level code","<textarea id=ta placeholder='Paste level code here…'></textarea>",[["Play it",()=>{const L=dec($("ta").value),e=validate(L);if(e){flash(e);return false}G.cur=L;go("play")}],["Edit a copy",()=>{const L=dec($("ta").value),e=validate(L);if(e){flash(e);return false}G.und.push(JSON.stringify(G.lv));G.red=[];G.lv=L;G.sel=null;save();go("edit")}],["Cancel"]]);
 document.addEventListener("click",e=>{if(e.isTrusted){Sfx.init();}if(e.target.tagName==="BUTTON")e.target.blur()});
 
-/* Camera D-pad bindings — capture the pointer so up/down/left/right keep
-   working for the entire press on touchscreens. pointerleave is deliberately
-   not used: browsers can emit it during normal touch movement. */
+/* Camera D-pad bindings */
 const PAN={x:0,y:0};
-const panPointers=new Map();
-function refreshPan(){
-  let x=0,y=0;
-  for(const v of panPointers.values()){x+=v.x;y+=v.y;}
-  PAN.x=Math.max(-1,Math.min(1,x));PAN.y=Math.max(-1,Math.min(1,y));
-}
 document.querySelectorAll("[data-p]").forEach(b=>{
-  const [x,y]=b.dataset.p.split(",").map(Number);
-  b.style.touchAction="none";
-  b.addEventListener("pointerdown",e=>{
-    e.preventDefault();
-    try{b.setPointerCapture(e.pointerId);}catch(_){}
-    panPointers.set(e.pointerId,{x,y,button:b});b.classList.add("dn");refreshPan();
-  });
-  const stop=e=>{
-    if(!panPointers.has(e.pointerId))return;
-    const entry=panPointers.get(e.pointerId);panPointers.delete(e.pointerId);
-    entry.button.classList.remove("dn");refreshPan();
-  };
-  ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>b.addEventListener(ev,stop));
+  const[x,y]=b.dataset.p.split(",").map(Number);
+  b.addEventListener("pointerdown",e=>{e.preventDefault();PAN.x=x;PAN.y=y;});
+  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,()=>{PAN.x=PAN.y=0;}));
 });
-addEventListener("blur",()=>{panPointers.clear();PAN.x=PAN.y=0;document.querySelectorAll("[data-p].dn").forEach(b=>b.classList.remove("dn"));});
-
-
-// Keep Phaser's FIT canvas dimensions synchronized with the reserved mobile control zone.
-if(typeof ResizeObserver!=="undefined"){
-  const layoutObserver=new ResizeObserver(()=>window.game?.scale?.refresh());
-  const wrapEl=$("wrap"),gameEl=$("game");
-  if(wrapEl)layoutObserver.observe(wrapEl);if(gameEl)layoutObserver.observe(gameEl);
-}
-addEventListener("orientationchange",()=>setTimeout(()=>window.game?.scale?.refresh(),180));
 
 /* Touch Gameplay Pad with Thumb-Slide Support between Left & Right */
 const T={l:0,r:0,j:0,jd:0,a:0,d:0,s:0};
@@ -3047,15 +2947,7 @@ class Main extends Phaser.Scene{
       }
     });
     this.ents.forEach(f=>{if(f.t==="G")f.bosses=[];});
-    this.bosses.forEach(b=>{
-      let best=null,bd=1e9;
-      this.ents.forEach(f=>{if(f.t!=="G")return;const dx=Math.abs(f.x-b.fx)/S,dy=Math.abs(f.y-b.by)/S;if(dx<=18&&dy<=12&&dx+dy<bd){bd=dx+dy;best=f;}});
-      if(best){b.flag=best;best.bosses.push(b);}
-      const safe=this.safeBossSpot(b.fx,b.by,20,28,Math.max(21,b.fx-220),Math.min(W*S-21,b.fx+220));
-      if(safe){b.fx=safe.x;b.by=safe.y;b.x=safe.x;b.y=safe.y;b.s.setPosition(b.x,b.y);}
-      else{b.hp=0;b.dead=b.gone=true;b.s.setVisible(false);b.bg.setVisible(false);b.bar.setVisible(false);b.nm.setVisible(false);}
-      b.hp=Math.max(0,Math.min(b.max,b.hp));
-    });
+    this.bosses.forEach(b=>{let best=null,bd=1e9;this.ents.forEach(f=>{if(f.t!=="G")return;const dx=Math.abs(f.x-b.fx)/S,dy=Math.abs(f.y-b.by)/S;if(dx<=18&&dy<=12&&dx+dy<bd){bd=dx+dy;best=f;}});if(best){b.flag=best;best.bosses.push(b);}});
     this.portals=this.ents.filter(e=>e.t==="Q");
     this.portals.forEach((portal,i)=>{portal.pair=i%2===0?(this.portals[i+1]||null):this.portals[i-1];});
     this.portalNeedsExit=false;this.portalCooldown=0;this.portalWarningAt=0;
@@ -3088,54 +2980,6 @@ class Main extends Phaser.Scene{
     this.die();
   }
   hitW(x,y,hw,hh){for(const sx of[x-hw,x,x+hw-1])for(const sy of[y-hh,y-hh/2,y+hh/2,y+hh-1])if(this.sol.has(Math.floor(sx/S)+","+Math.floor(sy/S)))return true;return false;}
-  bossBlocked(x,y,hw=20,hh=28){
-    const c0=Math.floor((x-hw+1)/S),c1=Math.floor((x+hw-1)/S);
-    const r0=Math.floor((y-hh+1)/S),r1=Math.floor((y+hh-1)/S);
-    for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++)if(this.sol.has(c+","+r))return true;
-    return x-hw<0||x+hw>W*S||y-hh<0||y+hh>H*S;
-  }
-  safeBossSpot(x,y,hw=20,hh=28,minX=hw+1,maxX=W*S-hw-1){
-    x=Math.max(minX,Math.min(maxX,x));
-    if(!this.bossBlocked(x,y,hw,hh))return {x,y};
-    // Search outward in small rings; never place a boss inside a solid tile.
-    for(let radius=1;radius<=9;radius++){
-      const d=radius*S;
-      const candidates=[
-        [x+d,y],[x-d,y],[x,y-d],[x,y+d],
-        [x+d,y-d],[x-d,y-d],[x+d,y+d],[x-d,y+d],
-        [x+d*.5,y-d],[x-d*.5,y-d],[x+d*.5,y+d],[x-d*.5,y+d]
-      ];
-      for(const [tx,ty] of candidates){
-        const cx=Math.max(minX,Math.min(maxX,tx));
-        const cy=Math.max(hh+1,Math.min(H*S-hh-1,ty));
-        if(!this.bossBlocked(cx,cy,hw,hh))return {x:cx,y:cy};
-      }
-    }
-    return null;
-  }
-  constrainBossMove(e,oldX,oldY){
-    if(e.teleported){
-      const safe=this.safeBossSpot(e.x,e.y,20,28,Math.max(21,e.fx-220),Math.min(W*S-21,e.fx+220));
-      if(safe){e.x=safe.x;e.y=safe.y;}else{e.x=oldX;e.y=oldY;}
-      e.teleported=false;return;
-    }
-    const dx=e.x-oldX,dy=e.y-oldY;
-    const steps=Math.max(1,Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))/7));
-    let x=oldX,y=oldY;
-    for(let i=1;i<=steps;i++){
-      const tx=oldX+dx*i/steps;
-      if(!this.bossBlocked(tx,y))x=tx;else e.vx=0;
-      const ty=oldY+dy*i/steps;
-      if(!this.bossBlocked(x,ty))y=ty;
-      else if(dy>0){e.g=1;e.vy=0;}else if(dy<0)e.vy=0;
-    }
-    e.x=x;e.y=y;
-  }
-  hasBossLineOfSight(x1,y1,x2,y2){
-    const dx=x2-x1,dy=y2-y1,steps=Math.max(1,Math.ceil(Math.hypot(dx,dy)/8));
-    for(let i=1;i<steps;i++){const t=i/steps;if(this.bossBlocked(x1+dx*t,y1+dy*t,3,3))return false;}
-    return true;
-  }
 
   got(t,ex,ey){
     if("ZFY".includes(t))this.wep=FX[t];
@@ -3154,20 +2998,17 @@ class Main extends Phaser.Scene{
   shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm"});}
   say(e,t,ms=1900){if(e.say){e.say.setText(t).setVisible(true);e.sayT=this.time.now+ms;}}
   wake(e,card){
-    if(!e||e.dead||e.awake||!BOSS[e.t])return;
-    const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;
+    const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;e.fire=0;
     this.say(e,B.q[0],2400);Sfx.play("boss");Sfx.vib([40,30,60]);
     if(card)Juice.card({icon:"👹",tag:"BOSS FIGHT",title:B.n,hint:B.t,color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3400});
   }
   aimAt(sx,sy,n,spr,v,tx,life){
-    const p=this.p;if(!p||this.dead||!this.hasBossLineOfSight(sx,sy,p.x+p.width/2,p.y+p.height/2))return;
-    const a=Math.atan2(p.y+p.height/2-sy,p.x+p.width/2-sx);
+    const p=this.p;if(!p||this.dead)return;const a=Math.atan2(p.y-sy,p.x-sx);
     for(let i=0;i<n;i++){const d=(i-(n-1)/2)*spr;this.shoot(sx,sy,Math.cos(a+d)*v,Math.sin(a+d)*v,true,tx,life,0);}
   }
   dmg(e,n){
-    if(!e||e.dead||!e.awake||!Number.isFinite(n)||n<=0||!BOSS[e.t])return;
-    const B=BOSS[e.t];e.hp=Math.max(0,e.hp-n);
-    if(e.s&&e.s.active){e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>{if(!e.dead&&e.s&&e.s.active)e.s.clearTint();});}
+    if(e.dead||!e.awake)return;
+    const B=BOSS[e.t];e.hp-=n;e.s.setTintFill(0xffffff);this.time.delayedCall(70,()=>{if(!e.dead)e.s.clearTint();});
     const f=e.hp/e.max,np=f<=.33?2:f<=.66?1:0;
     if(e.hp>0&&np>e.phase){
       e.phase=np;e.tm=this.time.now+900;e.wd=0;
@@ -3185,77 +3026,132 @@ class Main extends Phaser.Scene{
     }
   }
 
+  // ---- boss movement helpers: every boss moves through swept collision, so none can cross a wall ----
+  bfree(x,y){return !this.hitW(x,y,20,28);}
+  bmove(e,dx,dy){
+    let bx=false,by=false;
+    const n=Math.min(60,Math.ceil(Math.max(Math.abs(dx),Math.abs(dy))/4));
+    if(!n)return{bx,by};
+    const sx=dx/n,sy=dy/n;
+    for(let i=0;i<n;i++){
+      if(sx&&!bx){if(this.bfree(e.x+sx,e.y))e.x+=sx;else bx=true;}
+      if(sy&&!by){if(this.bfree(e.x,e.y+sy))e.y+=sy;else by=true;}
+    }
+    return{bx,by};
+  }
+  // glide toward a target at a capped speed (stops at walls instead of passing through them)
+  bto(e,tx,ty,spd,s){
+    let dx=tx-e.x,dy=ty-e.y;const d=Math.hypot(dx,dy),m=spd*s;
+    if(d>m){dx*=m/d;dy*=m/d;}
+    return this.bmove(e,dx,dy);
+  }
+  bclear(x0,y0,x1,y1){
+    const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/10)||1;
+    for(let i=0;i<=n;i++){const t=i/n;if(this.hitW(x0+(x1-x0)*t,y0+(y1-y0)*t,12,12))return false;}
+    return true;
+  }
+  unstick(e){
+    if(this.bfree(e.x,e.y))return;
+    for(let r=8;r<=240;r+=8)for(let a=0;a<16;a++){
+      const x=e.x+Math.cos(a*Math.PI/8)*r,y=e.y+Math.sin(a*Math.PI/8)*r;
+      if(this.bfree(x,y)){e.x=x;e.y=y;e.vy=0;return;}
+    }
+    e.x=e.fx;e.y=e.by;e.vy=0;
+  }
+  // a falling shot from above the player; skipped if a ceiling is in the way
+  rain(x,py,v,tx,life){
+    let y=py-280;
+    while(y<py-60&&this.hitW(x,y,6,6))y+=24;
+    if(y<py-60&&this.bclear(x,y,x,py-20))this.shoot(x,y,0,v,true,tx,life,0);
+  }
+  // teleport destination for the Ghost Mage: free space, same chamber as her home, ideally with a clear line to the player
+  ghostSpot(e,cx,cy){
+    const lo=Math.max(e.fx-200,40),hi=Math.min(e.fx+200,W*S-40);
+    for(const needPlayer of[true,false])for(let i=0;i<18;i++){
+      const side=Math.random()<.5?-1:1;
+      const x=Math.max(lo,Math.min(hi,cx+side*(120+Math.random()*100))),y=Math.max(60,e.by-Math.random()*100);
+      if(!this.bfree(x,y))continue;
+      if(!this.bclear(e.fx,e.by,x,y))continue;
+      if(needPlayer&&!this.bclear(x,y,cx,cy))continue;
+      return{x,y};
+    }
+    return null;
+  }
+
   boss(e,s,now,px,py,pw,ph,hit){
-    const k=e.t,cx=px+pw/2;
+    const k=e.t,cx=px+pw/2,cy=py+ph/2;
     if(!e.awake){
       if(!e.flag&&Math.abs(cx-e.fx)<520&&Math.abs(py-e.by)<380)this.wake(e,true);
       else{e.x=e.fx;e.y=e.by+Math.sin(now/500+e.fx)*2;e.vy=0;e.s.setPosition(e.x,e.y);return;}
     }
+    this.unstick(e);
     const sg=cx>e.x?1:-1,p2=e.phase,sp=1+p2*.3,cd=[1,.78,.58][p2],gnd=k==="1"||k==="4";
+    const xlo=Math.max(e.fx-220,40),xhi=Math.min(e.fx+220,W*S-40);
+    const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
     e.bg.setVisible(true);e.bar.setVisible(true);e.nm.setVisible(true);
     if(e.sayT&&now>e.sayT){e.say.setVisible(false);e.sayT=0;}
-    const ox=e.x,oy=e.y,st=this.hitW(ox,oy,20,28),air=!e.g,vy0=e.vy;
-    let go=false,jumped=false;
+    let go=false;
     // every attack: red flicker telegraph first, then the move
-    if(e.wd){if(now>e.wd){e.wd=0;go=true;e.s.clearTint();}else e.s.setTint(Math.floor(now/60)%2?0xff5a5a:0xffffff);}
-    else if(now>e.tm&&(!gnd||e.g))e.wd=now+(k==="2"?700:480);
-    if(!e.wd)e.ph+=s*sp;
-    if(gnd){e.vy+=1500*s;e.y+=e.vy*s;}
+    if(e.wd){
+      if(now>e.wd){e.wd=0;go=true;e.s.clearTint();
+        if(gnd&&!e.g){go=false;e.wd=now+80;} // ground bosses only launch an attack from the ground
+      }else e.s.setTint(Math.floor(now/60)%2?0xff5a5a:0xffffff);
+    }
+    else if(!e.fire&&now>e.tm&&(!gnd||e.g))e.wd=now+(k==="2"?700:480);
+    // delayed volley (Ghost Mage re-appears first, THEN fires, so there is a moment to react)
+    if(e.fire){
+      if(now>e.fire){e.fire=0;e.s.clearTint();this.aimAt(e.x,e.y,3+p2*2,.26,190+p2*25,"ebul",4);}
+      else e.s.setTint(Math.floor(now/60)%2?0xc4b5fd:0xffffff);
+    }
+    if(!e.wd&&!e.fire)e.ph+=s*sp;
     if(k==="1"){ // Gloop: hops, every 3rd hop is a slam that sends ground ripples
       if(e.g&&!e.wd&&!go)e.vx=0;
-      if(go){e.hc=(e.hc||0)+1;e.big=e.hc%3===0||p2>1;e.vy=e.big?-820:-560;jumped=true;e.vx=sg*(e.big?210:170)*sp;e.tm=now+cd*1300;}
-      e.x+=e.vx*s;
+      if(go){e.hc=(e.hc||0)+1;e.big=e.hc%3===0||p2>1;e.vy=e.big?-820:-560;e.g=0;e.vx=sg*(e.big?210:170)*sp;e.tm=now+cd*1300;}
+      if(e.vx){const lim=cl(e.x+e.vx*s,xlo,xhi)-e.x;if(this.bmove(e,lim,0).bx)e.vx=0;}
       if(e.wd)e.s.setScale(1.14,.8);else e.s.setScale(1-Math.min(.16,Math.abs(e.vy)/5000),1+Math.min(.2,Math.abs(e.vy)/3800));
     }
     if(k==="4"){ // Grumm: slow walker, never walks off ledges, stomp = two jumpable ground waves
       const ahead=this.sol.has(Math.floor((e.x+sg*26)/S)+","+Math.floor((e.y+34)/S));
-      if(!e.wd&&e.g&&ahead)e.x+=sg*34*sp*s;
-      if(go){this.cameras.main.shake(230,.014);const v=210*sp;this.shoot(e.x-20,e.y+18,-v,0,true,"ebul",2.4,0);this.shoot(e.x+20,e.y+18,v,0,true,"ebul",2.4,0);if(p2>0)for(let i=-1;i<=1;i++)this.shoot(cx+i*70,py-280,0,280,true,"ebul",1.8,0);e.tm=now+cd*3000;}
+      if(!e.wd&&e.g&&ahead)this.bmove(e,cl(e.x+sg*34*sp*s,xlo,xhi)-e.x,0);
+      if(go){this.cameras.main.shake(230,.014);const v=210*sp;this.shoot(e.x-20,e.y+18,-v,0,true,"ebul",2.4,0);this.shoot(e.x+20,e.y+18,v,0,true,"ebul",2.4,0);if(p2>0)for(let i=-1;i<=1;i++)this.rain(cx+i*70,py,280,"ebul",1.8);e.tm=now+cd*3000;}
       e.s.setScale(1,e.wd?1.12:1);
     }
-    if(k==="2"){ // Vesper: locks a dive target (dodgeable), can now dive below his perch; chains dives when hurt
-      if(go){e.dx=cx;e.dy=py;e.dv=now+600;e.dn=(e.dn||0)+1;e.tm=(p2>0&&e.dn%2)?now+250:now+cd*2800;if(p2>1)this.aimAt(e.x,e.y,3,.3,230,"ebul",3);}
-      if(e.dv>now){const t=Math.min(1,6*s);e.x+=(e.dx-e.x)*t;e.y+=(e.dy-e.y)*t;}
-      else if(e.wd)e.x+=(Math.random()-.5)*3;
-      else{const t=Math.min(1,1.3*s);e.x+=(e.fx+Math.sin(e.ph*1.1)*180-e.x)*t;e.y+=(e.by-90+Math.sin(e.ph*2)*25-e.y)*t;}
+    if(gnd){ // gravity with swept landing (no tunnelling on slow frames, no floating gap)
+      const wasAir=!e.g;
+      e.vy=Math.min(900,e.vy+1500*s);
+      const vIn=e.vy,r=this.bmove(e,0,e.vy*s);
+      if(r.by){e.g=vIn>0?1:0;e.vy=0;}else e.g=0;
+      if(k==="1"&&wasAir&&e.g&&e.big&&vIn>300){e.big=false;this.cameras.main.shake(200,.012);this.shoot(e.x-20,e.y+18,-220,0,true,"ebul",1.6,0);this.shoot(e.x+20,e.y+18,220,0,true,"ebul",1.6,0);}
     }
-    if(k==="3"){ // Mourna: safe, collision-checked teleport; never materializes in walls.
+    if(k==="2"){ // Vesper: locks a dive target (dodgeable); bonks into walls instead of passing through them
+      if(go){e.dx=cx;e.dy=cy;e.dv=now+600;e.dn=(e.dn||0)+1;e.tm=(p2>0&&e.dn%2)?now+250:now+cd*2800;if(p2>0&&p2>1)this.aimAt(e.x,e.y,3,.3,230,"ebul",3);}
+      if(e.dv>now){
+        const t=Math.min(1,6*s),r=this.bmove(e,(e.dx-e.x)*t,(e.dy-e.y)*t);
+        if(r.bx||r.by){e.dv=0;this.cameras.main.shake(90,.006);}
+      }
+      else if(e.wd)this.bmove(e,(Math.random()-.5)*3,0);
+      else this.bto(e,cl(e.fx+Math.sin(e.ph*1.1)*180,xlo,xhi),cl(e.by-90+Math.sin(e.ph*2)*25,60,H*S-60),420,s);
+    }
+    if(k==="3"){ // Mourna: fades out, reappears at a reachable spot near you, short beat, then a fan of bolts (3 -> 5 -> 7)
       if(e.wd)e.s.setAlpha(Math.max(.25,(e.wd-now)/480));
       if(go){
-        const side=cx>=e.x?-1:1;
-        const tx=Math.max(e.fx-200,Math.min(e.fx+200,cx+side*(115+Math.random()*65)));
-        const ty=Math.max(70,Math.min(H*S-70,py-35+(Math.random()-.5)*90));
-        const safe=this.safeBossSpot(tx,ty,20,28,Math.max(21,e.fx-220),Math.min(W*S-21,e.fx+220));
-        if(safe){e.x=safe.x;e.y=safe.y;e.teleported=true;}
-        e.s.setAlpha(1);
-        // Re-check line of sight after moving; bolts cannot originate through walls.
-        this.aimAt(e.x,e.y,3+p2*2,.26,190+p2*25,"ebul",4);
-        e.tm=now+cd*3000;
-      }else if(!e.wd)e.s.setAlpha(1);
+        const pick=this.ghostSpot(e,cx,cy);
+        if(pick){e.x=pick.x;e.y=pick.y;}
+        e.s.setAlpha(1);e.fire=now+450;e.tm=now+cd*3000+450;
+      }
+      else if(!e.wd)e.s.setAlpha(1);
     }
     if(k==="5"){ // Ignarax: hover, aimed fireball volley; enraged = fire rain too
-      if(!e.wd){e.x=e.fx+Math.sin(e.ph*.8)*220;e.y=e.by-70+Math.sin(e.ph*1.7)*25;}
-      if(go){const n=3+p2*2;for(let i=0;i<n;i++)this.time.delayedCall(i*150,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,1,0,260,"fball",3);});if(p2>1)for(let i=0;i<4;i++)this.shoot(cx+(i-1.5)*80,py-300,0,230,true,"fball",2.4,0);e.tm=now+cd*3000;this.cameras.main.shake(140,.006);}
+      if(!e.wd&&!e.fire)this.bto(e,cl(e.fx+Math.sin(e.ph*.8)*220,xlo,xhi),cl(e.by-70+Math.sin(e.ph*1.7)*25,60,e.by),380,s);
+      if(go){const n=3+p2*2;for(let i=0;i<n;i++)this.time.delayedCall(i*150,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,1,0,260,"fball",3);});if(p2>1)for(let i=0;i<4;i++)this.rain(cx+(i-1.5)*80,py,230,"fball",2.4);e.tm=now+cd*3000;this.cameras.main.shake(140,.006);}
     }
     if(k==="6"){ // Zephyra: sweeping lightning fans, second fan when hurt
-      if(!e.wd){e.x=e.fx+Math.sin(e.ph*1.15)*185;e.y=e.by-85+Math.sin(e.ph*2.1)*32;}
+      if(!e.wd&&!e.fire)this.bto(e,cl(e.fx+Math.sin(e.ph*1.15)*185,xlo,xhi),cl(e.by-85+Math.sin(e.ph*2.1)*32,60,e.by),380,s);
       if(go){const n=5+p2*2;this.aimAt(e.x,e.y,n,.24,265,"ebul",3.2);if(p2>0)this.time.delayedCall(380,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,n,.24,300,"ebul",3.2);});e.tm=now+cd*2700;this.cameras.main.shake(90,.004);}
     }
-    if(!st){
-      if(this.hitW(e.x,oy,20,28)){e.x=ox;e.vx=0;}
-      if(this.hitW(e.x,e.y,20,28)){
-        // A jump launched this frame must not be cancelled by the ground contact it is leaving.
-        e.g=(!jumped&&e.vy>0)?1:0;e.y=oy;if(!jumped)e.vy=0;
-        if(k==="1"&&air&&e.g&&e.big&&vy0>300){e.big=false;this.cameras.main.shake(200,.012);this.shoot(e.x-20,e.y+18,-220,0,true,"ebul",1.6,0);this.shoot(e.x+20,e.y+18,220,0,true,"ebul",1.6,0);}
-      }else if(gnd)e.g=0;
-    }
-    e.x=Math.max(Math.max(e.fx-220,40),Math.min(Math.min(e.fx+220,W*S-40),e.x));
-    if(k==="2")e.y=Math.max(60,Math.min(H*S-60,e.y));else if(!gnd)e.y=Math.max(60,Math.min(e.by,e.y));
-    // Collision-resolve the complete frame movement (not just a few sample points).
-    this.constrainBossMove(e,ox,oy);
     if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}
     e.s.setPosition(e.x,e.y).setFlipX(sg<0);
-    e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,Math.min(e.max,e.hp))/e.max,6);
+    e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,e.hp)/e.max,6);
     e.nm.setPosition(e.x,e.y-54);e.say.setPosition(e.x,e.y-64);
     if(hit(e.x-19,e.y-19,38,38))this.hurt();
   }
@@ -3288,7 +3184,10 @@ class Main extends Phaser.Scene{
      // Look ahead in the travel direction; when controls float over the screen, also lift the player higher.
      const tx=-(this.lookDir||1)*(COARSE?60:50),ty=(COARSE&&Ctl.mode==="over")?-46:0;
      cm.followOffset.x+=(tx-cm.followOffset.x)*Math.min(1,s*2.4);
-     cm.followOffset.y+=(ty-cm.followOffset.y)*Math.min(1,s*3);}
+     cm.followOffset.y+=(ty-cm.followOffset.y)*Math.min(1,s*3);
+     // Controls-below mode shrinks the canvas; zoom in part-way so the runner and hazards stay a readable size.
+     if(COARSE){const wr=$("wrap"),dh=this.scale.displaySize&&this.scale.displaySize.height;
+       if(wr&&dh>40){const want=1.13*Math.min(1.45,Math.sqrt(Math.max(1,wr.clientHeight/dh)));cm.setZoom(cm.zoom+(want-cm.zoom)*Math.min(1,s*4));}}}
     const JD=Phaser.Input.Keyboard.JustDown,b=p.body,fx=this.fx,fr=now<this.frz,jb=fx.jump>now;
     const l=!fr&&(k.A.isDown||k.LEFT.isDown||T.l),r=!fr&&(k.D.isDown||k.RIGHT.isDown||T.r),j=!fr&&(k.W.isDown||k.UP.isDown||k.SPACE.isDown||T.j);
     const jd=!fr&&(JD(k.W)||JD(k.UP)||JD(k.SPACE)||T.jd);T.jd=0;
@@ -3306,7 +3205,7 @@ class Main extends Phaser.Scene{
     else if(this.buf>0&&fx.dj>now&&!g&&this.jc<1){p.setVelocityY(-560);this.jc++;this.buf=0;this.jmp=true;Sfx.play("jump");Juice.burst(this,p.x,p.y+12,0xf9a8d4);}
     if(this.jmp&&!j&&b.velocity.y<-220)p.setVelocityY(-220);if(b.velocity.y>=0)this.jmp=false;
     const px=b.x,py=b.y,pw=b.width,ph=b.height,hit=(x,y,w,h)=>px<x+w&&px+pw>x&&py<y+h&&py+ph>y,ghost=fx.ghost>now;
-    const open=this.keysGot.size>=this.nk&&this.bosses.every(bb=>bb.dead||bb.hp<=0);
+    const open=this.keysGot.size>=this.nk&&this.bosses.every(bb=>bb.dead);
     if(open&&!this.unlockedShown&&(this.nk>0||this.bosses.length>0)){
       this.unlockedShown=true;
       Juice.card({icon:"🚪",tag:"EXIT READY",title:"DOOR UNLOCKED!",hint:"Head to the exit door to complete the level!",color:"#4ade80",glow:"rgba(74,222,128,0.5)",ms:3200});
@@ -3397,19 +3296,10 @@ class Main extends Phaser.Scene{
         case"E":e.s.setAlpha(open?1:.5);if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Collect all keys and defeat every boss!");}}break;
       }
     }
-    this.proj=this.proj.filter(q=>{
-      q.life-=s;const ox=q.x,oy=q.y,nx=q.x+q.vx*s,ny=q.y+q.vy*s;
-      const steps=Math.max(1,Math.ceil(Math.hypot(nx-ox,ny-oy)/4));let kill=q.life<=0;
-      for(let i=1;!kill&&i<=steps;i++){
-        const t=i/steps,x=ox+(nx-ox)*t,y=oy+(ny-oy)*t;
-        if(this.bossBlocked(x,y,6,6)){kill=true;break;}
-        if(q.en&&hit(x-6,y-6,12,12)){this.hurt(q.fire);kill=true;break;}
-        if(!q.en){for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(x-bb.x)<26&&Math.abs(y-bb.y)<34){this.dmg(bb,q.d);kill=true;break;}}
-      }
-      q.x=nx;q.y=ny;q.s.setPosition(q.x,q.y);
-      if(kill){q.s.destroy();return false;}
-      return true;
-    });
+    this.proj=this.proj.filter(q=>{q.life-=s;q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);let kill=q.life<=0||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S));
+      if(!kill&&q.en&&hit(q.x-6,q.y-6,12,12)){this.hurt(q.fire);kill=true;}
+      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);kill=true;break;}
+      if(kill)q.s.destroy();return!kill;});
     this.crates.getChildren().forEach(c=>{if(c.y>H*S+40){c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);}});
     if(p.y>H*S+40)return this.die();
     p.setAlpha(ghost?.35:now<this.inv&&Math.floor(now/80)%2?.4:1);
@@ -3440,11 +3330,7 @@ class Main extends Phaser.Scene{
         else if(e.t==="G"){
                     if(!e.on)e.on=!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
         }
-        else if("123456".includes(e.t)&&!e.dead){
-          e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);
-          e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);
-          e.bg.setVisible(e.awake);e.bar.setVisible(e.awake);e.nm.setVisible(e.awake);e.say.setVisible(false);e.bar.setSize(50,6);
-        }
+        else if("123456".includes(e.t)&&!e.dead){e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.fire=0;e.g=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);e.bar.setSize(50,6);}
         else if(e.t==="l"){e.fall=false;e.done=false;e.vy=0;e.y=e.y0;e.s.setY(e.y0);}
         else if(e.t==="i"){e.up=false;e.s.setVisible(false);}
       });
@@ -3465,7 +3351,7 @@ class Main extends Phaser.Scene{
           }
           if(e.t==="i")e.s.setVisible(!!e.up).setY(e.y);
           if(e.t==="l")e.s.setY(e.y);
-          if("123456".includes(e.t)&&!e.dead){if(e.awake)this.activatedBosses.add(e.t);e.bg.setVisible(!!e.awake);e.bar.setVisible(!!e.awake);e.nm.setVisible(!!e.awake);e.bar.setSize(50*Math.max(0,Math.min(e.max,e.hp))/e.max,6);}
+          if("123456".includes(e.t)&&!e.dead){const f=e.hp/e.max;e.phase=f<=.33?2:f<=.66?1:0;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.g=0;e.wd=0;e.fire=0;e.s.setPosition(e.x,e.y).clearTint();if(e.awake)this.activatedBosses.add(e.t);e.bar.setVisible(true);e.bar.setSize(50*Math.max(0,e.hp)/e.max,6);}
         });
       }
       this.crates.getChildren().forEach(c=>{c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);});
@@ -3527,7 +3413,7 @@ if(typeof Phaser==="undefined"){
   window.game=new Phaser.Game({
     type:Phaser.AUTO,parent:"game",width:960,height:540,backgroundColor:"#0f172a",pixelArt:true,
     physics:{default:"arcade",arcade:{gravity:{y:1500},debug:false}},
-    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
+    scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.NO_CENTER},
     scene:Main
   });
   addEventListener("resize",()=>setTimeout(()=>window.game?.scale?.refresh(),60));
