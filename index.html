@@ -249,7 +249,7 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   align-items: center;
   justify-content: center;
 }
-/* Let Phaser Scale.FIT control canvas dimensions so touch coordinates match 1:1 */
+/* Phaser Scale.FIT drives the canvas size; fitGame() matches the game aspect to the container so there is no letterboxing */
 #game canvas {
   display: block;
   touch-action: none;
@@ -912,51 +912,64 @@ body.home-active #drawerScrim {
   display: none;
 }
 
-/* Touch Controls Pad */
+/* Touch controls: one layout for every mode. The canvas always stays full screen. */
 #pad {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: auto 0 0 0;
   z-index: 5;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 8px max(16px, var(--safe-r)) calc(10px + var(--safe-b)) max(16px, var(--safe-l));
+  padding: 0 max(18px, var(--safe-r)) calc(14px + var(--safe-b)) max(18px, var(--safe-l));
   pointer-events: none;
+  --mv: calc(clamp(56px, 15vh, 70px) * var(--ctl));
+  --jb: calc(clamp(74px, 20vh, 94px) * var(--ctl));
 }
-#pad .g {
-  gap: clamp(8px, 1.8vw, 16px);
-  flex-wrap: nowrap;
+body[data-ctl="below"] #pad::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: calc(var(--jb) + 36px);
+  background: linear-gradient(to top, rgba(8, 6, 24, 0.55), transparent);
 }
 #pad button {
   pointer-events: auto;
   touch-action: none;
-  width: clamp(54px, 8.2vw, 74px);
-  height: clamp(54px, 8.2vw, 74px);
   padding: 0;
+  width: var(--mv);
+  height: var(--mv);
   border-radius: 50%;
-  font-size: clamp(20px, 2.8vw, 26px);
-  background: rgba(15, 12, 38, 0.58);
+  font-size: calc(var(--mv) * 0.42);
+  font-weight: 850;
   color: #fff;
-  border: 2px solid rgba(255, 255, 255, 0.48);
+  background: rgba(15, 12, 38, 0.52);
+  border: 2px solid rgba(255, 255, 255, 0.42);
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
 }
-#pad .jb {
-  width: clamp(68px, 10.5vw, 90px);
-  height: clamp(68px, 10.5vw, 90px);
-  font-size: clamp(12px, 1.8vw, 15px);
-  font-weight: 850;
+#padMove { display: flex; gap: calc(var(--mv) * 0.3); }
+#padAct { position: relative; width: calc(var(--jb) * 2.1); height: calc(var(--jb) * 1.95); }
+#padAct button { position: absolute; }
+#padAct .jb {
+  inset-inline-end: 0; bottom: 0;
+  width: var(--jb); height: var(--jb);
+  font-size: calc(var(--jb) * 0.2);
   background: rgba(109, 40, 217, 0.78);
   border-color: #c4b5fd;
 }
-#pad button.dn {
-  background: rgba(255, 255, 255, 0.42);
-  transform: scale(0.93);
+#padAct [data-k="a"] {
+  inset-inline-end: calc(var(--jb) + 10px); bottom: calc(var(--jb) * 0.1);
+  width: calc(var(--mv) * 1.12); height: calc(var(--mv) * 1.12);
+  background: rgba(190, 18, 60, 0.62);
 }
-#pad button[data-avail="0"] {
-  opacity: 0.35;
+#padAct [data-k="d"] { inset-inline-end: calc(var(--jb) * 0.08); bottom: calc(var(--jb) + 10px); }
+#padAct [data-k="s"] {
+  inset-inline-end: calc(var(--jb) + 14px + var(--mv) * 0.35); bottom: calc(var(--jb) * 0.1 + var(--mv) * 1.12 + 10px);
+  width: calc(var(--mv) * 0.78); height: calc(var(--mv) * 0.78);
 }
+body.lefty #pad { flex-direction: row-reverse; }
+body.lefty #padAct { direction: rtl; }
+#pad button.dn { background: rgba(255, 255, 255, 0.42); transform: scale(0.93); }
+#pad button[data-avail="0"] { opacity: 0.35; }
 
 /* Mobile / Coarse Pointer Responsive Architecture */
 @media (pointer: coarse), (max-width: 820px), (pointer: fine) {
@@ -1341,23 +1354,6 @@ body.home-active #drawerScrim {
   color:var(--fg);
 }
 .desktop-range button { border-radius:7px; background:transparent; }
-@media (pointer:coarse), (max-width:820px) {
-  #pad { padding-left:max(12px,var(--safe-l)); padding-right:max(12px,var(--safe-r)); }
-  #pad button {
-    width:clamp(46px,7.1vw,62px);
-    height:clamp(46px,7.1vw,62px);
-    font-size:clamp(18px,2.3vw,23px);
-    background:rgba(15,12,38,.48);
-  }
-  #pad .jb {
-    width:clamp(58px,8.8vw,72px);
-    height:clamp(58px,8.8vw,72px);
-    font-size:12px;
-  }
-  #pad .g { gap:clamp(6px,1.2vw,11px); }
-}
-
-
 #mobileQuickTools {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -1452,6 +1448,30 @@ body.home-active #drawerScrim {
 :root[data-theme="winter"] .game-art {background:linear-gradient(180deg,#93c5fd,#e0f2fe 65%,#bfdbfe)}
 :root[data-theme="thunder"] .game-art {background:linear-gradient(180deg,#111827,#312e81 65%,#581c87)}
 
+/* Home preview weather: each mode changes sky, scenery and animated particles */
+.game-art .wx { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; opacity: 0; transition: opacity 0.45s ease; }
+:root[data-theme="rain"] .wx-rain, :root[data-theme="thunder"] .wx-rain,
+:root[data-theme="winter"] .wx-snow,
+:root[data-theme="rain"] .wx-cloud, :root[data-theme="thunder"] .wx-cloud,
+:root[data-theme="thunder"] .wx-bolt { opacity: 1; }
+.wx-rain i { position: absolute; top: -16px; width: 1.5px; height: 14px; background: linear-gradient(transparent, #bfdbfe); animation: dropFall linear infinite; }
+:root[data-theme="thunder"] .wx-rain i { animation-duration: 0.4s !important; }
+@keyframes dropFall { to { transform: translate(-30px, 240px); } }
+.wx-snow i { position: absolute; top: -8px; border-radius: 50%; background: #fff; box-shadow: 0 0 4px #fff; animation: flakeFall linear infinite; }
+@keyframes flakeFall { 0% { transform: translate(0, 0); } 50% { transform: translate(14px, 120px); } 100% { transform: translate(-6px, 240px); } }
+.wx-cloud i { position: absolute; top: -12px; width: 90px; height: 34px; border-radius: 50%; background: rgba(30, 41, 59, 0.88); filter: blur(5px); animation: cloudFloat 12s ease-in-out infinite; }
+:root[data-theme="thunder"] .wx-cloud i { background: rgba(15, 12, 38, 0.92); }
+.wx-bolt { animation: boltFlash 4.2s infinite; }
+.wx-bolt svg { position: absolute; right: 24%; top: 0; height: 72%; opacity: 0; animation: boltShow 4.2s infinite; filter: drop-shadow(0 0 6px #c7d2fe); }
+@keyframes boltFlash { 0%, 86%, 100% { background: transparent; } 88% { background: rgba(224, 231, 255, 0.75); } 90% { background: transparent; } 92% { background: rgba(224, 231, 255, 0.5); } 95% { background: transparent; } }
+@keyframes boltShow { 0%, 86%, 93%, 100% { opacity: 0; } 88%, 92% { opacity: 1; } }
+:root[data-theme="rain"] .game-art .celestial, :root[data-theme="thunder"] .game-art .celestial { opacity: 0; }
+:root[data-theme="winter"] .game-art .celestial { background: radial-gradient(circle, #fff, #dbeafe 70%); box-shadow: 0 0 30px rgba(255, 255, 255, 0.85); }
+:root[data-theme="rain"] .day-scenery, :root[data-theme="thunder"] .day-scenery { opacity: 0; }
+:root[data-theme="rain"] .night-scenery { opacity: 0.55; }
+:root[data-theme="winter"] .night-scenery { opacity: 0; }
+:root[data-theme="winter"] .bird { display: none; }
+:root[data-theme="winter"] .game-art .platform { background: linear-gradient(#fff 0 35%, #8b5a2b 35%); }
 
 /* ==========================================================================
    MOBILE LAYOUT v2: raised game screen, controls below, larger tap targets
@@ -1459,9 +1479,6 @@ body.home-active #drawerScrim {
 :root{
   --ctl:1;
   --bar-h:56px;
-  --mv:calc(clamp(46px,13vh,58px) * var(--ctl));
-  --jb:calc(clamp(60px,17vh,72px) * var(--ctl));
-  --pad-zone:calc(var(--jb) + 12px + var(--safe-b));
 }
 #hud{font-size:15px;padding:7px 15px;}
 #fx{font-size:14px;padding:6px 12px;}
@@ -1475,22 +1492,6 @@ body.home-active #drawerScrim {
   #mobileBar .mobile-play-btn{padding:6px 18px;font-size:15px;}
   #mobileBar .range-stepper button{min-height:36px !important;width:36px;}
   #mobileBar .range-stepper b{font-size:14px;}
-}
-@media (pointer:coarse),(max-width:820px){
-  #pad{padding-left:max(14px,var(--safe-l));padding-right:max(14px,var(--safe-r));}
-  #pad button{width:var(--mv);height:var(--mv);font-size:calc(var(--mv) * .42);background:rgba(15,12,38,.62);}
-  #pad button[data-k="a"]{width:calc(var(--mv) * 1.1);height:calc(var(--mv) * 1.1);}
-  #pad .jb{width:var(--jb);height:var(--jb);font-size:calc(var(--jb) * .2);}
-  #pad .g{gap:calc(var(--mv) * .16);}
-  /* Controls below the screen: the game canvas gets its own area above the pad */
-  body:is([data-mode="test"],[data-mode="play"]) #game{bottom:var(--pad-zone);}
-  body:is([data-mode="test"],[data-mode="play"]) #pad{
-    height:var(--pad-zone);padding-top:6px;padding-bottom:calc(6px + var(--safe-b));align-items:center;
-    background:linear-gradient(to top,rgba(8,6,24,.72),rgba(8,6,24,.38));
-    border-top:1px solid rgba(255,255,255,.1);
-  }
-  body.lefty #pad{flex-direction:row-reverse;}
-  body.lefty #pad > .g:last-child{flex-direction:row-reverse;}
 }
 /* ==========================================================================
    MOBILE EDITOR: look-around pad lives in its own gutter so it never covers the level
@@ -1524,371 +1525,6 @@ body.home-active #drawerScrim {
   body[data-mode="edit"] #mobilePan button{width:38px;height:38px;font-size:15px;}
   body[data-mode="edit"] #mobilePan .zoom-row{width:auto;gap:8px;border-top:0;padding-top:0;}
   body[data-mode="edit"] #mobilePan .zoom-row button{flex:none;width:56px;height:44px;font-size:18px;}
-}
-
-
-/* ==========================================================================
-   MOBILE LANDSCAPE v4: full-screen game, view lifted so controls rest on extra ground
-   ========================================================================== */
-@media (pointer:coarse) and (orientation:landscape){
-  body:is([data-mode="test"],[data-mode="play"]) #game{left:0;right:0;bottom:0;}
-  body:is([data-mode="test"],[data-mode="play"]) #pad{
-    top:auto;height:auto;background:none;border:0;align-items:flex-end;
-    padding:0 max(10px,var(--safe-r)) calc(4px + var(--safe-b) * .4) max(10px,var(--safe-l));
-  }
-  body:is([data-mode="test"],[data-mode="play"]) #pad > .g:last-child{
-    display:grid;grid-template-columns:auto auto;align-items:end;justify-items:center;
-  }
-  body.lefty[data-ctl="below"] #pad > .g:last-child{direction:rtl;}
-  body.lefty[data-ctl="below"] #pad > .g:last-child button{direction:ltr;}
-}
-@media (pointer:coarse){
-  body.mobile-playing #hud{
-    position:fixed;top:0;left:calc(64px + var(--safe-l));right:auto;transform:none;width:auto;
-    max-width:calc(100vw - 64px - 250px - var(--safe-l));height:var(--bar-h);display:flex;align-items:center;
-    background:none;border:0;box-shadow:none;padding:0;border-radius:0;font-size:12.5px;white-space:nowrap;
-    overflow:hidden;text-overflow:ellipsis;z-index:61;pointer-events:none;
-  }
-  body.mobile-playing #fx,body.mobile-playing #tip{
-    top:6px;transform:none;max-width:44vw;font-size:11.5px;line-height:1.3;padding:3px 9px;
-    background:rgba(8,6,24,.42);border-radius:10px;opacity:.92;pointer-events:none;
-  }
-  body.mobile-playing #fx{left:max(8px,var(--safe-l));right:auto;width:auto;text-align:left;}
-  body.mobile-playing #tip{left:auto;right:max(8px,var(--safe-r));width:auto;text-align:right;}
-}
-.wx{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .5s;display:none;}
-.wx.rain{display:block;background-image:linear-gradient(105deg,transparent 45%,rgba(186,230,253,.8) 46%,transparent 48%),linear-gradient(105deg,transparent 45%,rgba(125,211,252,.55) 46%,transparent 47.5%);background-size:14px 38px,23px 52px;animation:rainFall .5s linear infinite;}
-@keyframes rainFall{to{background-position:-9px 38px,-14px 52px;}}
-.wx.snow{display:block;background-image:radial-gradient(2.2px 2.2px at 12px 8px,#fff 98%,transparent),radial-gradient(1.6px 1.6px at 30px 24px,rgba(255,255,255,.9) 98%,transparent),radial-gradient(2.8px 2.8px at 52px 40px,#fff 98%,transparent);background-size:64px 48px,47px 61px,83px 71px;animation:snowFall 7s linear infinite;}
-@keyframes snowFall{to{background-position:20px 48px,-14px 61px,30px 71px;}}
-.wx.flash{background:#c7d2fe;animation:boltFlash 5s infinite;}
-@keyframes boltFlash{0%,86%,100%{opacity:0}87%{opacity:.65}89%{opacity:.05}91%{opacity:.8}95%{opacity:0}}
-.wx.bolt{inset:0 auto auto 62%;width:34px;height:72%;background:#fef9c3;clip-path:polygon(60% 0,25% 45%,50% 45%,15% 100%,80% 42%,52% 42%,85% 0);filter:drop-shadow(0 0 6px #facc15);animation:boltShow 5s infinite;}
-@keyframes boltShow{0%,86%,100%{opacity:0}87%,91%{opacity:1}89%{opacity:.2}95%{opacity:0}}
-:root[data-theme="rain"] .wx.rain,:root[data-theme="thunder"] .wx.rain,:root[data-theme="winter"] .wx.snow{opacity:1;}
-:root[data-theme="thunder"] .wx.flash,:root[data-theme="thunder"] .wx.bolt{display:block;}
-:root[data-theme="rain"] .day-scenery .bird,:root[data-theme="thunder"] .day-scenery .bird,:root[data-theme="winter"] .day-scenery .bird{display:none;}
-:root[data-theme="rain"] .day-scenery .cloud,:root[data-theme="thunder"] .day-scenery .cloud{filter:brightness(.4) saturate(.5);opacity:1;}
-:root[data-theme="rain"] .game-art .celestial,:root[data-theme="thunder"] .game-art .celestial{background:radial-gradient(circle,rgba(148,163,184,.55),transparent 70%);box-shadow:none;}
-:root[data-theme="winter"] .game-art .celestial{background:radial-gradient(circle,#fff 0%,#e0f2fe 55%,transparent 72%);box-shadow:0 0 38px rgba(255,255,255,.9);}
-:root[data-theme="winter"] .game-art .platform{box-shadow:inset 0 6px 0 #fff;}
-:root[data-theme="rain"] .game-art .platform,:root[data-theme="thunder"] .game-art .platform{filter:brightness(.8);}
-
-/* winter uses a light page, so the menu card and buttons need light-theme values too */
-:root[data-theme="winter"]{
-  --home-card:linear-gradient(155deg,rgba(255,255,255,.95),rgba(224,242,254,.96));
-  --btn-bg:rgba(15,23,42,.05);--btn-border:rgba(15,23,42,.14);--shadow:0 18px 46px rgba(15,23,42,.16);
-}
-
-/* Focused UX patch: compact top-edge pickup toast + thumb-zone touch controls */
-#ban {
-  top: 8px !important;
-  left: 50% !important;
-  right: auto !important;
-  transform: translateX(-50%) !important;
-  width: max-content !important;
-  max-width: calc(100% - 16px) !important;
-  z-index: 40 !important;
-}
-#ban .pu-card {
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  max-width: min(360px, calc(100vw - 20px));
-  padding: 5px 12px 7px;
-  border-width: 1px;
-  border-radius: 999px;
-  box-shadow: 0 5px 18px rgba(0,0,0,.34), 0 0 14px var(--pu-glow, rgba(167,139,250,.3));
-}
-#ban .pu-rays {
-  width: 120px;
-  height: 120px;
-  left: -42px;
-  top: -42px;
-  opacity: .28;
-}
-#ban .pu-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 16px;
-  box-shadow: 0 2px 7px rgba(0,0,0,.25);
-}
-#ban .pu-body { min-width: 0; }
-#ban .pu-tag {
-  font-size: 8px;
-  line-height: 1;
-  letter-spacing: .11em;
-}
-#ban .pu-title {
-  margin: 2px 0 0;
-  font-size: 13px;
-  line-height: 1.1;
-  white-space: nowrap;
-}
-#ban .pu-hint { display: none !important; }
-#ban .pu-bar { height: 2px; }
-@media (max-width: 520px) {
-  #ban { top: 6px !important; max-width: calc(100% - 12px) !important; }
-  #ban .pu-card { min-height: 36px; padding: 4px 10px 6px; gap: 7px; }
-  #ban .pu-icon { width: 25px; height: 25px; font-size: 15px; }
-  #ban .pu-title { font-size: 12px; }
-}
-
-/* Controls stay in the thumb zones, not across the character's central play space. */
-@media (pointer: coarse), (max-width: 820px) {
-  #pad {
-    align-items: flex-end;
-    padding: 0 max(12px, var(--safe-r)) calc(8px + var(--safe-b)) max(12px, var(--safe-l));
-    gap: 10px;
-  }
-  #pad > .g:first-child,
-  #pad > .g:last-child {
-    padding: 5px;
-    border: 1px solid rgba(255,255,255,.16);
-    border-radius: 18px;
-    background: rgba(8,6,24,.28);
-    backdrop-filter: blur(3px);
-    box-shadow: 0 3px 12px rgba(0,0,0,.18);
-  }
-  #pad > .g:first-child { gap: 6px; }
-  #pad > .g:last-child {
-    display: grid !important;
-    grid-template-columns: 42px 42px;
-    grid-template-rows: 38px 56px;
-    grid-template-areas: "switch dash" "attack jump";
-    align-items: end;
-    justify-items: center;
-    gap: 5px;
-  }
-  #pad button {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
-    background: rgba(15,12,38,.48);
-    border: 1.5px solid rgba(255,255,255,.42);
-    box-shadow: 0 3px 10px rgba(0,0,0,.28);
-    backdrop-filter: none;
-  }
-  #pad > .g:last-child button[data-k="s"] {
-    grid-area: switch; width: 36px; height: 36px; font-size: 16px;
-  }
-  #pad > .g:last-child button[data-k="d"] {
-    grid-area: dash; width: 36px; height: 36px; font-size: 16px;
-  }
-  #pad > .g:last-child button[data-k="a"] {
-    grid-area: attack; width: 48px; height: 48px; font-size: 20px;
-  }
-  #pad > .g:last-child button[data-k="j"] {
-    grid-area: jump; width: 56px; height: 56px; font-size: 11px;
-  }
-  /* Don't show actions the player hasn't unlocked; avoid disabled-looking clutter. */
-  #pad button[data-avail="0"] { display: none !important; }
-  #pad button.dn {
-    background: rgba(139,92,246,.88);
-    border-color: rgba(237,233,254,.9);
-    box-shadow: 0 0 0 3px rgba(167,139,250,.2), 0 4px 14px rgba(0,0,0,.3);
-    transform: scale(.94);
-  }
-  body.lefty #pad > .g:last-child { direction: rtl; }
-  body.lefty #pad > .g:last-child button { direction: ltr; }
-}
-@media (pointer: coarse) and (orientation: landscape) {
-  #pad > .g:last-child {
-    grid-template-columns: 42px 42px !important;
-    grid-template-rows: 36px 52px !important;
-  }
-  #pad > .g:last-child button[data-k="j"] { width: 52px; height: 52px; }
-  #pad > .g:last-child button[data-k="a"] { width: 46px; height: 46px; }
-}
-
-
-/* ==========================================================================
-   MOBILE CONTROL REDESIGN — clear left/right thumb zones
-   The game viewport ends above a dedicated control rail, so buttons never
-   cover the character or the centre of the level.
-   ========================================================================== */
-@media (pointer:coarse), (max-width:820px) {
-  :root {
-    --touch-rail: clamp(92px, 19vh, 116px);
-    --touch-move: clamp(58px, 10vw, 72px);
-    --touch-jump: clamp(68px, 11vw, 82px);
-  }
-
-  body:is([data-mode="test"],[data-mode="play"]) #game {
-    left: 0 !important;
-    right: 0 !important;
-    bottom: var(--touch-rail) !important;
-  }
-
-  body:is([data-mode="test"],[data-mode="play"]) #pad {
-    display: flex !important;
-    position: absolute;
-    inset: auto 0 0 0;
-    height: var(--touch-rail);
-    min-height: var(--touch-rail);
-    padding: 8px max(16px,var(--safe-r)) calc(8px + var(--safe-b)) max(16px,var(--safe-l));
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    background: linear-gradient(180deg, rgba(9,8,27,.82), rgba(7,6,22,.96));
-    border-top: 1px solid rgba(255,255,255,.14);
-    box-shadow: 0 -8px 24px rgba(0,0,0,.18);
-    pointer-events: none;
-  }
-
-  #pad > .g {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(9px, 2vw, 16px);
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    pointer-events: none;
-  }
-
-  #pad button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: none;
-    width: var(--touch-move);
-    height: var(--touch-move);
-    min-width: var(--touch-move);
-    min-height: var(--touch-move);
-    padding: 0;
-    border: 2px solid rgba(255,255,255,.58);
-    border-radius: 21px;
-    background: linear-gradient(145deg, rgba(255,255,255,.24), rgba(255,255,255,.08)), #25304d;
-    color: #fff;
-    font-size: clamp(25px, 4vw, 34px);
-    font-weight: 900;
-    line-height: 1;
-    text-shadow: 0 2px 3px rgba(0,0,0,.35);
-    box-shadow: 0 5px 0 rgba(0,0,0,.3), 0 8px 18px rgba(0,0,0,.24);
-    touch-action: none;
-    pointer-events: auto;
-    -webkit-user-select: none;
-    user-select: none;
-  }
-
-  #pad > #padMove button {
-    background: linear-gradient(145deg, #ffbd45, #f07812);
-    border-color: #ffe0a0;
-    color: #fff;
-    border-radius: 20px;
-    font-size: clamp(27px, 4.4vw, 36px);
-  }
-
-  /* Jump is the largest, easiest-to-hit action. Attack sits beside it. */
-  #pad > .g:last-child {
-    display: grid !important;
-    grid-template-columns: 48px var(--touch-jump);
-    grid-template-rows: 34px var(--touch-jump);
-    grid-template-areas: "switch dash" "attack jump";
-    align-items: center;
-    justify-items: center;
-    gap: 5px 8px;
-  }
-
-  #pad > .g:last-child button[data-k="j"] {
-    grid-area: jump;
-    width: var(--touch-jump);
-    height: var(--touch-jump);
-    min-width: var(--touch-jump);
-    min-height: var(--touch-jump);
-    border-radius: 50%;
-    background: linear-gradient(145deg, #a78bfa, #6d28d9);
-    border: 3px solid #e9ddff;
-    font-size: clamp(12px, 2vw, 15px);
-    letter-spacing: .04em;
-    box-shadow: 0 5px 0 #43158f, 0 8px 18px rgba(0,0,0,.3);
-  }
-
-  #pad > .g:last-child button[data-k="a"] {
-    grid-area: attack;
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
-    border-radius: 50%;
-    background: linear-gradient(145deg, #fb7185, #be123c);
-    border-color: #fecdd3;
-    font-size: 22px;
-  }
-
-  #pad > .g:last-child button[data-k="s"] {
-    grid-area: switch;
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    min-height: 34px;
-    border-radius: 11px;
-    font-size: 15px;
-  }
-
-  #pad > .g:last-child button[data-k="d"] {
-    grid-area: dash;
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    min-height: 34px;
-    border-radius: 11px;
-    font-size: 15px;
-  }
-
-  #pad button[data-avail="0"] { display: none !important; }
-
-  #pad button.dn {
-    filter: brightness(1.22);
-    transform: translateY(3px) scale(.96);
-    box-shadow: 0 2px 0 rgba(0,0,0,.3), 0 3px 9px rgba(0,0,0,.22);
-    border-color: #fff;
-  }
-
-  body.lefty #pad { flex-direction: row-reverse; }
-  body.lefty #pad > .g:last-child { direction: rtl; }
-  body.lefty #pad > .g:last-child button { direction: ltr; }
-}
-
-@media (pointer:coarse) and (orientation:landscape) {
-  :root { --touch-rail: clamp(88px, 17vh, 106px); }
-  #pad > #padMove { gap: 12px; }
-  #pad > #padMove button { border-radius: 19px; }
-  body[data-mode="edit"] #mobilePan {
-    width: calc(104px + var(--safe-r)) !important;
-    padding-right: max(6px,var(--safe-r)) !important;
-  }
-  body[data-mode="edit"] #game { right: calc(104px + var(--safe-r)) !important; }
-  body[data-mode="edit"] #mobilePan .pan-grid {
-    grid-template-columns: repeat(3,32px) !important;
-    grid-template-rows: repeat(3,32px) !important;
-    gap: 3px !important;
-  }
-  body[data-mode="edit"] #mobilePan button {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 13px !important;
-  }
-  body[data-mode="edit"] #mobilePan .zoom-row button {
-    width: 42px !important;
-    height: 34px !important;
-  }
-}
-
-@media (pointer:coarse) and (orientation:portrait) {
-  :root { --touch-rail: 104px; }
-  body:is([data-mode="test"],[data-mode="play"]) #game {
-    bottom: var(--touch-rail) !important;
-  }
-  body:is([data-mode="test"],[data-mode="play"]) #pad {
-    height: var(--touch-rail);
-    min-height: var(--touch-rail);
-  }
 }
 
 </style>
@@ -1950,7 +1586,6 @@ body.home-active #drawerScrim {
         <div class="platform one"></div>
         <div class="platform two"></div>
         <div class="hero"></div>
-        <div class="wx rain"></div><div class="wx snow"></div><div class="wx flash"></div><div class="wx bolt"></div>
       </div>
       <div class="home-actions">
         <button class="home-primary" id="homePlay"><span>▶ &nbsp;PLAY ADVENTURE</span><small>Start level</small></button>
@@ -2063,7 +1698,7 @@ body.home-active #drawerScrim {
         <button data-k="l" aria-label="Move left">◀</button>
         <button data-k="r" aria-label="Move right">▶</button>
       </div>
-      <div class="g">
+      <div class="g" id="padAct">
         <button data-k="s" data-avail="0" aria-label="Switch weapon">⇄</button>
         <button data-k="d" data-avail="0" aria-label="Dash">💨</button>
         <button data-k="a" data-avail="0" aria-label="Attack">⚔</button>
@@ -2095,9 +1730,9 @@ body.home-active #drawerScrim {
 
 
 const W=60,H=30,S=32,MAXO=700,DUR=8000,MV="gumzb";
-const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine",K:"pboom",I:"pice",V:"pzap",q:"gem"};
-const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash",K:"boom",I:"ice",V:"zap"},FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash",boom:"🪃 Boomerang",ice:"❄ Frost Orb",zap:"⚡ Lightning Staff"};
-const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,boom:0,ice:0,zap:0,dj:0,dash:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40},
+const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine",I:"pice",J:"pboom",K:"pbolt",V:"pbomb"};
+const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash",I:"ice",J:"boom",K:"bolt",V:"bomb"},WEAPONS=["sword","fb","flame","ice","boom","bolt","bomb"],WEP_KEYS="ZFYIJKV",FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash",ice:"❄ Ice Wand",boom:"🪃 Boomerang",bolt:"⚡ Lightning",bomb:"💣 Bombs"};
+const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,dj:0,dash:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40},
 BOSS={
 1:{n:"Gloop the Glutton",t:"Hungry, hungry, HOP!",c:0x22c55e,q:["Mine! All mine!","You look crunchy...","GLOOP IS HUNGRY!!"],d:"Gloop... melts..."},
 2:{n:"Count Vesper",t:"Lord of the Dusk Swarm",c:0x7c3aed,q:["Fresh blood... delightful.","You amuse me, little one.","ENOUGH! DARKNESS, CONSUME!"],d:"Back to... the dark..."},
@@ -2145,7 +1780,10 @@ const TOOLS=[
 ["Z","Sword","Weapons","Yours for the whole level once picked up. X / J (⚔ on phones) to slash. Deflects bolts."],
 ["F","Fireball","Weapons","Yours for the whole level. X / J / ⚔ throws fireballs."],
 ["Y","Flamethrower","Weapons","Yours for the whole level. Hold X / J / ⚔ to spray flames."],
-["K","Boomerang","Weapons","Yours for the whole level. Throw it out and it returns, hitting twice."],["I","Frost Orb","Weapons","Yours for the whole level. Freezes bosses for a moment."],["V","Lightning Staff","Weapons","Yours for the whole level. Instant bolt that wipes out enemy shots."],["q","Gem","Helpers","Optional collectible. Miss one and you lose a star."],
+["I","Ice Wand","Weapons","Yours for the whole level. Fires a spread of three ice shards."],
+["J","Boomerang","Weapons","Yours for the whole level. Flies out, pierces, and returns to you."],
+["K","Lightning Staff","Weapons","Yours for the whole level. Instant bolt that stops at walls and wipes enemy shots."],
+["V","Bombs","Weapons","Yours for the whole level. Lobbed grenade: area damage, clears shots, breaks crumble blocks."],
 ["A","Double jump","Powerups","8s. Jump once more in mid-air."],
 ["H","Dash","Powerups","8s. Shift / 💨 to dash. Invulnerable while dashing."],
 ["S","Start","Level","Where you begin."],["E","Door","Level","The exit."],
@@ -2179,10 +1817,6 @@ const Sfx={
   play(kind){
     if(!this.on)return;
     if(kind==="jump")this.tone(290,0.11,"sine",0.1,220);
-    else if(kind==="gem"){this.tone(880,.07,"sine",.1);setTimeout(()=>this.tone(1320,.12,"sine",.1),55);}
-    else if(kind==="zap"){this.tone(1300,.14,"sawtooth",.09,260);}
-    else if(kind==="boom"){this.tone(520,.1,"triangle",.09,380);}
-    else if(kind==="ice"){this.tone(900,.16,"sine",.09,1600);}
     else if(kind==="key"){this.tone(660,0.09,"triangle",0.13);setTimeout(()=>this.tone(990,0.16,"triangle",0.14),75);}
     else if(kind==="power"){[523,659,784,1046].forEach((n,i)=>setTimeout(()=>this.tone(n,0.14,"triangle",0.13),i*55));}
     else if(kind==="check"){this.tone(440,0.09,"sine",0.12);setTimeout(()=>this.tone(660,0.15,"sine",0.12),80);}
@@ -2196,7 +1830,13 @@ const Sfx={
 /* ==========================================================================
    TOUCH CONTROL LAYOUT (below / over screen, size, left-handed)
    ========================================================================== */
-const SIDE_MQ=matchMedia("(pointer:coarse) and (orientation:landscape)");
+/* Keep the internal game height at 540 and stretch the width to the container's aspect ratio, so the canvas always fills the screen. */
+function fitGame(){
+  const g=window.game,el=document.getElementById("game");if(!g||!el||!el.clientHeight)return;
+  const w=Math.round(Math.max(640,Math.min(1500,540*el.clientWidth/el.clientHeight)));
+  if(g.scale.gameSize.width!==w)g.scale.setGameSize(w,540);
+  g.scale.refresh();
+}
 const Ctl={
   mode:localStorage.getItem("bbctl")==="over"?"over":"below",
   size:Math.min(1.4,Math.max(.8,parseFloat(localStorage.getItem("bbctlsz"))||1)),
@@ -2210,7 +1850,7 @@ const Ctl={
     this[k]=v;
     try{localStorage.setItem(k==="mode"?"bbctl":k==="size"?"bbctlsz":"bblefty",k==="lefty"?(v?"1":"0"):String(v));}catch(_){}
     this.apply();
-    setTimeout(()=>window.game?.scale?.refresh(),60);
+    setTimeout(()=>fitGame(),60);
   }
 };
 
@@ -2352,10 +1992,11 @@ const PU_META={
   A:{icon:"🦘",tag:"ABILITY ACQUIRED",title:"DOUBLE JUMP!",hint:"Jump again in mid-air!",chip:()=>COARSE?"Tap JUMP in air":"Press Space / W in air",color:"#f472b6",glow:"rgba(244,114,182,0.5)",hex:0xf9a8d4},
   H:{icon:"💨",tag:"ABILITY ACQUIRED",title:"SHADOW DASH!",hint:"Invulnerable burst dash!",chip:()=>COARSE?"Tap 💨":"Press Shift",color:"#2dd4bf",glow:"rgba(45,212,191,0.5)",hex:0x2dd4bf},
   Z:{icon:"⚔",tag:"WEAPON UNLOCKED",title:"HERO SWORD!",hint:"Yours for the whole level · Deflects bolts",chip:()=>COARSE?"Tap ⚔ to slash":"Press X / J to slash",color:"#eab308",glow:"rgba(234,179,8,0.55)",hex:0xfacc15},
-  K:{icon:"🪃",tag:"WEAPON UNLOCKED",title:"BOOMERANG!",hint:"Flies out and comes back · hits twice · deflects bolts",chip:()=>COARSE?"Tap ⚔ to throw":"Press X / J to throw",color:"#f59e0b",glow:"rgba(245,158,11,0.55)",hex:0xf59e0b},
-  I:{icon:"❄",tag:"WEAPON UNLOCKED",title:"FROST ORB!",hint:"Hits bosses and freezes them for a moment",chip:()=>COARSE?"Tap ⚔ to shoot":"Press X / J to shoot",color:"#38bdf8",glow:"rgba(56,189,248,0.55)",hex:0x38bdf8},
-  V:{icon:"⚡",tag:"WEAPON UNLOCKED",title:"LIGHTNING STAFF!",hint:"Instant bolt in a straight line · wipes out enemy shots",chip:()=>COARSE?"Tap ⚔ to zap":"Press X / J to zap",color:"#facc15",glow:"rgba(250,204,21,0.55)",hex:0xfde047},
   F:{icon:"☄",tag:"WEAPON UNLOCKED",title:"FIREBALLS!",hint:"Yours for the whole level · Ranged blasts",chip:()=>COARSE?"Tap ⚔ to throw":"Press X / J to throw",color:"#f97316",glow:"rgba(249,115,22,0.55)",hex:0xf97316},
+  I:{icon:"❄",tag:"WEAPON UNLOCKED",title:"ICE WAND!",hint:"Yours for the whole level · 3-shard spread",chip:()=>COARSE?"Tap ⚔ to fire":"Press X / J to fire",color:"#7dd3fc",glow:"rgba(125,211,252,0.55)",hex:0x7dd3fc},
+  J:{icon:"🪃",tag:"WEAPON UNLOCKED",title:"BOOMERANG!",hint:"Yours for the whole level · Pierces and returns",chip:()=>COARSE?"Tap ⚔ to throw":"Press X / J to throw",color:"#fbbf24",glow:"rgba(251,191,36,0.55)",hex:0xfbbf24},
+  K:{icon:"⚡",tag:"WEAPON UNLOCKED",title:"LIGHTNING STAFF!",hint:"Yours for the whole level · Instant bolt",chip:()=>COARSE?"Tap ⚔ to zap":"Press X / J to zap",color:"#818cf8",glow:"rgba(129,140,248,0.55)",hex:0x818cf8},
+  V:{icon:"💣",tag:"WEAPON UNLOCKED",title:"BOMBS!",hint:"Yours for the whole level · Area blast",chip:()=>COARSE?"Tap ⚔ to lob":"Press X / J to lob",color:"#f87171",glow:"rgba(248,113,113,0.55)",hex:0xf87171},
   Y:{icon:"🔥",tag:"WEAPON UNLOCKED",title:"FLAMETHROWER!",hint:"Yours for the whole level · Continuous stream",chip:()=>COARSE?"Hold ⚔ to spray":"Hold X / J to spray",color:"#ef4444",glow:"rgba(239,68,68,0.55)",hex:0xef4444}
 };
 
@@ -2563,7 +2204,7 @@ async function enterImmersivePlay(){
   }catch(_){}
   try{if(screen.orientation?.lock)await screen.orientation.lock("landscape");}catch(_){}
   document.body.classList.add("immersive");
-  setTimeout(()=>window.game?.scale?.refresh(),120);
+  setTimeout(()=>fitGame(),120);
 }
 
 function dismissTransientUI(){
@@ -2592,7 +2233,7 @@ function go(m){
   clearTimeout(banTimer);
   ["fx","tip","ban","st"].forEach(i=>setDisp($(i),"none"));
   hud();
-  setTimeout(()=>{window.game?.scale?.refresh();},90);
+  setTimeout(()=>{fitGame();},90);
   const s=sc();if(s)s.scene.restart();
 }
 
@@ -2739,25 +2380,12 @@ function openMobileSettings(){
   const scene=sc();let resumeAfter=false;
   try{if(G.mode!=="edit"&&scene?.scene.isActive("main")&&!scene.scene.isPaused("main")){scene.scene.pause();resumeAfter=true;}}catch(_){}
   const render=()=>{
-    const weatherDescriptions={
-      night:"City lights, homes and stars",
-      day:"Sunshine, clouds and flying birds",
-      rain:"Rainfall, dark clouds and wet atmosphere",
-      winter:"Snowfall and a cold, frosty atmosphere",
-      thunder:"Storm clouds, lightning and thunder"
-    };
-    const weatherChoices=Theme.modes.map(mode=>{
-      const info=Theme.meta[mode],active=Theme.cur===mode;
-      return `<button type="button" class="${active?"pri":""}" data-weather="${mode}" aria-pressed="${active}" style="min-height:42px;padding:8px 10px;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap">${info[0]} ${info[1]}</button>`;
-    }).join("");
+    const isDay=Theme.cur==="day";
     dlg("Game Settings",
       `<div style="display:grid;gap:10px;margin:8px 0">
-        <div style="padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px">
-            <b>World Weather</b><small style="color:var(--fg-muted)">Choose an environment</small>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px">${weatherChoices}</div>
-          <small style="display:block;color:var(--fg-muted);margin-top:8px">${Theme.meta[Theme.cur][0]} ${weatherDescriptions[Theme.cur]}</small>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
+          <div><b>World Environment</b><br><small style="color:var(--fg-muted)">${isDay?"☀️ Day: Sunshine, clouds & flying birds":"🌙 Night: City lights, homes & stars"}</small></div>
+          <button id="stgTheme" class="pri">${isDay?"☀️ Day":"🌙 Night"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
           <div><b>Sound Effects</b><br><small style="color:var(--fg-muted)">Synthesized arcade chimes</small></div>
@@ -2772,7 +2400,7 @@ function openMobileSettings(){
           <button id="stgAmb" class="${Amb.on?"pri":""}">${Amb.on?"🎵 On":"Off"}</button>
         </div>
         ${COARSE?`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <div><b>Controls Position</b><br><small style="color:var(--fg-muted)">${Ctl.mode==="below"?"Game stays full screen, lifted so the buttons rest on extra ground":"Buttons float over the game screen"}</small></div>
+          <div><b>Controls Position</b><br><small style="color:var(--fg-muted)">${Ctl.mode==="below"?"Game is lifted above the buttons":"Buttons float over the game"}</small></div>
           <button id="stgCtl" class="pri">${Ctl.mode==="below"?"⬇ Below":"⬆ Over"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
@@ -2786,9 +2414,7 @@ function openMobileSettings(){
       </div>`,
       [["Close",()=>{if(resumeAfter){try{scene?.scene.resume();}catch(_){}}}]]
     );
-    document.querySelectorAll("[data-weather]").forEach(btn=>{
-      btn.onclick=()=>{Theme.set(btn.dataset.weather,true);render();};
-    });
+    $("stgTheme").onclick=()=>{Theme.toggle();render();};
     $("stgSfx").onclick=()=>{Sfx.on=!Sfx.on;localStorage.setItem("bbsfx",Sfx.on?"1":"0");Amb.sync();if(Sfx.on)Sfx.play("key");render();};
     $("stgHap").onclick=()=>{Sfx.hap=!Sfx.hap;localStorage.setItem("bbhap",Sfx.hap?"1":"0");if(Sfx.hap)Sfx.vib(35);render();};
     $("stgAmb").onclick=()=>{Amb.on=!Amb.on;localStorage.setItem("bbamb",Amb.on?"1":"0");Amb.sync();render();};
@@ -2828,12 +2454,12 @@ function showMobileHome(){
   document.body.dataset.mode="home";
   setText($("homeStatus"),"Ready when you are.");
   if($("mobileHome"))$("mobileHome").setAttribute("aria-hidden","false");
-  requestAnimationFrame(()=>{window.game?.scale?.refresh();});
+  requestAnimationFrame(()=>{fitGame();});
 }
 function hideMobileHome(){
   document.body.classList.remove("home-active");
   if($("mobileHome"))$("mobileHome").setAttribute("aria-hidden","true");
-  requestAnimationFrame(()=>{window.game?.scale?.refresh();});
+  requestAnimationFrame(()=>{fitGame();});
 }
 
 function showHelpDialog(){
@@ -3045,14 +2671,15 @@ class Main extends Phaser.Scene{
     pot("parm",0x60a5fa,g=>g.fillStyle(0xffffff).fillTriangle(10,16,22,16,16,27));
     pot("pjump",0x4ade80,g=>g.fillStyle(0x14532d).fillTriangle(10,23,16,13,22,23));
     pot("pz",0x94a3b8,g=>g.fillStyle(0xffffff).fillRect(15,13,3,13));pot("pf2",0xf97316,g=>g.fillStyle(0xfde047).fillCircle(16,20,4));pot("pflm",0xef4444,g=>g.fillStyle(0xfde047).fillTriangle(12,26,16,12,20,26));pot("pdj",0xf9a8d4,g=>g.fillStyle(0xffffff).fillTriangle(10,20,16,12,22,20).fillTriangle(10,26,16,18,22,26));pot("pdash",0x2dd4bf,g=>g.fillStyle(0xffffff).fillRect(9,18,14,3).fillRect(12,23,10,2));
-    pot("pboom",0xf59e0b,g=>g.fillStyle(0xffffff).fillTriangle(9,13,23,13,16,27));pot("pice",0x38bdf8,g=>{g.fillStyle(0xffffff).fillRect(15,11,2,18);g.fillRect(7,19,18,2);g.fillRect(9,13,2,14);g.fillRect(21,13,2,14);});pot("pzap",0xfacc15,g=>{g.fillStyle(0xffffff).fillTriangle(19,10,11,21,17,21);g.fillTriangle(14,30,21,19,14,19);});
-    mk("gem",32,32,g=>{g.fillStyle(0x22d3ee).fillTriangle(16,5,27,14,5,14);g.fillStyle(0x0891b2).fillTriangle(5,14,27,14,16,29);g.fillStyle(0xffffff,.85).fillTriangle(11,14,16,7,16,14);g.fillStyle(0xa5f3fc).fillTriangle(16,14,22,14,16,23);});
-    mk("boom",24,24,g=>{g.fillStyle(0xfbbf24).fillTriangle(2,4,22,12,2,20);g.fillStyle(0x0b0f19).fillTriangle(8,10,22,12,8,14);g.lineStyle(2,0xffffff,.8);g.strokeTriangle(2,4,22,12,2,20);});
-    mk("iceorb",18,18,g=>{g.fillStyle(0x38bdf8,.35).fillCircle(9,9,9);g.fillStyle(0xbae6fd).fillCircle(9,9,6);g.fillStyle(0xffffff).fillCircle(7,7,2.5);});
     mk("fball",14,14,g=>{g.fillStyle(0xf97316).fillCircle(7,7,7);g.fillStyle(0xfde047).fillCircle(7,7,3.5)});mk("flm",10,10,g=>{g.fillStyle(0xfb923c).fillCircle(5,5,5);g.fillStyle(0xfde047).fillCircle(5,5,2.5)});mk("ebul",12,12,g=>{g.fillStyle(0xa855f7).fillCircle(6,6,6);g.fillStyle(0xf5d0fe).fillCircle(6,6,3)});
+    pot("pice",0x7dd3fc,g=>g.fillStyle(0xffffff).fillTriangle(16,12,12,24,20,24));pot("pboom",0xfbbf24,g=>g.lineStyle(3,0x78350f).beginPath().moveTo(10,16).lineTo(16,26).lineTo(23,14).strokePath());
+    pot("pbolt",0x818cf8,g=>g.fillStyle(0xfde047).fillTriangle(17,12,11,21,16,21).fillTriangle(16,21,21,19,14,28));pot("pbomb",0xf87171,g=>g.fillStyle(0x0f172a).fillCircle(16,21,6));
+    mk("shard",12,6,g=>{g.fillStyle(0xe0f2fe).fillTriangle(0,3,10,0,10,6);g.fillStyle(0x38bdf8).fillRect(8,1,4,4)});
+    mk("boomr",20,20,g=>{g.lineStyle(5,0xfbbf24).beginPath().moveTo(3,3).lineTo(3,17).lineTo(17,17).strokePath();g.lineStyle(2,0x78350f).beginPath().moveTo(3,3).lineTo(3,17).lineTo(17,17).strokePath()});
+    mk("bombp",16,16,g=>{g.fillStyle(0x1e293b).fillCircle(8,9,7);g.fillStyle(0xf87171).fillCircle(6,7,2);g.lineStyle(2,0xfacc15).lineBetween(8,2,11,0)});
     mk("bflag",32,32,g=>{g.fillStyle(0xcbd5e1).fillRect(8,2,3,30);g.fillStyle(0xdc2626).fillTriangle(11,2,28,8,11,16);g.fillStyle(0xffffff).fillCircle(17,8,2)});mk("sword",10,34,g=>{g.fillStyle(0xe2e8f0).fillRect(3,0,4,24);g.fillStyle(0xca8a04).fillRect(0,24,10,3);g.fillStyle(0x7c2d12).fillRect(4,27,2,7)});mk("turret",32,32,g=>{g.fillStyle(0x475569).fillRoundedRect(2,6,28,24,4);g.fillStyle(0x1e293b).fillRect(20,12,12,8);g.fillStyle(0xef4444).fillCircle(10,18,4)});
     mk("crusher",32,32,g=>{g.fillStyle(0x64748b).fillRect(0,0,32,26);g.fillStyle(0x334155).fillRect(4,4,24,6);g.fillStyle(0xcbd5e1).fillTriangle(0,26,8,32,16,26).fillTriangle(16,26,24,32,32,26)});
-    mk("laser",32,32,g=>{g.fillStyle(0x334155).fillRect(4,0,24,12);g.fillStyle(0xff2d55).fillRect(12,10,8,6)});
+    mk("laser",32,32,g=>{g.fillStyle(0x1e293b).fillRect(2,0,28,14);g.fillStyle(0x475569).fillRect(2,0,28,4);g.fillStyle(0x0f172a).fillRect(8,10,16,8);g.fillStyle(0xff2d55).fillCircle(16,15,5);g.fillStyle(0xffe4e9).fillCircle(15,14,2)});
     mk("mace",32,32,g=>{g.fillStyle(0x94a3b8);for(let i=0;i<8;i++){const a=i*Math.PI/4;g.fillTriangle(16+15*Math.cos(a),16+15*Math.sin(a),16+8*Math.cos(a-.5),16+8*Math.sin(a-.5),16+8*Math.cos(a+.5),16+8*Math.sin(a+.5))}g.fillStyle(0x475569).fillCircle(16,16,9)});
     mk("fbar",32,32,g=>{g.fillStyle(0x7c2d12).fillRoundedRect(8,8,16,16,3);g.fillStyle(0xf97316).fillCircle(16,16,4)});
     mk("crumble",32,32,g=>{g.fillStyle(0xa8a29e).fillRect(0,0,32,32);g.lineStyle(2,0x57534e).lineBetween(4,0,12,16).lineBetween(12,16,8,32).lineBetween(22,0,18,14).lineBetween(18,14,28,32);g.fillStyle(0xd6d3d1).fillRect(0,0,32,5)});
@@ -3083,14 +2710,14 @@ class Main extends Phaser.Scene{
         this.bgObjs.push(this.add.rectangle(-400,i*160-80,1800,170,Phaser.Display.Color.HexStringToColor(c).color).setOrigin(0).setScrollFactor(0).setDepth(-12));
       });
       // Shining Sun + Rotating Corona Rays
-      const sunHalo=this.add.circle(810,95,62,0xfef08a,0.28).setScrollFactor(0).setDepth(-11);
-      const sunRays=this.add.graphics().setScrollFactor(0).setDepth(-11).setPosition(810,95);
+      const sunHalo=this.add.circle(810,172,62,0xfef08a,0.28).setScrollFactor(0).setDepth(-11);
+      const sunRays=this.add.graphics().setScrollFactor(0).setDepth(-11).setPosition(810,172);
       sunRays.fillStyle(0xfde047,0.32);
       for(let i=0;i<12;i++){
         const a=(i/12)*Math.PI*2;
         sunRays.fillTriangle(Math.cos(a-0.1)*42,Math.sin(a-0.1)*42,Math.cos(a)*82,Math.sin(a)*82,Math.cos(a+0.1)*42,Math.sin(a+0.1)*42);
       }
-      const sunCore=this.add.circle(810,95,38,0xfacc15,1).setScrollFactor(0).setDepth(-11);
+      const sunCore=this.add.circle(810,172,38,0xfacc15,1).setScrollFactor(0).setDepth(-11);
       this.sunRays=sunRays;this.sunHalo=sunHalo;
       this.bgObjs.push(sunHalo,sunRays,sunCore);
 
@@ -3125,9 +2752,9 @@ class Main extends Phaser.Scene{
         this.bgObjs.push(this.add.rectangle(-400,i*160-80,1800,170,Phaser.Display.Color.HexStringToColor(c).color).setOrigin(0).setScrollFactor(0).setDepth(-12));
       });
       // Glowing Moon
-      const moonGlow=this.add.circle(810,92,56,0xa78bfa,0.22).setScrollFactor(0).setDepth(-11);
-      const moon=this.add.circle(810,92,34,0xede9fe,0.96).setScrollFactor(0).setDepth(-11);
-      const crater=this.add.circle(820,84,7,0xc4b5fd,0.5).setScrollFactor(0).setDepth(-11);
+      const moonGlow=this.add.circle(810,170,56,0xa78bfa,0.22).setScrollFactor(0).setDepth(-11);
+      const moon=this.add.circle(810,170,34,0xede9fe,0.96).setScrollFactor(0).setDepth(-11);
+      const crater=this.add.circle(820,162,7,0xc4b5fd,0.5).setScrollFactor(0).setDepth(-11);
       if(wx){[moonGlow,moon,crater].forEach(o=>o.setVisible(false));}this.bgObjs.push(moonGlow,moon,crater);
 
       // Twinkling Stars
@@ -3187,20 +2814,12 @@ class Main extends Phaser.Scene{
     }
   }
 
-  buildExt(){ // extra ground below the level so the lifted view has earth under the touch buttons
-    if(this.extG){this.extG.destroy();this.extG=null;}
-    if(!this.extPad)return;
-    const c={day:[0x4d7c0f,0x84cc16],night:[0x1e1b4b,0x4c1d95],rain:[0x1e293b,0x475569],winter:[0xcbd5e1,0xffffff],thunder:[0x1b1536,0x3b2a6b]}[Theme.cur]||[0x1e1b4b,0x4c1d95];
-    const g=this.add.graphics().setDepth(1);g.fillStyle(c[0]).fillRect(-400,H*S,W*S+800,this.extPad+300);g.fillStyle(c[1]).fillRect(-400,H*S,W*S+800,8);
-    g.fillStyle(c[1],.22);for(let x=0;x<W*S;x+=64)g.fillRect(x,H*S+30,34,4),g.fillRect(x+32,H*S+62,34,4);
-    this.extG=g;
-  }
   applyTheme(){
-    this.buildBg();this.mkWeather();if(this.extPad)this.buildExt();
+    this.buildBg();this.mkWeather();
     if(G.mode==="edit"&&this.spr)this.draw();
-    else if(this.solid){
+    else if(this.tiles){
       const texture=Theme.cur==="day"?"platDay":"plat";
-      this.solid.getChildren().forEach(tile=>{if(tile.texture?.key==="plat"||tile.texture?.key==="platDay")tile.setTexture(texture);});
+      this.tiles.getChildren().forEach(tile=>{if(tile.texture?.key==="plat"||tile.texture?.key==="platDay")tile.setTexture(texture);});
     }
   }
 
@@ -3290,7 +2909,7 @@ class Main extends Phaser.Scene{
   create(){
     this.tex();initPal(this);setupNavigation();
     this.spr=[];this.down=false;this.dead=false;this.over=false;this.p=null;this.editGrid=null;
-    const cam=this.cameras.main;cam.setBounds(0,0,W*S,H*S);this.extPad=0;this.extG=null;
+    const cam=this.cameras.main;cam.setBounds(0,0,W*S,H*S);
     this.buildBg();this.mkWeather();
     this.k=this.input.keyboard.addKeys("W,A,S,D,UP,LEFT,RIGHT,DOWN,SPACE,X,J,SHIFT,Q",false);
     G.mode==="edit"?this.edit():this.play();
@@ -3430,21 +3049,30 @@ class Main extends Phaser.Scene{
     this.gf=this.add.graphics().setDepth(1);this.coy=0;this.buf=0;this.lastGroundedAt=-9999;this.jmp=false;this.frz=0;this.fcd=0;this.inv=0;
     this.fx=FX0();this.mud=new Set();this.dyn=[];this.proj=[];this.ice=new Set();this.belt=new Map();this.sl=[];this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];this.cpState=null;this.cpDyn=null;
     this.physics.world.setBounds(0,0,W*S,H*S);this.physics.world.setBoundsCollision(true,true,true,false);
-    this.solid=this.physics.add.staticGroup();this.crates=this.physics.add.group();this.ents=[];
+    this.solid=this.physics.add.staticGroup();this.tiles=this.add.group();this.crates=this.physics.add.group();this.ents=[];
     const sol=new Set(L.o.filter(o=>"pavwM".includes(o[0])).map(o=>o[1]+","+o[2]));this.sol=sol;
+    { // Merge touching solid cells into larger invisible bodies: removes the seams between tiles that snag the player.
+      const seen=new Set(),free=(c,r)=>sol.has(c+","+r)&&!seen.has(c+","+r);
+      for(let r=0;r<H;r++)for(let c=0;c<W;c++){
+        if(!free(c,r))continue;
+        let w=1;while(c+w<W&&free(c+w,r))w++;
+        let h=1;for(;r+h<H;h++){let ok=true;for(let i=0;i<w;i++)if(!free(c+i,r+h)){ok=false;break;}if(!ok)break;}
+        for(let j=0;j<h;j++)for(let i=0;i<w;i++)seen.add((c+i)+","+(r+j));
+        this.solid.create(c*S+w*S/2,r*S+h*S/2,"plat").setVisible(false).setDisplaySize(w*S,h*S).refreshBody();
+      }
+    }
     L.o.forEach(([t,c,r,R],i)=>{
       const x=c*S+16,y=r*S+16;R=R||3;
-      if("pavwM".includes(t)){const b=this.solid.create(x,y,t==="p"&&Theme.cur==="day"?"platDay":TYPES[t]);if(t==="w")b.setFlipX(true);if(t==="a")this.ice.add(c+","+r);else if(t==="M")this.mud.add(c+","+r);else if(t!=="p")this.belt.set(c+","+r,t==="v"?1:-1);}
+      if("pavwM".includes(t)){const b=this.add.image(x,y,t==="p"&&Theme.cur==="day"?"platDay":TYPES[t]);if(t==="w")b.setFlipX(true);this.tiles.add(b);if(t==="a")this.ice.add(c+","+r);else if(t==="M")this.mud.add(c+","+r);else if(t!=="p")this.belt.set(c+","+r,t==="v"?1:-1);}
       else if(t==="D"||t==="U"){const b=this.solid.create(x,y,TYPES[t]);this.dyn.push({b,t,x,y,ph:c*.3});}
       else if(t==="g"||t==="u"){const m=this.physics.add.image(x,y-10,"slider").setImmovable(true);m.body.setAllowGravity(false);this.sl.push({s:m,x,y:y-10,v:t==="u",R});}
       else if(t==="c"){const k=this.crates.create(x,y,"crate");k.setDragX(1000).setCollideWorldBounds(true);k.home=[x,y];}
       else{
         const s=this.add.image(x,y,TYPES[t]).setDepth(1);if(t==="h")s.setTint(0xff8a8a);if(t==="i")s.setVisible(false);if(t==="n")s.setAlpha(.3);
         if(t==="b")s.setDepth(2);
-        if(t==="q")this.tweens.add({targets:s,y:y-4,yoyo:true,repeat:-1,duration:600+Math.random()*300,ease:"Sine.easeInOut"});
         const e={t,i,x,y,s,cd:0,y0:y,vy:0,R};
         if("123456".includes(t)){e.hp=e.max=BH[t];e.y=y-12;e.by=e.y;e.fx=x;e.vx=0;e.tm=0;e.ph=0;s.setY(e.y).setDepth(2);e.phase=0;e.awake=false;e.bg=this.add.rectangle(x,e.y-42,52,8,0x000000,.65).setDepth(5).setVisible(false);e.bar=this.add.rectangle(x-25,e.y-42,50,6,BOSS[t].c).setOrigin(0,.5).setDepth(6).setVisible(false);e.nm=this.add.text(x,e.y-55,BOSS[t].n,{font:"bold 11px system-ui",color:"#fff",stroke:"#000",strokeThickness:3}).setOrigin(.5).setDepth(6).setVisible(false);e.say=this.add.text(x,e.y-78,"",{font:"bold 12px system-ui",color:"#fde68a",stroke:"#000",strokeThickness:3,align:"center",wordWrap:{width:200}}).setOrigin(.5,1).setDepth(7).setVisible(false);s.setAlpha(.75);this.bosses.push(e);}
-        if(t==="l"||t==="L"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break;}if(t==="L"){e.fy=Math.min(e.fy,H*S);e.bm=this.add.graphics().setDepth(1).setBlendMode(Phaser.BlendModes.ADD);}}
+        if(t==="l"||t==="L"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break;}if(t==="L"){e.fy=Math.min(e.fy,H*S);}}
         this.ents.push(e);
       }
     });
@@ -3456,16 +3084,16 @@ class Main extends Phaser.Scene{
     const door=this.add.image(L.e[0]*S+16,L.e[1]*S+16,"door");
     this.tweens.add({targets:door,scale:{from:1,to:1.1},yoyo:true,repeat:-1,duration:700});
     this.ents.push({t:"E",x:door.x,y:door.y,s:door});
-    this.nk=L.o.filter(o=>o[0]==="k").length;this.ng=L.o.filter(o=>o[0]==="q").length;this.gemsGot=new Set();this.cpGems=new Set();
+    this.nk=L.o.filter(o=>o[0]==="k").length;
     const p=this.p=this.physics.add.sprite(this.spawn[0],this.spawn[1],G.pk).setDepth(3).setCollideWorldBounds(true);
-    p.body.setMaxVelocity(320,900);
+    p.body.setMaxVelocity(320,900);p.body.setSize(16,26).setOffset(3,2);
     this.physics.add.collider(p,this.solid);this.physics.add.collider(p,this.crates);
     this.physics.add.collider(this.crates,this.solid);this.physics.add.collider(this.crates,this.crates);
     this.sl.forEach(m=>{this.physics.add.collider(p,m.s);this.physics.add.collider(this.crates,m.s);});
-    this.cameras.main.setZoom(COARSE?1.13:1).startFollow(p,true,.12,.12).setDeadzone(80,60);
+    this.cameras.main.setZoom(COARSE?1.45:1).startFollow(p,true,.12,.12).setDeadzone(80,60);this.cameras.main.setBounds(0,0,W*S,H*S+(COARSE?110:60));this.add.rectangle(W*S/2,H*S+200,W*S+400,400,0x0b0a1e).setDepth(0);
     const fxo={setText(t){setText($("fx"),t);return fxo;},setVisible(v){setDisp($("fx"),v?"block":"none");return fxo;}};this.fxT=fxo;
     this.tip={setText:t=>{const d=$("tip");setText(d,t);setDisp(d,t?"block":"none");}};
-    this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;this.boom=null;
+    this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;
   }
 
   mv(e,now,sp){const w=Math.max(.7,Math.min(2.4,6.3/e.R))*(sp||1);return .5*e.R*S*(1-Math.cos((now-this.t00)/1000*w));}
@@ -3486,10 +3114,6 @@ class Main extends Phaser.Scene{
     for(const x of[b.x+3,b.x+b.width/2,b.x+b.width-3])if(this.sol.has(Math.floor(x/S)+","+y))return true;
     return false;
   }
-  boxFreeX(x,y,w,h){ // exact half-open test: touching a wall is fine, overlapping it by even a fraction is not
-    for(let cx=Math.floor((x+.001)/S);cx<=Math.ceil((x+w-.001)/S)-1;cx++)for(let cy=Math.floor((y+.001)/S);cy<=Math.ceil((y+h-.001)/S)-1;cy++)if(this.sol.has(cx+","+cy))return false;
-    return true;
-  }
   boxFree(x,y,w,h){ // true when no solid cell overlaps the box (x,y = top-left)
     for(let cx=Math.floor(x/S);cx<=Math.floor((x+w-1)/S);cx++)for(let cy=Math.floor(y/S);cy<=Math.floor((y+h-1)/S);cy++)if(this.sol.has(cx+","+cy))return false;
     return true;
@@ -3505,7 +3129,7 @@ class Main extends Phaser.Scene{
   hitW(x,y,hw,hh){for(const sx of[x-hw,x,x+hw-1])for(const sy of[y-hh,y-hh/2,y+hh/2,y+hh-1])if(this.sol.has(Math.floor(sx/S)+","+Math.floor(sy/S)))return true;return false;}
 
   got(t,ex,ey){
-    if("ZFYKIV".includes(t))this.wep=FX[t];
+    if(WEP_KEYS.includes(t))this.wep=FX[t];
     const m=PU_META[t];
     Sfx.play("power");Sfx.vib([25,40,35]);
     if(m){
@@ -3518,8 +3142,24 @@ class Main extends Phaser.Scene{
     Juice.card({icon:"🚩",tag:"EVENT",title:m,hint:"Watch out!",color:"#ef4444",glow:"rgba(239,68,68,0.5)",ms:3200});
   }
 
-  shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm",ice:tx==="iceorb"});}
-  freezeBoss(e){const n=this.time.now;e.fz=n+1400;e.wd=0;e.tm=Math.max(e.tm||0,n+1400);e.s.setTint(0x93c5fd);Sfx.play("ice");}
+  shoot(x,y,vx,vy,en,tx,life,d,o){const s=this.add.image(x,y,tx).setDepth(2),q={s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm",hits:new Set(),...o};this.proj.push(q);return q;}
+  zap(x,y,dir){ // instant lightning: stops at the first wall, damages bosses in line, erases enemy shots
+    let len=0;while(len<300&&!this.sol.has(Math.floor((x+dir*len)/S)+","+Math.floor(y/S)))len+=8;
+    const pts=[[x,y]];for(let i=1;i<8;i++)pts.push([x+dir*len*i/8,y+(Math.random()-.5)*16]);pts.push([x+dir*len,y]);
+    const g=this.add.graphics().setDepth(5),line=(w,c,a)=>{g.lineStyle(w,c,a).beginPath().moveTo(pts[0][0],pts[0][1]);pts.slice(1).forEach(q=>g.lineTo(q[0],q[1]));g.strokePath();};
+    line(9,0x60a5fa,.35);line(3,0xe0f2fe,1);this.tweens.add({targets:g,alpha:0,duration:170,onComplete:()=>g.destroy()});
+    this.cameras.main.shake(60,.004);Sfx.play("boss");
+    this.bosses.forEach(bb=>{const d=(bb.x-x)*dir;if(bb.awake&&!bb.dead&&Math.abs(bb.y-y)<44&&d>-20&&d<len+30)this.dmg(bb,2.5);});
+    this.proj.forEach(q=>{const d=(q.x-x)*dir;if(q.en&&Math.abs(q.y-y)<28&&d>0&&d<len)q.life=0;});
+  }
+  blast(x,y){ // bomb explosion
+    const R=96,now=this.time.now,c=this.add.circle(x,y,R*.3,0xfbbf24,.9).setDepth(6);
+    this.tweens.add({targets:c,scale:3.2,alpha:0,duration:260,onComplete:()=>c.destroy()});
+    Juice.burst(this,x,y,0xf97316);this.cameras.main.shake(180,.01);Sfx.play("boss");Sfx.vib(30);
+    this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&Math.hypot(bb.x-x,bb.y-y)<R+24)this.dmg(bb,4);});
+    this.proj.forEach(q=>{if(q.en&&Math.hypot(q.x-x,q.y-y)<R)q.life=0;});
+    this.dyn.forEach(d=>{if(d.t==="D"&&!d.rb&&Math.hypot(d.x-x,d.y-y)<R){d.st=0;d.rb=now+3000;d.b.body.enable=false;d.b.setVisible(false);}});
+  }
   say(e,t,ms=1900){if(e.say){e.say.setText(t).setVisible(true);e.sayT=this.time.now+ms;}}
   wake(e,card){
     const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;e.fire=0;
@@ -3609,8 +3249,6 @@ class Main extends Phaser.Scene{
       else{e.x=e.fx;e.y=e.by+Math.sin(now/500+e.fx)*2;e.vy=0;e.s.setPosition(e.x,e.y);return;}
     }
     this.unstick(e);
-    if(now<(e.fz||0)){e.s.setTint(0x93c5fd);e.s.setPosition(e.x,e.y);e.bar.setSize(50*Math.max(0,e.hp)/e.max,6);return;}
-    else if(e.fz){e.fz=0;e.s.clearTint();e.tm=Math.max(e.tm||0,now+300);}
     const sg=cx>e.x?1:-1,p2=e.phase,sp=1+p2*.3,cd=[1,.78,.58][p2],gnd=k==="1"||k==="4";
     const xlo=Math.max(e.fx-220,40),xhi=Math.min(e.fx+220,W*S-40);
     const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -3707,14 +3345,11 @@ class Main extends Phaser.Scene{
     const p=this.p;if(!p||!p.body||this.over||this.dead)return;
     {const cm=this.cameras.main,pvx=p.body.velocity.x;
      if(Math.abs(pvx)>40)this.lookDir=pvx>0?1:-1;
-     // Look ahead in the travel direction; when controls float over the screen, also lift the player higher.
-     const tx=-(this.lookDir||1)*(COARSE?60:50),lift=COARSE?(Ctl.mode==="below"?.15:.21):0,ty=-Math.round(lift*540/Math.max(.5,cm.zoom));
-     const wantExt=(COARSE&&Ctl.mode==="below")?130:0;if(this.extPad!==wantExt){this.extPad=wantExt;cm.setBounds(0,0,W*S,H*S+wantExt);this.buildExt();}
+     // Look ahead in the travel direction and lift the player above the on-screen buttons.
+     const tx=-(this.lookDir||1)*(COARSE?60:50),ty=COARSE?(Ctl.mode==="below"?-70:-30):0;
      cm.followOffset.x+=(tx-cm.followOffset.x)*Math.min(1,s*2.4);
      cm.followOffset.y+=(ty-cm.followOffset.y)*Math.min(1,s*3);
-     // Controls-below mode shrinks the canvas; zoom in part-way so the runner and hazards stay a readable size.
-     if(COARSE){const wr=$("wrap"),dh=this.scale.displaySize&&this.scale.displaySize.height;
-       if(wr&&dh>40){const want=1.13*Math.min(1.45,Math.sqrt(Math.max(1,wr.clientHeight/dh)));cm.setZoom(cm.zoom+(want-cm.zoom)*Math.min(1,s*4));}}}
+    }
     const JD=Phaser.Input.Keyboard.JustDown,b=p.body,fx=this.fx,fr=now<this.frz,jb=fx.jump>now;
     const l=!fr&&(k.A.isDown||k.LEFT.isDown||T.l),r=!fr&&(k.D.isDown||k.RIGHT.isDown||T.r),j=!fr&&(k.W.isDown||k.UP.isDown||k.SPACE.isDown||T.j);
     const jd=!fr&&(JD(k.W)||JD(k.UP)||JD(k.SPACE)||T.jd);T.jd=0;
@@ -3722,12 +3357,7 @@ class Main extends Phaser.Scene{
     const kk=Math.floor((b.x+b.width/2)/S)+","+Math.floor((b.bottom+3)/S),g=b.blocked.down||b.touching.down||(b.velocity.y>-20&&this.footOnSolid(b)),ice=g&&this.ice.has(kk),bl=g?(this.belt.get(kk)||0):0;
     const mud=g&&this.mud.has(kk),tv=(r-l)*(jb?250:200)*(mud?.5:1)+bl*110,a=(fr?3000:ice?260:g?2200:1200)*s;let vx=b.velocity.x;
     vx=vx<tv?Math.min(tv,vx+a):Math.max(tv,vx-a);
-    // Never let the body overlap a wall cell. Pressing into a tall wall while jumping made the engine think the head
-    // hit a ceiling (corner clipping) and cancel the jump; clamping the step against the level grid removes that.
-    if(vx){const ty=b.y+Math.min(0,b.velocity.y*s),hh=b.height-2;
-      if(this.boxFreeX(b.x,ty+1,b.width,hh)){let d=vx*s;
-        if(!this.boxFreeX(b.x+d,ty+1,b.width,hh)){let ok=0;for(let i=0;i<5&&Math.abs(d)>.05;i++){d*=.5;if(this.boxFreeX(b.x+d,ty+1,b.width,hh)){ok=d;break;}}vx=ok/s;}}}
-    const dp=T.d&&!this.pd;this.pd=T.d;
+        const dp=T.d&&!this.pd;this.pd=T.d;
     if((JD(k.SHIFT)||dp)&&fx.dash>now&&now>this.dcd){this.dsh=now+190;this.dcd=now+700;this.dd=p.flipX?-1:1;this.inv=Math.max(this.inv,now+190);Sfx.play("jump");}
     if(now<this.dsh){vx=this.dd*520;p.setVelocityY(0);}
     p.setVelocityX(vx);if(tv)p.setFlipX(tv<0);if(g)this.jc=0;
@@ -3744,7 +3374,7 @@ class Main extends Phaser.Scene{
       Juice.card({icon:"🚪",tag:"EXIT READY",title:"DOOR UNLOCKED!",hint:"Head to the exit door to complete the level!",color:"#4ade80",glow:"rgba(74,222,128,0.5)",ms:3200});
     }
     this.gf.clear();
-    const ow0=["sword","fb","flame","boom","ice","zap"].filter(n=>fx[n]>now),sp=T.s&&!this.ps;this.ps=T.s;
+    const ow0=WEAPONS.filter(n=>fx[n]>now),sp=T.s&&!this.ps;this.ps=T.s;
     if((JD(k.Q)||sp)&&ow0.length>1){this.wep=ow0[(ow0.indexOf(this.wep)+1)%ow0.length];flash("Weapon: "+FXN[this.wep]);}
 
     // Update touch button availability indicators only when state changes
@@ -3763,24 +3393,12 @@ class Main extends Phaser.Scene{
       else if(this.wep==="fb"){this.acd=now+380;this.shoot(cx+dir*14,py+14,dir*520,0,false,"fball",1.4,2);}
       else if(this.wep==="sword"){this.acd=now+300;this.sws=now;const sx=dir>0?cx:cx-48,rc=this.add.rectangle(sx+24,py+16,48,34,0xe2e8f0,.8).setDepth(4);this.tweens.add({targets:rc,alpha:0,scaleX:1.3,duration:160,onComplete:()=>rc.destroy()});
         this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&Math.abs(bb.x-(sx+24))<56&&Math.abs(bb.y-py)<46)this.dmg(bb,3);});this.proj.forEach(q=>{if(q.en&&Math.abs(q.x-(sx+24))<40&&Math.abs(q.y-py-16)<30)q.life=0;});}
-      else if(this.wep==="ice"){this.acd=now+420;Sfx.play("ice");this.shoot(cx+dir*14,py+14,dir*430,0,false,"iceorb",1.5,2);}
-      else if(this.wep==="boom"){if(!this.boom){this.acd=now+250;Sfx.play("boom");this.boom={s:this.add.image(cx+dir*14,py+16,"boom").setDepth(4),x:cx+dir*14,y:py+16,dir,out:true,run:0,hit:new Map()};}}
-      else if(this.wep==="zap"){this.acd=now+520;Sfx.play("zap");
-        const y0=py+16,x0=cx+dir*12;let x1=x0;for(let d=0;d<280;d+=8){const xx=x0+dir*d;if(this.sol.has(Math.floor(xx/S)+","+Math.floor(y0/S)))break;x1=xx;}
-        const g=this.add.graphics().setDepth(5),pts=[[x0,y0]];for(let d=18;d<Math.abs(x1-x0);d+=18)pts.push([x0+dir*d,y0+(Math.random()-.5)*16]);pts.push([x1,y0]);
-        for(const[w,c,a]of[[9,0xfde047,.35],[4,0xfef08a,.9],[1.5,0xffffff,1]]){g.lineStyle(w,c,a);g.beginPath();pts.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.strokePath();}
-        this.tweens.add({targets:g,alpha:0,duration:170,onComplete:()=>g.destroy()});
-        const lo=Math.min(x0,x1)-8,hi=Math.max(x0,x1)+8;
-        this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&bb.x>lo&&bb.x<hi&&Math.abs(bb.y-y0)<40)this.dmg(bb,2.5);});
-        this.proj.forEach(q=>{if(q.en&&q.x>lo&&q.x<hi&&Math.abs(q.y-y0)<26)q.life=0;});}
-      else if(!this.hinted){this.hinted=1;flash("Find a weapon: sword, fireball, flamethrower, boomerang, frost orb or lightning staff!");}
+      else if(this.wep==="ice"){this.acd=now+520;[-110,0,110].forEach(v=>this.shoot(cx+dir*14,py+14,dir*430,v,false,"shard",.55,1));Sfx.play("jump");}
+      else if(this.wep==="boom"){if(!this.proj.some(q=>q.ret)){this.acd=now+250;this.shoot(cx+dir*12,py+14,dir*480,0,false,"boomr",1.5,1.5,{ret:.85,pierce:1,spin:1});Sfx.play("jump");}}
+      else if(this.wep==="bolt"){this.acd=now+650;this.zap(cx+dir*10,py+16,dir);}
+      else if(this.wep==="bomb"){this.acd=now+900;this.shoot(cx+dir*12,py+8,dir*260+b.velocity.x*.4,-330,false,"bombp",1.6,0,{g:1100,bomb:1,spin:1});Sfx.play("jump");}
+      else if(!this.hinted){this.hinted=1;flash("Find a weapon pickup first!");}
     }
-    if(this.boom){const q=this.boom,tx=px+pw/2,ty2=py+ph/2;q.s.rotation+=s*20;
-      if(q.out){const dx=q.dir*430*s;q.x+=dx;q.run+=Math.abs(dx);if(q.run>=250||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S)))q.out=false;}
-      else{const dx=tx-q.x,dy=ty2-q.y,dd=Math.hypot(dx,dy),st=560*s;if(dd<=st+14){q.s.destroy();this.boom=null;}else{q.x+=dx/dd*st;q.y+=dy/dd*st;}}
-      if(this.boom){q.s.setPosition(q.x,q.y);const leg=q.out?1:2;
-        this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<34&&Math.abs(q.y-bb.y)<34&&q.hit.get(bb)!==leg){q.hit.set(bb,leg);this.dmg(bb,2);}});
-        this.proj.forEach(pp=>{if(pp.en&&Math.abs(pp.x-q.x)<20&&Math.abs(pp.y-q.y)<20)pp.life=0;});}}
     for(const e of this.ents){
       if(this.dead)return;if(e.gone)continue;
       switch(e.t){
@@ -3788,10 +3406,9 @@ class Main extends Phaser.Scene{
         case"r":case"B":if(hit(e.x-16,e.y+4,32,12)&&b.velocity.y>=-20&&now>e.cd){p.setVelocityY(e.t==="B"?-1080:-800);e.cd=now+300;this.tweens.add({targets:e.s,scaleY:.6,yoyo:true,duration:100});Sfx.play("jump");}break;
         case"O":{e.s.setY(e.y+Math.sin(now/180+e.x)*2);if(hit(e.x-18,e.y-150,36,150)){p.setVelocityY(Math.max(-520,b.velocity.y-2100*s));this.gf.fillStyle(0x67e8f9,.18).fillTriangle(e.x-16,e.y-8,e.x+16,e.y-8,e.x,e.y-150);}break;}
         case"N":{const phase=((now-this.t00)/1000+e.x*.013)%2.8,charge=phase>1.65&&phase<2.05,pulse=phase>=2.05&&phase<2.42;e.s.setTint(charge?0xfacc15:pulse?0x67e8f9:0xffffff).setAlpha(pulse?1:charge?.8:.45);if(pulse){this.gf.lineStyle(4,0x67e8f9,.9).strokeCircle(e.x,e.y,34+Math.sin(now/30)*5);if(!ghost&&now>e.cd&&hit(e.x-34,e.y-28,68,56)){this.hurt();e.cd=now+850;}}break;}
-        case"q":if(hit(e.x-11,e.y-11,22,22)){e.gone=true;e.s.setVisible(false);this.gemsGot.add(e.i);Sfx.play("gem");Sfx.vib(15);Juice.burst(this,e.x,e.y,0x22d3ee,"💎 "+this.gemsGot.size+"/"+this.ng);}break;
         case"k":if(hit(e.x-10,e.y-10,20,20)){e.gone=true;e.s.setVisible(false);this.keysGot.add(e.i);Sfx.play("key");Sfx.vib(25);Juice.burst(this,e.x,e.y,0xfacc15,"🔑 "+this.keysGot.size+"/"+this.nk);flash("🔑 Key "+this.keysGot.size+"/"+this.nk);}break;
         case"h":if(!e.on&&hit(e.x-12,e.y-16,24,32)){
-          e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot);this.cpGems=new Set(this.gemsGot);
+          e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot);
           // Save the world state as well as the respawn position: collected items,
           // triggered traps, opened flags and their visual/physics state.
           this.cpState=this.ents.map(q=>({gone:!!q.gone,on:!!q.on,up:!!q.up,fall:!!q.fall,done:!!q.done,y:q.y,vy:q.vy,dead:!!q.dead,hp:q.hp,awake:!!q.awake}));
@@ -3811,18 +3428,21 @@ class Main extends Phaser.Scene{
         case"b":{const o=this.mv(e,now,.8),x=e.x+o;e.s.setPosition(x,e.y+1).setRotation(o/15);if(hit(x-14,e.y-13,28,28))this.hurt();break;}
         case"n":{const q=((now-this.t00)/1000+e.x*.017)%3.4,on=q>2.5,wn=q>1.8;e.s.setAlpha(on?1:wn?.65:.25).setScale(1,on?2:1);
           if(on&&!ghost&&now>this.fcd&&hit(e.x-14,e.y-30,28,60)){this.frz=now+1300;this.fcd=now+2600;p.setVelocityX(0);}break;}
-        case"e":case"o":case"t":case"j":case"Z":case"F":case"Y":case"A":case"H":case"K":case"I":case"V":
-          if(hit(e.x-12,e.y-12,24,24)){e.gone=true;e.s.setVisible(false);fx[FX[e.t]]=now+("ZFYKIV".includes(e.t)?1e12:e.t==="t"?DUR*1.5:DUR);this.got(e.t,e.x,e.y);}break;
+        case"e":case"o":case"t":case"j":case"Z":case"F":case"Y":case"A":case"H":case"I":case"J":case"K":case"V":
+          if(hit(e.x-12,e.y-12,24,24)){e.gone=true;e.s.setVisible(false);fx[FX[e.t]]=now+(WEP_KEYS.includes(e.t)?1e12:e.t==="t"?DUR*1.5:DUR);this.got(e.t,e.x,e.y);}break;
         case"T":if(now>e.cd&&Math.abs(px-e.x)<420&&Math.abs(py-e.y)<130){e.cd=now+2200;const d=px>e.x?1:-1;this.shoot(e.x+d*18,e.y,d*270,0,true,"ebul",3,0);e.s.setFlipX(d<0);}break;
         case"C":{const q=((now-this.t00)/1000+e.x*.013)%3.2,o=q>2.2&&q<2.9?2*S:q>1.7&&q<2.2?(q*40%4):0;e.s.setY(e.y+o);if(o>4&&hit(e.x-15,e.y+o-15,30,30))this.hurt();break;}
-        case"L":{const q=((now-this.t00)/1000+e.x*.011)%3.4,on=q>1.9,warn=!on&&q>1.4,len=e.fy-e.y-16,g=e.bm,ny=e.y+16;g.clear();
-          if(on){const f=.85+Math.random()*.15;
-            g.fillStyle(0xff2d55,.2*f).fillRect(e.x-13,ny,26,len);g.fillStyle(0xff5a7a,.45*f).fillRect(e.x-7,ny,14,len);g.fillStyle(0xffffff,.95).fillRect(e.x-2.5,ny,5,len);
-            g.fillStyle(0xff2d55,.45).fillCircle(e.x,ny,16*f);g.fillStyle(0xffffff,.9).fillCircle(e.x,ny,6);
-            g.fillStyle(0xff2d55,.5).fillEllipse(e.x,e.fy,40*f,12);g.fillStyle(0xffffff,.9).fillEllipse(e.x,e.fy,18,5);
-            if(Math.random()<.4){const sp=this.add.rectangle(e.x+(Math.random()-.5)*14,e.fy-2,3,3,0xfff1f2).setDepth(2);this.tweens.add({targets:sp,y:sp.y-14-Math.random()*18,x:sp.x+(Math.random()-.5)*34,alpha:0,duration:300,onComplete:()=>sp.destroy()});}
-          }else if(warn){const a=(Math.sin(now/45)+1)/2,ch=(q-1.4)/.5;g.lineStyle(2,0xff2d55,.2+.35*a);g.lineBetween(e.x,ny,e.x,e.fy);g.fillStyle(0xff2d55,.35+.45*a).fillCircle(e.x,ny,4+9*ch);g.fillStyle(0xffffff,.6*a).fillCircle(e.x,ny,2+2*ch);}
-          if(on&&hit(e.x-5,e.y+16,10,e.fy-e.y-16))this.hurt();break;}
+        case"L":{const q=((now-this.t00)/1000+e.x*.011)%3.4,on=q>1.9,x=e.x,y0=e.y+14,len=e.fy-y0,g=this.gf;
+          if(!on&&q>1.4){const k=(q-1.4)/.5;g.lineStyle(1,0xff5a7a,.2+.4*(.5+.5*Math.sin(now/35))).lineBetween(x,y0,x,e.fy);
+            for(let i=0;i<8;i++){const a=i*Math.PI/4+now/400,r0=26-14*k;g.lineStyle(2,0xff8aa1,.15+.55*k).lineBetween(x+Math.cos(a)*r0,y0+Math.sin(a)*r0,x+Math.cos(a)*(r0-10),y0+Math.sin(a)*(r0-10));}
+            g.fillStyle(0xff2d55,.25+.5*k).fillCircle(x,y0,4+8*k);}
+          else if(on){const fl=Math.sin(now/22)*1.5;
+            g.fillStyle(0xff2d55,.14).fillRect(x-14-fl,y0,28+2*fl,len).fillStyle(0xff2d55,.38).fillRect(x-7,y0,14,len).fillStyle(0xff7a93,.85).fillRect(x-3.5,y0,7,len).fillStyle(0xffffff,.95).fillRect(x-1.5,y0,3,len);
+            g.fillStyle(0xff2d55,.5).fillCircle(x,y0,14).fillStyle(0xffffff,.9).fillCircle(x,y0,6);
+            for(let i=0;i<10;i++){const a=i*Math.PI/5+now/90,r1=20+(i%3)*6;g.lineStyle(2,0xff9fb2,.7).lineBetween(x+Math.cos(a)*10,y0+Math.sin(a)*10,x+Math.cos(a)*r1,y0+Math.sin(a)*r1);}
+            if(e.fy<H*S){g.fillStyle(0xfff1f2,.85).fillEllipse(x,e.fy,34,8);for(let i=0;i<5;i++)g.fillStyle(0xffd1da,.9).fillRect(x+(Math.random()-.5)*34,e.fy-Math.random()*14,2,2);}
+            if(hit(x-4,e.y+16,8,len))this.hurt();}
+          break;}
         case"P":{const a=1.15*Math.sin((now-this.t00)/1000*2+e.x*.02),mx=e.x+Math.sin(a)*96,my=e.y+Math.cos(a)*96;e.s.setPosition(mx,my).setRotation(-a*2);this.gf.lineStyle(3,0x94a3b8).lineBetween(e.x,e.y-12,mx,my).fillStyle(0x94a3b8).fillCircle(e.x,e.y-12,5);if(hit(mx-13,my-13,26,26))this.hurt();break;}
         case"R":{const a=(now-this.t00)/1000*2.2+e.x*.01;for(let n=1;n<=3;n++){const ox=e.x+Math.cos(a)*n*26,oy=e.y+Math.sin(a)*n*26;this.gf.fillStyle(0xf97316).fillCircle(ox,oy,8).fillStyle(0xfde047).fillCircle(ox,oy,4);if(hit(ox-8,oy-8,16,16))this.hurt(true);}break;}
         case"W":e.s.setScale(1,1+.05*Math.sin(now/60));if(hit(e.x-14,e.y-160,28,160)){p.setVelocityY(Math.max(-340,b.velocity.y-3200*s));this.gf.fillStyle(0xbae6fd,.35).fillRect(e.x-14,e.y-160,28,160);}break;
@@ -3853,24 +3473,34 @@ class Main extends Phaser.Scene{
         case"E":e.s.setAlpha(open?1:.5);if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Collect all keys and defeat every boss!");}}break;
       }
     }
-    this.proj=this.proj.filter(q=>{q.life-=s;q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);let kill=q.life<=0||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S));
+    this.proj=this.proj.filter(q=>{
+      q.life-=s;
+      if(q.ret&&!q.back&&q.life<q.ret){q.back=true;q.hits.clear();q.life=9;}
+      if(q.back){const dx=px+pw/2-q.x,dy=py+ph/2-q.y,dl=Math.hypot(dx,dy)||1;if(dl<22){q.s.destroy();return false;}q.vx=dx/dl*470;q.vy=dy/dl*470;}
+      if(q.g)q.vy+=q.g*s;
+      q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);if(q.spin)q.s.angle+=900*s;
+      let kill=q.life<=0;
+      if(!kill&&!q.back&&this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S))){if(q.ret){q.back=true;q.hits.clear();q.life=9;}else kill=true;}
       if(!kill&&q.en&&hit(q.x-6,q.y-6,12,12)){this.hurt(q.fire);kill=true;}
-      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);if(q.ice)this.freezeBoss(bb);kill=true;break;}
-      if(kill)q.s.destroy();return!kill;});
+      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){
+        if(q.bomb){kill=true;break;}
+        if(q.pierce){if(!q.hits.has(bb)){q.hits.add(bb);this.dmg(bb,q.d);}}else{this.dmg(bb,q.d);kill=true;break;}}
+      if(kill){if(q.bomb)this.blast(q.x,q.y);q.s.destroy();}
+      return!kill;});
     this.crates.getChildren().forEach(c=>{if(c.y>H*S+40){c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);}});
     if(p.y>H*S+40)return this.die();
     p.setAlpha(ghost?.35:now<this.inv&&Math.floor(now/80)%2?.4:1);
     if(fr)p.setTint(0x93c5fd);else if(fx.fire>now)p.setTint(0xfdba74);else if(fx.arm>now)p.setTint(0xa5f3fc);else p.clearTint();
     const act=Object.keys(fx).filter(n=>fx[n]>now&&fx[n]<1e11).map(n=>FXN[n]+" "+((fx[n]-now)/1000).toFixed(0)+"s");
     this.fxT.setText(act.join("   ")).setVisible(act.length>0);
-    {const cm=COARSE,ow=["sword","fb","flame","boom","ice","zap"].filter(n=>fx[n]>now),tp=[];
-      if(this.wep&&fx[this.wep]>now)tp.push({sword:"⚔ Sword: "+(cm?"tap ⚔":"press X")+" to slash",fb:"☄ Fireballs: "+(cm?"tap ⚔":"press X")+" to throw",flame:"🔥 Flamethrower: "+(cm?"hold ⚔":"hold X")+" to spray"}[this.wep]);
+    {const cm=COARSE,ow=WEAPONS.filter(n=>fx[n]>now),tp=[];
+      if(this.wep&&fx[this.wep]>now)tp.push({sword:"⚔ Sword: "+(cm?"tap ⚔":"press X")+" to slash",fb:"☄ Fireballs: "+(cm?"tap ⚔":"press X")+" to throw",flame:"🔥 Flamethrower: "+(cm?"hold ⚔":"hold X")+" to spray",ice:"❄ Ice Wand: "+(cm?"tap ⚔":"press X")+" to fire",boom:"🪃 Boomerang: "+(cm?"tap ⚔":"press X")+" to throw",bolt:"⚡ Lightning: "+(cm?"tap ⚔":"press X")+" to zap",bomb:"💣 Bombs: "+(cm?"tap ⚔":"press X")+" to lob"}[this.wep]);
       if(ow.length>1)tp.push((cm?"⇄":"Q")+" switch weapon");
       if(fx.dash>now)tp.push((cm?"💨":"Shift")+" dash");
       const lb=this.bosses.filter(bb=>!bb.dead);
       if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 Bosses left: "+lb.length+" (door stays locked)");}
       this.tip.setText(tp.join("   ·   "));}
-    {const SEP=" · ";setText($("hud"),"Deaths "+this.deaths+SEP+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?SEP+"Keys "+this.keysGot.size+"/"+this.nk:"")+(this.ng?SEP+"💎 "+this.gemsGot.size+"/"+this.ng:"")+(this.bosses.length?SEP+"Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:""));}
+    {const SEP=" · ";setText($("hud"),"Deaths "+this.deaths+SEP+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?SEP+"Keys "+this.keysGot.size+"/"+this.nk:"")+(this.bosses.length?SEP+"Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:""));}
   }
 
   die(){
@@ -3880,10 +3510,9 @@ class Main extends Phaser.Scene{
     this.cameras.main.shake(150,.012);this.sw.setVisible(false);this.p.setVisible(false);this.p.body.enable=false;
     this.time.delayedCall(450,()=>{
       this.p.enableBody(true,this.spawn[0],this.spawn[1],true,true);this.p.setVelocity(0,0).clearTint();
-      this.keysGot=new Set(this.cpKeys);this.gemsGot=new Set(this.cpGems);const kw={sword:this.fx.sword,fb:this.fx.fb,flame:this.fx.flame,boom:this.fx.boom,ice:this.fx.ice,zap:this.fx.zap};this.fx=Object.assign(FX0(),kw);this.proj.forEach(q=>q.s.destroy());this.proj=[];if(this.boom){this.boom.s.destroy();this.boom=null;}this.frz=0;this.inv=this.time.now+800;
+      this.keysGot=new Set(this.cpKeys);const kw={sword:this.fx.sword,fb:this.fx.fb,flame:this.fx.flame};this.fx=Object.assign(FX0(),kw);this.proj.forEach(q=>q.s.destroy());this.proj=[];this.frz=0;this.inv=this.time.now+800;
       this.ents.forEach(e=>{
         if(e.t==="k"){e.gone=this.keysGot.has(e.i);e.s.setVisible(!e.gone);}
-        if(e.t==="q"){e.gone=this.gemsGot.has(e.i);e.s.setVisible(!e.gone);}
         else if("eotjAH".includes(e.t)){e.gone=false;e.s.setVisible(true);}
         else if(e.t==="G"){
                     if(!e.on)e.on=!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
@@ -3923,7 +3552,7 @@ class Main extends Phaser.Scene{
     Juice.burst(this,this.p.x,this.p.y,0xfacc15,"VICTORY!");
     const rawT=(this.time.now-(this.t0==null?this.time.now:this.t0))/1000;
     const t=rawT.toFixed(1);
-    let stars=this.deaths===0?3:this.deaths<=3?2:1;if(this.ng&&this.gemsGot.size<this.ng)stars=Math.max(1,stars-1);
+    const stars=this.deaths===0?3:this.deaths<=3?2:1;
     const bk="bb_best_"+(JSON.stringify(G.cur.o).split("").reduce((h,c)=>(h*31+c.charCodeAt(0))|0,7)>>>0),prevBest=parseFloat(localStorage.getItem(bk)||"99999");
     const isNewBest=rawT<prevBest;
     if(isNewBest)try{localStorage.setItem(bk,String(rawT.toFixed(1)));}catch(_){}
@@ -3938,7 +3567,6 @@ class Main extends Phaser.Scene{
           <span class="win-star" id="ws2">⭐</span>
           <span class="win-star" id="ws3">⭐</span>
         </div>
-        ${this.ng?`<div style="text-align:center;margin:-4px 0 8px;font-weight:700">💎 Gems ${this.gemsGot.size}/${this.ng}${this.gemsGot.size<this.ng?" · collect all for a full star rating":""}</div>`:""}
         <div class="win-stats-grid">
           <div class="win-stat-card">
             <small>Clear Time</small>
@@ -3975,12 +3603,23 @@ if(typeof Phaser==="undefined"){
     scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.NO_CENTER},
     scene:Main
   });
-  addEventListener("resize",()=>setTimeout(()=>window.game?.scale?.refresh(),60));
-  window.visualViewport?.addEventListener("resize",()=>setTimeout(()=>window.game?.scale?.refresh(),60));
+  addEventListener("resize",()=>setTimeout(()=>fitGame(),60));
+  window.visualViewport?.addEventListener("resize",()=>setTimeout(()=>fitGame(),60));
   hud();
 }
+
+/* Build the home-preview weather particles once */
+(()=>{
+  const art=document.querySelector(".game-art");if(!art)return;
+  const layer=(cls,n,fn,html="")=>{const w=document.createElement("div");w.className="wx "+cls;w.innerHTML=html;for(let i=0;i<n;i++){const e=document.createElement("i");fn(e,i);w.appendChild(e);}art.appendChild(w);};
+  const r=Math.random;
+  layer("wx-rain",36,e=>{e.style.cssText=`left:${r()*100}%;animation-duration:${.45+r()*.4}s;animation-delay:-${r()}s;opacity:${.35+r()*.5}`;});
+  layer("wx-snow",28,e=>{const z=2+r()*3;e.style.cssText=`left:${r()*100}%;width:${z}px;height:${z}px;animation-duration:${4+r()*4}s;animation-delay:-${r()*6}s`;});
+  layer("wx-cloud",3,(e,i)=>{e.style.cssText=`left:${i*34-6}%;animation-delay:-${i*3}s`;});
+  layer("wx-bolt",0,()=>{},'<svg viewBox="0 0 30 60"><polygon points="18,0 4,32 14,32 8,60 26,24 15,24" fill="#e0e7ff"/></svg>');
+})();
 Ctl.apply();
-new MutationObserver(()=>setTimeout(()=>window.game?.scale?.refresh(),60)).observe(document.body,{attributes:true,attributeFilter:["data-mode","data-ctl","class"]});
+new MutationObserver(()=>setTimeout(()=>fitGame(),60)).observe(document.body,{attributes:true,attributeFilter:["data-mode","data-ctl","class"]});
 </script>
 </body>
 </html>
