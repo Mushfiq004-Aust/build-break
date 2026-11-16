@@ -95,7 +95,7 @@ button {
   cursor: pointer;
   touch-action: manipulation;
   white-space: nowrap;
-  transition: transform 0.12s ease, background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+  transition: transform .04s linear, background-color .08s linear, border-color .08s linear;
 }
 button:active {
   transform: scale(0.96);
@@ -252,22 +252,22 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
 /* Phaser Scale.FIT drives the canvas size; fitGame() matches the game aspect to the container so there is no letterboxing */
 #game canvas {
   display: block;
-  touch-action: none;
+  touch-action: manipulation;
 }
 
 #hud {
   position: absolute;
-  top: 10px;
-  right: max(12px, var(--safe-r));
+  bottom: max(8px, var(--safe-b));
+  right: max(8px, var(--safe-r));
+  top: auto;
   z-index: 4;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: rgba(15, 12, 38, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(8px);
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.08);
   color: #fff;
-  font-weight: 700;
-  font-size: 12.5px;
+  font-weight: 600;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
   pointer-events: none;
@@ -292,11 +292,12 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   font-size: 12.5px;
 }
 #tip {
-  top: 44px;
-  left: max(10px, var(--safe-l));
-  padding: 5px 11px;
-  font-size: 12px;
-  max-width: min(460px, 58vw);
+  top: 34px;
+  left: max(6px, var(--safe-l));
+  padding: 4px 8px;
+  font-size: 11px;
+  max-width: 220px;
+  opacity: .85;
 }
 #st {
   top: 48px;
@@ -316,7 +317,7 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
    5. JUICY POPUPS: POWER-UP CARD, EVENT BANNER & CONFETTI
    ========================================================================== */
 #ban {
-  top: 13%;
+  top: max(6px, var(--safe-t));
   left: 50%;
   transform: translateX(-50%);
   padding: 0;
@@ -325,17 +326,17 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   box-shadow: none;
   backdrop-filter: none;
   z-index: 9;
-  max-width: min(440px, 90vw);
-  width: max-content;
+  max-width: 280px;
+  width: auto;
 }
 .pu-card {
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 18px;
-  border-radius: 18px;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
   background: linear-gradient(145deg, rgba(22, 18, 52, 0.95), rgba(12, 10, 30, 0.96));
   border: 2px solid var(--pu-color, #a78bfa);
   box-shadow: 0 14px 38px rgba(0, 0, 0, 0.55), 0 0 28px var(--pu-glow, rgba(167, 139, 250, 0.45));
@@ -364,14 +365,14 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
 .pu-icon {
   position: relative;
   z-index: 1;
-  width: 50px;
-  height: 50px;
+  width: 34px;
+  height: 34px;
   border-radius: 14px;
   background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), var(--pu-color, #8b5cf6));
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 27px;
+  font-size: 18px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.35), inset 0 2px 3px rgba(255,255,255,0.45);
   animation: puBounce 0.6s ease 0.1s;
   flex: none;
@@ -382,14 +383,14 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   text-align: left;
 }
 .pu-tag {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--pu-color, #c4b5fd);
 }
 .pu-title {
-  font-size: clamp(16px, 2.5vw, 20px);
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.02em;
   color: #ffffff;
@@ -397,7 +398,7 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 .pu-hint {
-  font-size: 12px;
+  font-size: 10px;
   color: #e2e8f0;
   display: flex;
   align-items: center;
@@ -899,7 +900,7 @@ body.home-active #drawerScrim {
   margin-top: 4px;
   padding: 2px 8px;
   border-radius: 999px;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 900;
   background: #facc15;
   color: #0f172a;
@@ -933,7 +934,7 @@ body[data-ctl="below"] #pad::before {
 }
 #pad button {
   pointer-events: auto;
-  touch-action: none;
+  touch-action: manipulation;
   padding: 0;
   width: var(--mv);
   height: var(--mv);
@@ -944,7 +945,7 @@ body[data-ctl="below"] #pad::before {
   background: rgba(15, 12, 38, 0.52);
   border: 2px solid rgba(255, 255, 255, 0.42);
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
+  backdrop-filter: none;
 }
 #padMove { display: flex; gap: calc(var(--mv) * 0.3); }
 #padAct { position: relative; width: calc(var(--jb) * 2.1); height: calc(var(--jb) * 1.95); }
@@ -968,7 +969,11 @@ body[data-ctl="below"] #pad::before {
 }
 body.lefty #pad { flex-direction: row-reverse; }
 body.lefty #padAct { direction: rtl; }
-#pad button.dn { background: rgba(255, 255, 255, 0.42); transform: scale(0.93); }
+#pad button.dn {
+  background: rgba(255,255,255,.65);
+  border-color:#fff;
+  transform:scale(.88);
+}
 #pad button[data-avail="0"] { opacity: 0.35; }
 
 /* Mobile / Coarse Pointer Responsive Architecture */
@@ -3500,7 +3505,7 @@ class Main extends Phaser.Scene{
       const lb=this.bosses.filter(bb=>!bb.dead);
       if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 Bosses left: "+lb.length+" (door stays locked)");}
       this.tip.setText(tp.join("   ·   "));}
-    {const SEP=" · ";setText($("hud"),"Deaths "+this.deaths+SEP+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?SEP+"Keys "+this.keysGot.size+"/"+this.nk:"")+(this.bosses.length?SEP+"Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:""));}
+    {const SEP=" · ";setText($("hud"),"D:"+this.deaths+"  B:"+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length+"  T:"+(this.t0==null?0:(now-this.t0)/1000).toFixed(0)+"s");}
   }
 
   die(){
