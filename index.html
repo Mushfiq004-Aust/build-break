@@ -308,6 +308,8 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   border-left: 3px solid var(--ac);
   animation: toastSlide 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
+/* In-game status line (bosses left / door locked / weapon tips) lives in the top bar, next to Home / Settings / Weather. */
+#topStatus { display: none; }
 @keyframes toastSlide {
   from { opacity: 0; transform: translateY(-8px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -317,8 +319,11 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
    5. JUICY POPUPS: POWER-UP CARD, EVENT BANNER & CONFETTI
    ========================================================================== */
 #ban {
+  /* Pop-up cards live at the very bottom, in the gap between the move buttons (left) and the jump/attack cluster (right). */
+  --mv: calc(clamp(56px, 15vh, 70px) * var(--ctl));
+  --jb: calc(clamp(74px, 20vh, 94px) * var(--ctl));
   top:auto;
-  bottom:calc(150px + var(--safe-b));
+  bottom:calc(16px + var(--safe-b));
   left: 50%;
   transform: translateX(-50%);
   padding: 0;
@@ -327,7 +332,7 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
   box-shadow: none;
   backdrop-filter: none;
   z-index: 9;
-  max-width: 280px;
+  max-width: min(300px, max(170px, calc(100% - var(--mv) * 2.3 - var(--jb) * 2.1 - 60px)));
   width: auto;
 }
 .pu-card {
@@ -1488,7 +1493,19 @@ body.lefty #padAct { direction: rtl; }
 }
 #hud{font-size:15px;padding:7px 15px;}
 #fx{font-size:14px;padding:6px 12px;}
-#tip{font-size:13.5px;top:auto;bottom:calc(95px + var(--safe-b));left:50%;transform:translateX(-50%);max-width:340px;text-align:center;}
+#tip{display:none !important;}
+body:not([data-mode="edit"]) #st{display:none !important;}
+body.mobile-playing #topStatus{
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;
+  flex:1 1 0;min-width:0;align-self:center;margin:0 2px;padding:5px 10px;
+  text-align:center;font-size:12.5px;font-weight:750;line-height:1.25;
+  color:var(--fg);background:var(--btn-bg);border:1px solid var(--line);border-radius:12px;
+  visibility:hidden;
+}
+body.mobile-playing #topStatus.on{visibility:visible;}
+body.mobile-playing #topStatus.alert{border-color:#f59e0b;background:color-mix(in srgb,#f59e0b 22%,var(--btn-bg));animation:toastSlide .22s cubic-bezier(.2,.9,.3,1);}
+body.mobile-playing #mobileBar .mobile-left,body.mobile-playing #mobileBar .mobile-right{flex:none;}
+@media (max-width:560px){body.mobile-playing #topStatus{font-size:10.5px;padding:3px 6px;}}
 @media (pointer:coarse),(max-width:820px),(pointer:fine){
   #mobileBar{gap:8px;}
   .mobile-left,.mobile-right{gap:7px;}
@@ -1621,6 +1638,7 @@ body.lefty #padAct { direction: rtl; }
       <button id="mRgInc" type="button" aria-label="Increase range">+</button>
     </div>
   </div>
+  <div id="topStatus" aria-live="polite"></div>
   <div class="mobile-right">
     <button id="mobileSettings" aria-label="Settings">⚙</button><button id="mobileThemeBtn" aria-label="Cycle weather and lighting themes">🌙</button>
     <button id="mobileMoreBtn" class="edit-only" aria-label="More level actions">⋯ More</button>
@@ -1780,7 +1798,7 @@ const TOOLS=[
 ["G","Boss flag","Bosses","Arena trigger. Place it near a boss (within ~18 cells): that boss sleeps until you touch the flag. Bosses with no flag nearby wake when you get close."],
 ["1","Slime King","Bosses","Hops at you. The door stays locked until every boss is beaten."],
 ["2","Bat Lord","Bosses","Flies and dive-bombs."],
-["3","Ghost Mage","Bosses","Teleports and fires 3 bolts."],
+["3","Ghost Mage","Bosses","Teleports and fires 2 bolts (more as she gets hurt)."],
 ["4","Stone Golem","Bosses","Walks at you and sends shockwaves."],
 ["5","Dragon","Bosses","Hovers and breathes fireballs."],["6","Storm Serpent","Bosses","Sweeps through the air and fires a five-shot lightning fan."],
 ["Z","Sword","Weapons","Yours for the whole level once picked up. X / J (⚔ on phones) to slash. Deflects bolts."],
@@ -2172,7 +2190,18 @@ function askRangeForPlacement(t,c,r){
 }
 
 let ft;
+// Top-bar status line: persistent tip (bosses left, weapon hints) + temporary alerts (door locked, etc.)
+const TS={tip:"",msg:"",t:null,
+  render(){const el=$("topStatus");if(!el)return;const v=this.msg||this.tip;
+    if(el.textContent!==v)el.textContent=v;
+    el.classList.toggle("on",!!v);el.classList.toggle("alert",!!this.msg);},
+  setTip(v){v=v||"";if(v===this.tip)return;this.tip=v;this.render();},
+  alert(m,ms=2800){this.msg=m;clearTimeout(this.t);this.t=setTimeout(()=>{this.msg="";this.t=null;this.render();},ms);
+    const el=$("topStatus");if(el){el.classList.remove("alert");void el.offsetWidth;}this.render();},
+  clear(){clearTimeout(this.t);this.t=null;this.msg="";this.tip="";this.render();}
+};
 function flash(m){
+  if(G&&G.mode&&G.mode!=="edit"){TS.alert(m,2800);return;}
   const t=$("st");if(!t)return;
   t.textContent=m;t.style.display="block";
   clearTimeout(ft);ft=setTimeout(()=>{t.style.display="none"},2800);
@@ -2217,6 +2246,7 @@ function dismissTransientUI(){
   // Power-up cards, event banners, tips and toast messages must never survive a mode change.
   clearTimeout(banTimer);banTimer=null;
   clearTimeout(ft);ft=null;
+  TS.clear();
   ["dlg","ban","st","tip","fx"].forEach(id=>{
     const el=$(id);
     if(!el)return;
@@ -3098,7 +3128,7 @@ class Main extends Phaser.Scene{
     this.sl.forEach(m=>{this.physics.add.collider(p,m.s);this.physics.add.collider(this.crates,m.s);});
     this.cameras.main.setZoom(COARSE?1.18:1).startFollow(p,true,.12,.12).setDeadzone(80,60);this.cameras.main.setBounds(0,0,W*S,H*S+(COARSE?110:60));this.add.rectangle(W*S/2,H*S+200,W*S+400,400,0x0b0a1e).setDepth(0);
     const fxo={setText(t){setText($("fx"),t);return fxo;},setVisible(v){setDisp($("fx"),v?"block":"none");return fxo;}};this.fxT=fxo;
-    this.tip={setText:t=>{const d=$("tip");setText(d,t);setDisp(d,t?"block":"none");}};
+    this.tip={setText:t=>TS.setTip(t)};
     this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;
   }
 
@@ -3239,7 +3269,7 @@ class Main extends Phaser.Scene{
     const lo=Math.max(e.fx-200,40),hi=Math.min(e.fx+200,W*S-40);
     for(const needPlayer of[true,false])for(let i=0;i<18;i++){
       const side=Math.random()<.5?-1:1;
-      const x=Math.max(lo,Math.min(hi,cx+side*(120+Math.random()*100))),y=Math.max(60,e.by-Math.random()*100);
+      const x=Math.max(lo,Math.min(hi,cx+side*(180+Math.random()*110))),y=Math.max(60,e.by-Math.random()*100);
       if(!this.bfree(x,y))continue;
       if(!this.bclear(e.fx,e.by,x,y))continue;
       if(needPlayer&&!this.bclear(x,y,cx,cy))continue;
@@ -3270,7 +3300,7 @@ class Main extends Phaser.Scene{
     else if(!e.fire&&now>e.tm&&(!gnd||e.g))e.wd=now+(k==="2"?700:480);
     // delayed volley (Ghost Mage re-appears first, THEN fires, so there is a moment to react)
     if(e.fire){
-      if(now>e.fire){e.fire=0;e.s.clearTint();this.aimAt(e.x,e.y,3+p2*2,.26,190+p2*25,"ebul",4);}
+      if(now>e.fire){e.fire=0;e.s.clearTint();this.aimAt(e.x,e.y,2+p2,.2,150+p2*15,"ebul",4);}
       else e.s.setTint(Math.floor(now/60)%2?0xc4b5fd:0xffffff);
     }
     if(!e.wd&&!e.fire)e.ph+=s*sp;
@@ -3307,7 +3337,7 @@ class Main extends Phaser.Scene{
       if(go){
         const pick=this.ghostSpot(e,cx,cy);
         if(pick){e.x=pick.x;e.y=pick.y;}
-        e.s.setAlpha(1);e.fire=now+450;e.tm=now+cd*3000+450;
+        e.s.setAlpha(1);e.fire=now+700;e.tm=now+cd*4200+700;
       }
       else if(!e.wd)e.s.setAlpha(1);
     }
@@ -3344,7 +3374,12 @@ class Main extends Phaser.Scene{
       // make Arcade Physics platforms surge or jitter under a standing player.
       const w=Math.max(.7,Math.min(2.4,6.3/m.R));
       const phase=((now-this.t00)/1000)*w;
-      const speed=.5*m.R*S*Math.sin(phase)*w;
+      let speed=.5*m.R*S*Math.sin(phase)*w;
+      // Velocity integration slowly drifts from the ideal path, so the platform is also
+      // pulled back onto its exact position every frame (same spot every cycle, every death).
+      const off=.5*m.R*S*(1-Math.cos(phase)),ax=m.v?"y":"x",want=(m.v?m.y:m.x)+off,err=want-m.s[ax];
+      if(Math.abs(err)>24){m.s.body.reset(m.v?m.x:want,m.v?want:m.y);}
+      else speed+=Math.max(-80,Math.min(80,err*12));
       m.s.body.setVelocity(m.v?0:speed,m.v?speed:0);
     });
     this.dyn.forEach(d=>{const bb=this.p&&this.p.body,k=d.b,n=this.time.now;if(d.t==="U"){const on=((n-this.t00)/1000+d.ph)%3.2<2;if(on!==d.on){d.on=on;k.body.enable=on;k.setAlpha(on?1:.2);}}else{if(!d.st&&!d.rb&&bb&&Math.abs(bb.bottom-(d.y-16))<5&&bb.right>d.x-16&&bb.x<d.x+16){d.st=n+450;this.tweens.add({targets:k,x:d.x+2,yoyo:true,repeat:3,duration:50});}if(d.st&&n>d.st){d.st=0;d.rb=n+3000;k.body.enable=false;k.setVisible(false);}if(d.rb&&n>d.rb){d.rb=0;k.body.enable=true;k.setVisible(true).setX(d.x);}}});
