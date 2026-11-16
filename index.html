@@ -1526,38 +1526,58 @@ body.home-active #drawerScrim {
   body[data-mode="edit"] #mobilePan .zoom-row button{flex:none;width:56px;height:44px;font-size:18px;}
 }
 
+
 /* ==========================================================================
-   MOBILE LANDSCAPE v3: controls + status live in side columns, game gets full height
+   MOBILE LANDSCAPE v4: full-screen game, view lifted so controls rest on extra ground
    ========================================================================== */
 @media (pointer:coarse) and (orientation:landscape){
-  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]){
-    --col:calc(var(--jb) + var(--mv) * 1.1 + 34px);
-    --col-l:calc(var(--col) + var(--safe-l));
-    --col-r:calc(var(--col) + var(--safe-r));
-  }
-  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #game{left:var(--col-l);right:var(--col-r);bottom:0;}
+  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #game{left:0;right:0;bottom:0;}
   body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #pad{
-    top:0;height:auto;background:none;border:0;align-items:flex-end;
-    padding:0 max(10px,var(--safe-r)) calc(3px + var(--safe-b) * .35) max(10px,var(--safe-l));
+    top:auto;height:auto;background:none;border:0;align-items:flex-end;
+    padding:0 max(10px,var(--safe-r)) calc(4px + var(--safe-b) * .4) max(10px,var(--safe-l));
   }
   body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #pad > .g:last-child{
     display:grid;grid-template-columns:auto auto;align-items:end;justify-items:center;
   }
   body.lefty[data-ctl="below"] #pad > .g:last-child{direction:rtl;}
   body.lefty[data-ctl="below"] #pad > .g:last-child button{direction:ltr;}
-  /* status text goes into the side columns instead of floating over the level */
-  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #hud{
-    left:max(8px,var(--safe-l));right:auto;top:8px;width:calc(var(--col) - 16px);
-    border-radius:14px;padding:8px 11px;font-size:13px;line-height:1.5;white-space:pre-line;text-align:left;
+}
+@media (pointer:coarse){
+  body.mobile-playing #hud{
+    position:fixed;top:0;left:calc(64px + var(--safe-l));right:auto;transform:none;width:auto;
+    max-width:calc(100vw - 64px - 250px - var(--safe-l));height:var(--bar-h);display:flex;align-items:center;
+    background:none;border:0;box-shadow:none;padding:0;border-radius:0;font-size:12.5px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;z-index:61;pointer-events:none;
   }
-  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #fx{
-    left:max(8px,var(--safe-l));right:auto;top:104px;width:calc(var(--col) - 16px);
-    white-space:normal;text-align:left;font-size:12.5px;
+  body.mobile-playing #fx,body.mobile-playing #tip{
+    top:6px;transform:none;max-width:44vw;font-size:11.5px;line-height:1.3;padding:3px 9px;
+    background:rgba(8,6,24,.42);border-radius:10px;opacity:.92;pointer-events:none;
   }
-  body[data-ctl="below"]:is([data-mode="test"],[data-mode="play"]) #tip{
-    left:auto;right:max(8px,var(--safe-r));top:8px;transform:none;width:calc(var(--col) - 16px);
-    white-space:normal;text-align:left;font-size:12.5px;line-height:1.4;
-  }
+  body.mobile-playing #fx{left:max(8px,var(--safe-l));right:auto;width:auto;text-align:left;}
+  body.mobile-playing #tip{left:auto;right:max(8px,var(--safe-r));width:auto;text-align:right;}
+}
+.wx{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .5s;display:none;}
+.wx.rain{display:block;background-image:linear-gradient(105deg,transparent 45%,rgba(186,230,253,.8) 46%,transparent 48%),linear-gradient(105deg,transparent 45%,rgba(125,211,252,.55) 46%,transparent 47.5%);background-size:14px 38px,23px 52px;animation:rainFall .5s linear infinite;}
+@keyframes rainFall{to{background-position:-9px 38px,-14px 52px;}}
+.wx.snow{display:block;background-image:radial-gradient(2.2px 2.2px at 12px 8px,#fff 98%,transparent),radial-gradient(1.6px 1.6px at 30px 24px,rgba(255,255,255,.9) 98%,transparent),radial-gradient(2.8px 2.8px at 52px 40px,#fff 98%,transparent);background-size:64px 48px,47px 61px,83px 71px;animation:snowFall 7s linear infinite;}
+@keyframes snowFall{to{background-position:20px 48px,-14px 61px,30px 71px;}}
+.wx.flash{background:#c7d2fe;animation:boltFlash 5s infinite;}
+@keyframes boltFlash{0%,86%,100%{opacity:0}87%{opacity:.65}89%{opacity:.05}91%{opacity:.8}95%{opacity:0}}
+.wx.bolt{inset:0 auto auto 62%;width:34px;height:72%;background:#fef9c3;clip-path:polygon(60% 0,25% 45%,50% 45%,15% 100%,80% 42%,52% 42%,85% 0);filter:drop-shadow(0 0 6px #facc15);animation:boltShow 5s infinite;}
+@keyframes boltShow{0%,86%,100%{opacity:0}87%,91%{opacity:1}89%{opacity:.2}95%{opacity:0}}
+:root[data-theme="rain"] .wx.rain,:root[data-theme="thunder"] .wx.rain,:root[data-theme="winter"] .wx.snow{opacity:1;}
+:root[data-theme="thunder"] .wx.flash,:root[data-theme="thunder"] .wx.bolt{display:block;}
+:root[data-theme="rain"] .day-scenery .bird,:root[data-theme="thunder"] .day-scenery .bird,:root[data-theme="winter"] .day-scenery .bird{display:none;}
+:root[data-theme="rain"] .day-scenery .cloud,:root[data-theme="thunder"] .day-scenery .cloud{filter:brightness(.4) saturate(.5);opacity:1;}
+:root[data-theme="rain"] .game-art .celestial,:root[data-theme="thunder"] .game-art .celestial{background:radial-gradient(circle,rgba(148,163,184,.55),transparent 70%);box-shadow:none;}
+:root[data-theme="winter"] .game-art .celestial{background:radial-gradient(circle,#fff 0%,#e0f2fe 55%,transparent 72%);box-shadow:0 0 38px rgba(255,255,255,.9);}
+:root[data-theme="winter"] .game-art .platform{box-shadow:inset 0 6px 0 #fff;}
+:root[data-theme="rain"] .game-art .platform,:root[data-theme="thunder"] .game-art .platform{filter:brightness(.8);}
+
+/* winter uses a light page, so the menu card and buttons need light-theme values too */
+:root[data-theme="winter"]{
+  --home-card:linear-gradient(155deg,rgba(255,255,255,.95),rgba(224,242,254,.96));
+  --btn-bg:rgba(15,23,42,.05);--btn-border:rgba(15,23,42,.14);--shadow:0 18px 46px rgba(15,23,42,.16);
 }
 </style>
 </head>
@@ -1618,6 +1638,7 @@ body.home-active #drawerScrim {
         <div class="platform one"></div>
         <div class="platform two"></div>
         <div class="hero"></div>
+        <div class="wx rain"></div><div class="wx snow"></div><div class="wx flash"></div><div class="wx bolt"></div>
       </div>
       <div class="home-actions">
         <button class="home-primary" id="homePlay"><span>▶ &nbsp;PLAY ADVENTURE</span><small>Start level</small></button>
@@ -1762,9 +1783,9 @@ body.home-active #drawerScrim {
 
 
 const W=60,H=30,S=32,MAXO=700,DUR=8000,MV="gumzb";
-const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine"};
-const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash"},FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash"};
-const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,dj:0,dash:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40},
+const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine",K:"pboom",I:"pice",V:"pzap",q:"gem"};
+const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash",K:"boom",I:"ice",V:"zap"},FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash",boom:"🪃 Boomerang",ice:"❄ Frost Orb",zap:"⚡ Lightning Staff"};
+const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,boom:0,ice:0,zap:0,dj:0,dash:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40},
 BOSS={
 1:{n:"Gloop the Glutton",t:"Hungry, hungry, HOP!",c:0x22c55e,q:["Mine! All mine!","You look crunchy...","GLOOP IS HUNGRY!!"],d:"Gloop... melts..."},
 2:{n:"Count Vesper",t:"Lord of the Dusk Swarm",c:0x7c3aed,q:["Fresh blood... delightful.","You amuse me, little one.","ENOUGH! DARKNESS, CONSUME!"],d:"Back to... the dark..."},
@@ -1812,6 +1833,7 @@ const TOOLS=[
 ["Z","Sword","Weapons","Yours for the whole level once picked up. X / J (⚔ on phones) to slash. Deflects bolts."],
 ["F","Fireball","Weapons","Yours for the whole level. X / J / ⚔ throws fireballs."],
 ["Y","Flamethrower","Weapons","Yours for the whole level. Hold X / J / ⚔ to spray flames."],
+["K","Boomerang","Weapons","Yours for the whole level. Throw it out and it returns, hitting twice."],["I","Frost Orb","Weapons","Yours for the whole level. Freezes bosses for a moment."],["V","Lightning Staff","Weapons","Yours for the whole level. Instant bolt that wipes out enemy shots."],["q","Gem","Helpers","Optional collectible. Miss one and you lose a star."],
 ["A","Double jump","Powerups","8s. Jump once more in mid-air."],
 ["H","Dash","Powerups","8s. Shift / 💨 to dash. Invulnerable while dashing."],
 ["S","Start","Level","Where you begin."],["E","Door","Level","The exit."],
@@ -1845,6 +1867,10 @@ const Sfx={
   play(kind){
     if(!this.on)return;
     if(kind==="jump")this.tone(290,0.11,"sine",0.1,220);
+    else if(kind==="gem"){this.tone(880,.07,"sine",.1);setTimeout(()=>this.tone(1320,.12,"sine",.1),55);}
+    else if(kind==="zap"){this.tone(1300,.14,"sawtooth",.09,260);}
+    else if(kind==="boom"){this.tone(520,.1,"triangle",.09,380);}
+    else if(kind==="ice"){this.tone(900,.16,"sine",.09,1600);}
     else if(kind==="key"){this.tone(660,0.09,"triangle",0.13);setTimeout(()=>this.tone(990,0.16,"triangle",0.14),75);}
     else if(kind==="power"){[523,659,784,1046].forEach((n,i)=>setTimeout(()=>this.tone(n,0.14,"triangle",0.13),i*55));}
     else if(kind==="check"){this.tone(440,0.09,"sine",0.12);setTimeout(()=>this.tone(660,0.15,"sine",0.12),80);}
@@ -2014,6 +2040,9 @@ const PU_META={
   A:{icon:"🦘",tag:"ABILITY ACQUIRED",title:"DOUBLE JUMP!",hint:"Jump again in mid-air!",chip:()=>COARSE?"Tap JUMP in air":"Press Space / W in air",color:"#f472b6",glow:"rgba(244,114,182,0.5)",hex:0xf9a8d4},
   H:{icon:"💨",tag:"ABILITY ACQUIRED",title:"SHADOW DASH!",hint:"Invulnerable burst dash!",chip:()=>COARSE?"Tap 💨":"Press Shift",color:"#2dd4bf",glow:"rgba(45,212,191,0.5)",hex:0x2dd4bf},
   Z:{icon:"⚔",tag:"WEAPON UNLOCKED",title:"HERO SWORD!",hint:"Yours for the whole level · Deflects bolts",chip:()=>COARSE?"Tap ⚔ to slash":"Press X / J to slash",color:"#eab308",glow:"rgba(234,179,8,0.55)",hex:0xfacc15},
+  K:{icon:"🪃",tag:"WEAPON UNLOCKED",title:"BOOMERANG!",hint:"Flies out and comes back · hits twice · deflects bolts",chip:()=>COARSE?"Tap ⚔ to throw":"Press X / J to throw",color:"#f59e0b",glow:"rgba(245,158,11,0.55)",hex:0xf59e0b},
+  I:{icon:"❄",tag:"WEAPON UNLOCKED",title:"FROST ORB!",hint:"Hits bosses and freezes them for a moment",chip:()=>COARSE?"Tap ⚔ to shoot":"Press X / J to shoot",color:"#38bdf8",glow:"rgba(56,189,248,0.55)",hex:0x38bdf8},
+  V:{icon:"⚡",tag:"WEAPON UNLOCKED",title:"LIGHTNING STAFF!",hint:"Instant bolt in a straight line · wipes out enemy shots",chip:()=>COARSE?"Tap ⚔ to zap":"Press X / J to zap",color:"#facc15",glow:"rgba(250,204,21,0.55)",hex:0xfde047},
   F:{icon:"☄",tag:"WEAPON UNLOCKED",title:"FIREBALLS!",hint:"Yours for the whole level · Ranged blasts",chip:()=>COARSE?"Tap ⚔ to throw":"Press X / J to throw",color:"#f97316",glow:"rgba(249,115,22,0.55)",hex:0xf97316},
   Y:{icon:"🔥",tag:"WEAPON UNLOCKED",title:"FLAMETHROWER!",hint:"Yours for the whole level · Continuous stream",chip:()=>COARSE?"Hold ⚔ to spray":"Hold X / J to spray",color:"#ef4444",glow:"rgba(239,68,68,0.55)",hex:0xef4444}
 };
@@ -2418,7 +2447,7 @@ function openMobileSettings(){
           <button id="stgAmb" class="${Amb.on?"pri":""}">${Amb.on?"🎵 On":"Off"}</button>
         </div>
         ${COARSE?`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <div><b>Controls Position</b><br><small style="color:var(--fg-muted)">${Ctl.mode==="below"?"Buttons sit below the game screen":"Buttons float over the game screen"}</small></div>
+          <div><b>Controls Position</b><br><small style="color:var(--fg-muted)">${Ctl.mode==="below"?"Game stays full screen, lifted so the buttons rest on extra ground":"Buttons float over the game screen"}</small></div>
           <button id="stgCtl" class="pri">${Ctl.mode==="below"?"⬇ Below":"⬆ Over"}</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
@@ -2689,6 +2718,10 @@ class Main extends Phaser.Scene{
     pot("parm",0x60a5fa,g=>g.fillStyle(0xffffff).fillTriangle(10,16,22,16,16,27));
     pot("pjump",0x4ade80,g=>g.fillStyle(0x14532d).fillTriangle(10,23,16,13,22,23));
     pot("pz",0x94a3b8,g=>g.fillStyle(0xffffff).fillRect(15,13,3,13));pot("pf2",0xf97316,g=>g.fillStyle(0xfde047).fillCircle(16,20,4));pot("pflm",0xef4444,g=>g.fillStyle(0xfde047).fillTriangle(12,26,16,12,20,26));pot("pdj",0xf9a8d4,g=>g.fillStyle(0xffffff).fillTriangle(10,20,16,12,22,20).fillTriangle(10,26,16,18,22,26));pot("pdash",0x2dd4bf,g=>g.fillStyle(0xffffff).fillRect(9,18,14,3).fillRect(12,23,10,2));
+    pot("pboom",0xf59e0b,g=>g.fillStyle(0xffffff).fillTriangle(9,13,23,13,16,27));pot("pice",0x38bdf8,g=>{g.fillStyle(0xffffff).fillRect(15,11,2,18);g.fillRect(7,19,18,2);g.fillRect(9,13,2,14);g.fillRect(21,13,2,14);});pot("pzap",0xfacc15,g=>{g.fillStyle(0xffffff).fillTriangle(19,10,11,21,17,21);g.fillTriangle(14,30,21,19,14,19);});
+    mk("gem",32,32,g=>{g.fillStyle(0x22d3ee).fillTriangle(16,5,27,14,5,14);g.fillStyle(0x0891b2).fillTriangle(5,14,27,14,16,29);g.fillStyle(0xffffff,.85).fillTriangle(11,14,16,7,16,14);g.fillStyle(0xa5f3fc).fillTriangle(16,14,22,14,16,23);});
+    mk("boom",24,24,g=>{g.fillStyle(0xfbbf24).fillTriangle(2,4,22,12,2,20);g.fillStyle(0x0b0f19).fillTriangle(8,10,22,12,8,14);g.lineStyle(2,0xffffff,.8);g.strokeTriangle(2,4,22,12,2,20);});
+    mk("iceorb",18,18,g=>{g.fillStyle(0x38bdf8,.35).fillCircle(9,9,9);g.fillStyle(0xbae6fd).fillCircle(9,9,6);g.fillStyle(0xffffff).fillCircle(7,7,2.5);});
     mk("fball",14,14,g=>{g.fillStyle(0xf97316).fillCircle(7,7,7);g.fillStyle(0xfde047).fillCircle(7,7,3.5)});mk("flm",10,10,g=>{g.fillStyle(0xfb923c).fillCircle(5,5,5);g.fillStyle(0xfde047).fillCircle(5,5,2.5)});mk("ebul",12,12,g=>{g.fillStyle(0xa855f7).fillCircle(6,6,6);g.fillStyle(0xf5d0fe).fillCircle(6,6,3)});
     mk("bflag",32,32,g=>{g.fillStyle(0xcbd5e1).fillRect(8,2,3,30);g.fillStyle(0xdc2626).fillTriangle(11,2,28,8,11,16);g.fillStyle(0xffffff).fillCircle(17,8,2)});mk("sword",10,34,g=>{g.fillStyle(0xe2e8f0).fillRect(3,0,4,24);g.fillStyle(0xca8a04).fillRect(0,24,10,3);g.fillStyle(0x7c2d12).fillRect(4,27,2,7)});mk("turret",32,32,g=>{g.fillStyle(0x475569).fillRoundedRect(2,6,28,24,4);g.fillStyle(0x1e293b).fillRect(20,12,12,8);g.fillStyle(0xef4444).fillCircle(10,18,4)});
     mk("crusher",32,32,g=>{g.fillStyle(0x64748b).fillRect(0,0,32,26);g.fillStyle(0x334155).fillRect(4,4,24,6);g.fillStyle(0xcbd5e1).fillTriangle(0,26,8,32,16,26).fillTriangle(16,26,24,32,32,26)});
@@ -2827,8 +2860,16 @@ class Main extends Phaser.Scene{
     }
   }
 
+  buildExt(){ // extra ground below the level so the lifted view has earth under the touch buttons
+    if(this.extG){this.extG.destroy();this.extG=null;}
+    if(!this.extPad)return;
+    const c={day:[0x4d7c0f,0x84cc16],night:[0x1e1b4b,0x4c1d95],rain:[0x1e293b,0x475569],winter:[0xcbd5e1,0xffffff],thunder:[0x1b1536,0x3b2a6b]}[Theme.cur]||[0x1e1b4b,0x4c1d95];
+    const g=this.add.graphics().setDepth(1);g.fillStyle(c[0]).fillRect(-400,H*S,W*S+800,this.extPad+300);g.fillStyle(c[1]).fillRect(-400,H*S,W*S+800,8);
+    g.fillStyle(c[1],.22);for(let x=0;x<W*S;x+=64)g.fillRect(x,H*S+30,34,4),g.fillRect(x+32,H*S+62,34,4);
+    this.extG=g;
+  }
   applyTheme(){
-    this.buildBg();this.mkWeather();
+    this.buildBg();this.mkWeather();if(this.extPad)this.buildExt();
     if(G.mode==="edit"&&this.spr)this.draw();
     else if(this.solid){
       const texture=Theme.cur==="day"?"platDay":"plat";
@@ -2922,7 +2963,7 @@ class Main extends Phaser.Scene{
   create(){
     this.tex();initPal(this);setupNavigation();
     this.spr=[];this.down=false;this.dead=false;this.over=false;this.p=null;this.editGrid=null;
-    const cam=this.cameras.main;cam.setBounds(0,0,W*S,H*S);
+    const cam=this.cameras.main;cam.setBounds(0,0,W*S,H*S);this.extPad=0;this.extG=null;
     this.buildBg();this.mkWeather();
     this.k=this.input.keyboard.addKeys("W,A,S,D,UP,LEFT,RIGHT,DOWN,SPACE,X,J,SHIFT,Q",false);
     G.mode==="edit"?this.edit():this.play();
@@ -3073,9 +3114,10 @@ class Main extends Phaser.Scene{
       else{
         const s=this.add.image(x,y,TYPES[t]).setDepth(1);if(t==="h")s.setTint(0xff8a8a);if(t==="i")s.setVisible(false);if(t==="n")s.setAlpha(.3);
         if(t==="b")s.setDepth(2);
+        if(t==="q")this.tweens.add({targets:s,y:y-4,yoyo:true,repeat:-1,duration:600+Math.random()*300,ease:"Sine.easeInOut"});
         const e={t,i,x,y,s,cd:0,y0:y,vy:0,R};
         if("123456".includes(t)){e.hp=e.max=BH[t];e.y=y-12;e.by=e.y;e.fx=x;e.vx=0;e.tm=0;e.ph=0;s.setY(e.y).setDepth(2);e.phase=0;e.awake=false;e.bg=this.add.rectangle(x,e.y-42,52,8,0x000000,.65).setDepth(5).setVisible(false);e.bar=this.add.rectangle(x-25,e.y-42,50,6,BOSS[t].c).setOrigin(0,.5).setDepth(6).setVisible(false);e.nm=this.add.text(x,e.y-55,BOSS[t].n,{font:"bold 11px system-ui",color:"#fff",stroke:"#000",strokeThickness:3}).setOrigin(.5).setDepth(6).setVisible(false);e.say=this.add.text(x,e.y-78,"",{font:"bold 12px system-ui",color:"#fde68a",stroke:"#000",strokeThickness:3,align:"center",wordWrap:{width:200}}).setOrigin(.5,1).setDepth(7).setVisible(false);s.setAlpha(.75);this.bosses.push(e);}
-        if(t==="l"||t==="L"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break;}if(t==="L"){e.fy=Math.min(e.fy,H*S);e.bm=this.add.rectangle(x,(y+16+e.fy)/2,6,e.fy-y-16,0xff2d55,0).setDepth(1);}}
+        if(t==="l"||t==="L"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break;}if(t==="L"){e.fy=Math.min(e.fy,H*S);e.bm=this.add.graphics().setDepth(1).setBlendMode(Phaser.BlendModes.ADD);}}
         this.ents.push(e);
       }
     });
@@ -3087,7 +3129,7 @@ class Main extends Phaser.Scene{
     const door=this.add.image(L.e[0]*S+16,L.e[1]*S+16,"door");
     this.tweens.add({targets:door,scale:{from:1,to:1.1},yoyo:true,repeat:-1,duration:700});
     this.ents.push({t:"E",x:door.x,y:door.y,s:door});
-    this.nk=L.o.filter(o=>o[0]==="k").length;
+    this.nk=L.o.filter(o=>o[0]==="k").length;this.ng=L.o.filter(o=>o[0]==="q").length;this.gemsGot=new Set();this.cpGems=new Set();
     const p=this.p=this.physics.add.sprite(this.spawn[0],this.spawn[1],G.pk).setDepth(3).setCollideWorldBounds(true);
     p.body.setMaxVelocity(320,900);
     this.physics.add.collider(p,this.solid);this.physics.add.collider(p,this.crates);
@@ -3096,7 +3138,7 @@ class Main extends Phaser.Scene{
     this.cameras.main.setZoom(COARSE?1.13:1).startFollow(p,true,.12,.12).setDeadzone(80,60);
     const fxo={setText(t){setText($("fx"),t);return fxo;},setVisible(v){setDisp($("fx"),v?"block":"none");return fxo;}};this.fxT=fxo;
     this.tip={setText:t=>{const d=$("tip");setText(d,t);setDisp(d,t?"block":"none");}};
-    this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;
+    this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;this.boom=null;
   }
 
   mv(e,now,sp){const w=Math.max(.7,Math.min(2.4,6.3/e.R))*(sp||1);return .5*e.R*S*(1-Math.cos((now-this.t00)/1000*w));}
@@ -3117,6 +3159,10 @@ class Main extends Phaser.Scene{
     for(const x of[b.x+3,b.x+b.width/2,b.x+b.width-3])if(this.sol.has(Math.floor(x/S)+","+y))return true;
     return false;
   }
+  boxFreeX(x,y,w,h){ // exact half-open test: touching a wall is fine, overlapping it by even a fraction is not
+    for(let cx=Math.floor((x+.001)/S);cx<=Math.ceil((x+w-.001)/S)-1;cx++)for(let cy=Math.floor((y+.001)/S);cy<=Math.ceil((y+h-.001)/S)-1;cy++)if(this.sol.has(cx+","+cy))return false;
+    return true;
+  }
   boxFree(x,y,w,h){ // true when no solid cell overlaps the box (x,y = top-left)
     for(let cx=Math.floor(x/S);cx<=Math.floor((x+w-1)/S);cx++)for(let cy=Math.floor(y/S);cy<=Math.floor((y+h-1)/S);cy++)if(this.sol.has(cx+","+cy))return false;
     return true;
@@ -3132,7 +3178,7 @@ class Main extends Phaser.Scene{
   hitW(x,y,hw,hh){for(const sx of[x-hw,x,x+hw-1])for(const sy of[y-hh,y-hh/2,y+hh/2,y+hh-1])if(this.sol.has(Math.floor(sx/S)+","+Math.floor(sy/S)))return true;return false;}
 
   got(t,ex,ey){
-    if("ZFY".includes(t))this.wep=FX[t];
+    if("ZFYKIV".includes(t))this.wep=FX[t];
     const m=PU_META[t];
     Sfx.play("power");Sfx.vib([25,40,35]);
     if(m){
@@ -3145,7 +3191,8 @@ class Main extends Phaser.Scene{
     Juice.card({icon:"🚩",tag:"EVENT",title:m,hint:"Watch out!",color:"#ef4444",glow:"rgba(239,68,68,0.5)",ms:3200});
   }
 
-  shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm"});}
+  shoot(x,y,vx,vy,en,tx,life,d){const s=this.add.image(x,y,tx).setDepth(2);this.proj.push({s,x,y,vx,vy,en,life,d,fire:tx==="fball"||tx==="flm",ice:tx==="iceorb"});}
+  freezeBoss(e){const n=this.time.now;e.fz=n+1400;e.wd=0;e.tm=Math.max(e.tm||0,n+1400);e.s.setTint(0x93c5fd);Sfx.play("ice");}
   say(e,t,ms=1900){if(e.say){e.say.setText(t).setVisible(true);e.sayT=this.time.now+ms;}}
   wake(e,card){
     const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;e.fire=0;
@@ -3235,6 +3282,8 @@ class Main extends Phaser.Scene{
       else{e.x=e.fx;e.y=e.by+Math.sin(now/500+e.fx)*2;e.vy=0;e.s.setPosition(e.x,e.y);return;}
     }
     this.unstick(e);
+    if(now<(e.fz||0)){e.s.setTint(0x93c5fd);e.s.setPosition(e.x,e.y);e.bar.setSize(50*Math.max(0,e.hp)/e.max,6);return;}
+    else if(e.fz){e.fz=0;e.s.clearTint();e.tm=Math.max(e.tm||0,now+300);}
     const sg=cx>e.x?1:-1,p2=e.phase,sp=1+p2*.3,cd=[1,.78,.58][p2],gnd=k==="1"||k==="4";
     const xlo=Math.max(e.fx-220,40),xhi=Math.min(e.fx+220,W*S-40);
     const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -3332,7 +3381,8 @@ class Main extends Phaser.Scene{
     {const cm=this.cameras.main,pvx=p.body.velocity.x;
      if(Math.abs(pvx)>40)this.lookDir=pvx>0?1:-1;
      // Look ahead in the travel direction; when controls float over the screen, also lift the player higher.
-     const tx=-(this.lookDir||1)*(COARSE?60:50),ty=(COARSE&&Ctl.mode==="over")?-46:0;
+     const tx=-(this.lookDir||1)*(COARSE?60:50),ty=(COARSE&&Ctl.mode==="below")?-Math.round(.15*540/Math.max(.5,cm.zoom)):0;
+     const wantExt=(COARSE&&Ctl.mode==="below")?130:0;if(this.extPad!==wantExt){this.extPad=wantExt;cm.setBounds(0,0,W*S,H*S+wantExt);this.buildExt();}
      cm.followOffset.x+=(tx-cm.followOffset.x)*Math.min(1,s*2.4);
      cm.followOffset.y+=(ty-cm.followOffset.y)*Math.min(1,s*3);
      // Controls-below mode shrinks the canvas; zoom in part-way so the runner and hazards stay a readable size.
@@ -3345,8 +3395,11 @@ class Main extends Phaser.Scene{
     const kk=Math.floor((b.x+b.width/2)/S)+","+Math.floor((b.bottom+3)/S),g=b.blocked.down||b.touching.down||(b.velocity.y>-20&&this.footOnSolid(b)),ice=g&&this.ice.has(kk),bl=g?(this.belt.get(kk)||0):0;
     const mud=g&&this.mud.has(kk),tv=(r-l)*(jb?250:200)*(mud?.5:1)+bl*110,a=(fr?3000:ice?260:g?2200:1200)*s;let vx=b.velocity.x;
     vx=vx<tv?Math.min(tv,vx+a):Math.max(tv,vx-a);
-    // Don't keep pushing into a wall: that jams the body against the block and can swallow the jump.
-    if((b.blocked.right||b.touching.right)&&vx>0)vx=0;else if((b.blocked.left||b.touching.left)&&vx<0)vx=0;
+    // Never let the body overlap a wall cell. Pressing into a tall wall while jumping made the engine think the head
+    // hit a ceiling (corner clipping) and cancel the jump; clamping the step against the level grid removes that.
+    if(vx){const ty=b.y+Math.min(0,b.velocity.y*s),hh=b.height-2;
+      if(this.boxFreeX(b.x,ty+1,b.width,hh)){let d=vx*s;
+        if(!this.boxFreeX(b.x+d,ty+1,b.width,hh)){let ok=0;for(let i=0;i<5&&Math.abs(d)>.05;i++){d*=.5;if(this.boxFreeX(b.x+d,ty+1,b.width,hh)){ok=d;break;}}vx=ok/s;}}}
     const dp=T.d&&!this.pd;this.pd=T.d;
     if((JD(k.SHIFT)||dp)&&fx.dash>now&&now>this.dcd){this.dsh=now+190;this.dcd=now+700;this.dd=p.flipX?-1:1;this.inv=Math.max(this.inv,now+190);Sfx.play("jump");}
     if(now<this.dsh){vx=this.dd*520;p.setVelocityY(0);}
@@ -3364,7 +3417,7 @@ class Main extends Phaser.Scene{
       Juice.card({icon:"🚪",tag:"EXIT READY",title:"DOOR UNLOCKED!",hint:"Head to the exit door to complete the level!",color:"#4ade80",glow:"rgba(74,222,128,0.5)",ms:3200});
     }
     this.gf.clear();
-    const ow0=["sword","fb","flame"].filter(n=>fx[n]>now),sp=T.s&&!this.ps;this.ps=T.s;
+    const ow0=["sword","fb","flame","boom","ice","zap"].filter(n=>fx[n]>now),sp=T.s&&!this.ps;this.ps=T.s;
     if((JD(k.Q)||sp)&&ow0.length>1){this.wep=ow0[(ow0.indexOf(this.wep)+1)%ow0.length];flash("Weapon: "+FXN[this.wep]);}
 
     // Update touch button availability indicators only when state changes
@@ -3383,8 +3436,24 @@ class Main extends Phaser.Scene{
       else if(this.wep==="fb"){this.acd=now+380;this.shoot(cx+dir*14,py+14,dir*520,0,false,"fball",1.4,2);}
       else if(this.wep==="sword"){this.acd=now+300;this.sws=now;const sx=dir>0?cx:cx-48,rc=this.add.rectangle(sx+24,py+16,48,34,0xe2e8f0,.8).setDepth(4);this.tweens.add({targets:rc,alpha:0,scaleX:1.3,duration:160,onComplete:()=>rc.destroy()});
         this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&Math.abs(bb.x-(sx+24))<56&&Math.abs(bb.y-py)<46)this.dmg(bb,3);});this.proj.forEach(q=>{if(q.en&&Math.abs(q.x-(sx+24))<40&&Math.abs(q.y-py-16)<30)q.life=0;});}
-      else if(!this.hinted){this.hinted=1;flash("Find a weapon: sword, fireball or flamethrower!");}
+      else if(this.wep==="ice"){this.acd=now+420;Sfx.play("ice");this.shoot(cx+dir*14,py+14,dir*430,0,false,"iceorb",1.5,2);}
+      else if(this.wep==="boom"){if(!this.boom){this.acd=now+250;Sfx.play("boom");this.boom={s:this.add.image(cx+dir*14,py+16,"boom").setDepth(4),x:cx+dir*14,y:py+16,dir,out:true,run:0,hit:new Map()};}}
+      else if(this.wep==="zap"){this.acd=now+520;Sfx.play("zap");
+        const y0=py+16,x0=cx+dir*12;let x1=x0;for(let d=0;d<280;d+=8){const xx=x0+dir*d;if(this.sol.has(Math.floor(xx/S)+","+Math.floor(y0/S)))break;x1=xx;}
+        const g=this.add.graphics().setDepth(5),pts=[[x0,y0]];for(let d=18;d<Math.abs(x1-x0);d+=18)pts.push([x0+dir*d,y0+(Math.random()-.5)*16]);pts.push([x1,y0]);
+        for(const[w,c,a]of[[9,0xfde047,.35],[4,0xfef08a,.9],[1.5,0xffffff,1]]){g.lineStyle(w,c,a);g.beginPath();pts.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.strokePath();}
+        this.tweens.add({targets:g,alpha:0,duration:170,onComplete:()=>g.destroy()});
+        const lo=Math.min(x0,x1)-8,hi=Math.max(x0,x1)+8;
+        this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&bb.x>lo&&bb.x<hi&&Math.abs(bb.y-y0)<40)this.dmg(bb,2.5);});
+        this.proj.forEach(q=>{if(q.en&&q.x>lo&&q.x<hi&&Math.abs(q.y-y0)<26)q.life=0;});}
+      else if(!this.hinted){this.hinted=1;flash("Find a weapon: sword, fireball, flamethrower, boomerang, frost orb or lightning staff!");}
     }
+    if(this.boom){const q=this.boom,tx=px+pw/2,ty2=py+ph/2;q.s.rotation+=s*20;
+      if(q.out){const dx=q.dir*430*s;q.x+=dx;q.run+=Math.abs(dx);if(q.run>=250||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S)))q.out=false;}
+      else{const dx=tx-q.x,dy=ty2-q.y,dd=Math.hypot(dx,dy),st=560*s;if(dd<=st+14){q.s.destroy();this.boom=null;}else{q.x+=dx/dd*st;q.y+=dy/dd*st;}}
+      if(this.boom){q.s.setPosition(q.x,q.y);const leg=q.out?1:2;
+        this.bosses.forEach(bb=>{if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<34&&Math.abs(q.y-bb.y)<34&&q.hit.get(bb)!==leg){q.hit.set(bb,leg);this.dmg(bb,2);}});
+        this.proj.forEach(pp=>{if(pp.en&&Math.abs(pp.x-q.x)<20&&Math.abs(pp.y-q.y)<20)pp.life=0;});}}
     for(const e of this.ents){
       if(this.dead)return;if(e.gone)continue;
       switch(e.t){
@@ -3392,9 +3461,10 @@ class Main extends Phaser.Scene{
         case"r":case"B":if(hit(e.x-16,e.y+4,32,12)&&b.velocity.y>=-20&&now>e.cd){p.setVelocityY(e.t==="B"?-1080:-800);e.cd=now+300;this.tweens.add({targets:e.s,scaleY:.6,yoyo:true,duration:100});Sfx.play("jump");}break;
         case"O":{e.s.setY(e.y+Math.sin(now/180+e.x)*2);if(hit(e.x-18,e.y-150,36,150)){p.setVelocityY(Math.max(-520,b.velocity.y-2100*s));this.gf.fillStyle(0x67e8f9,.18).fillTriangle(e.x-16,e.y-8,e.x+16,e.y-8,e.x,e.y-150);}break;}
         case"N":{const phase=((now-this.t00)/1000+e.x*.013)%2.8,charge=phase>1.65&&phase<2.05,pulse=phase>=2.05&&phase<2.42;e.s.setTint(charge?0xfacc15:pulse?0x67e8f9:0xffffff).setAlpha(pulse?1:charge?.8:.45);if(pulse){this.gf.lineStyle(4,0x67e8f9,.9).strokeCircle(e.x,e.y,34+Math.sin(now/30)*5);if(!ghost&&now>e.cd&&hit(e.x-34,e.y-28,68,56)){this.hurt();e.cd=now+850;}}break;}
+        case"q":if(hit(e.x-11,e.y-11,22,22)){e.gone=true;e.s.setVisible(false);this.gemsGot.add(e.i);Sfx.play("gem");Sfx.vib(15);Juice.burst(this,e.x,e.y,0x22d3ee,"💎 "+this.gemsGot.size+"/"+this.ng);}break;
         case"k":if(hit(e.x-10,e.y-10,20,20)){e.gone=true;e.s.setVisible(false);this.keysGot.add(e.i);Sfx.play("key");Sfx.vib(25);Juice.burst(this,e.x,e.y,0xfacc15,"🔑 "+this.keysGot.size+"/"+this.nk);flash("🔑 Key "+this.keysGot.size+"/"+this.nk);}break;
         case"h":if(!e.on&&hit(e.x-12,e.y-16,24,32)){
-          e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot);
+          e.on=true;e.s.setTint(0x4ade80);this.spawn=[e.x,e.y+2];this.cpKeys=new Set(this.keysGot);this.cpGems=new Set(this.gemsGot);
           // Save the world state as well as the respawn position: collected items,
           // triggered traps, opened flags and their visual/physics state.
           this.cpState=this.ents.map(q=>({gone:!!q.gone,on:!!q.on,up:!!q.up,fall:!!q.fall,done:!!q.done,y:q.y,vy:q.vy,dead:!!q.dead,hp:q.hp,awake:!!q.awake}));
@@ -3414,11 +3484,18 @@ class Main extends Phaser.Scene{
         case"b":{const o=this.mv(e,now,.8),x=e.x+o;e.s.setPosition(x,e.y+1).setRotation(o/15);if(hit(x-14,e.y-13,28,28))this.hurt();break;}
         case"n":{const q=((now-this.t00)/1000+e.x*.017)%3.4,on=q>2.5,wn=q>1.8;e.s.setAlpha(on?1:wn?.65:.25).setScale(1,on?2:1);
           if(on&&!ghost&&now>this.fcd&&hit(e.x-14,e.y-30,28,60)){this.frz=now+1300;this.fcd=now+2600;p.setVelocityX(0);}break;}
-        case"e":case"o":case"t":case"j":case"Z":case"F":case"Y":case"A":case"H":
-          if(hit(e.x-12,e.y-12,24,24)){e.gone=true;e.s.setVisible(false);fx[FX[e.t]]=now+("ZFY".includes(e.t)?1e12:e.t==="t"?DUR*1.5:DUR);this.got(e.t,e.x,e.y);}break;
+        case"e":case"o":case"t":case"j":case"Z":case"F":case"Y":case"A":case"H":case"K":case"I":case"V":
+          if(hit(e.x-12,e.y-12,24,24)){e.gone=true;e.s.setVisible(false);fx[FX[e.t]]=now+("ZFYKIV".includes(e.t)?1e12:e.t==="t"?DUR*1.5:DUR);this.got(e.t,e.x,e.y);}break;
         case"T":if(now>e.cd&&Math.abs(px-e.x)<420&&Math.abs(py-e.y)<130){e.cd=now+2200;const d=px>e.x?1:-1;this.shoot(e.x+d*18,e.y,d*270,0,true,"ebul",3,0);e.s.setFlipX(d<0);}break;
         case"C":{const q=((now-this.t00)/1000+e.x*.013)%3.2,o=q>2.2&&q<2.9?2*S:q>1.7&&q<2.2?(q*40%4):0;e.s.setY(e.y+o);if(o>4&&hit(e.x-15,e.y+o-15,30,30))this.hurt();break;}
-        case"L":{const q=((now-this.t00)/1000+e.x*.011)%3.4,on=q>1.9;e.bm.setAlpha(on?.9:q>1.4?.25:0);if(on&&hit(e.x-4,e.y+16,8,e.fy-e.y-16))this.hurt();break;}
+        case"L":{const q=((now-this.t00)/1000+e.x*.011)%3.4,on=q>1.9,warn=!on&&q>1.4,len=e.fy-e.y-16,g=e.bm,ny=e.y+16;g.clear();
+          if(on){const f=.85+Math.random()*.15;
+            g.fillStyle(0xff2d55,.2*f).fillRect(e.x-13,ny,26,len);g.fillStyle(0xff5a7a,.45*f).fillRect(e.x-7,ny,14,len);g.fillStyle(0xffffff,.95).fillRect(e.x-2.5,ny,5,len);
+            g.fillStyle(0xff2d55,.45).fillCircle(e.x,ny,16*f);g.fillStyle(0xffffff,.9).fillCircle(e.x,ny,6);
+            g.fillStyle(0xff2d55,.5).fillEllipse(e.x,e.fy,40*f,12);g.fillStyle(0xffffff,.9).fillEllipse(e.x,e.fy,18,5);
+            if(Math.random()<.4){const sp=this.add.rectangle(e.x+(Math.random()-.5)*14,e.fy-2,3,3,0xfff1f2).setDepth(2);this.tweens.add({targets:sp,y:sp.y-14-Math.random()*18,x:sp.x+(Math.random()-.5)*34,alpha:0,duration:300,onComplete:()=>sp.destroy()});}
+          }else if(warn){const a=(Math.sin(now/45)+1)/2,ch=(q-1.4)/.5;g.lineStyle(2,0xff2d55,.2+.35*a);g.lineBetween(e.x,ny,e.x,e.fy);g.fillStyle(0xff2d55,.35+.45*a).fillCircle(e.x,ny,4+9*ch);g.fillStyle(0xffffff,.6*a).fillCircle(e.x,ny,2+2*ch);}
+          if(on&&hit(e.x-5,e.y+16,10,e.fy-e.y-16))this.hurt();break;}
         case"P":{const a=1.15*Math.sin((now-this.t00)/1000*2+e.x*.02),mx=e.x+Math.sin(a)*96,my=e.y+Math.cos(a)*96;e.s.setPosition(mx,my).setRotation(-a*2);this.gf.lineStyle(3,0x94a3b8).lineBetween(e.x,e.y-12,mx,my).fillStyle(0x94a3b8).fillCircle(e.x,e.y-12,5);if(hit(mx-13,my-13,26,26))this.hurt();break;}
         case"R":{const a=(now-this.t00)/1000*2.2+e.x*.01;for(let n=1;n<=3;n++){const ox=e.x+Math.cos(a)*n*26,oy=e.y+Math.sin(a)*n*26;this.gf.fillStyle(0xf97316).fillCircle(ox,oy,8).fillStyle(0xfde047).fillCircle(ox,oy,4);if(hit(ox-8,oy-8,16,16))this.hurt(true);}break;}
         case"W":e.s.setScale(1,1+.05*Math.sin(now/60));if(hit(e.x-14,e.y-160,28,160)){p.setVelocityY(Math.max(-340,b.velocity.y-3200*s));this.gf.fillStyle(0xbae6fd,.35).fillRect(e.x-14,e.y-160,28,160);}break;
@@ -3451,7 +3528,7 @@ class Main extends Phaser.Scene{
     }
     this.proj=this.proj.filter(q=>{q.life-=s;q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);let kill=q.life<=0||this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S));
       if(!kill&&q.en&&hit(q.x-6,q.y-6,12,12)){this.hurt(q.fire);kill=true;}
-      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);kill=true;break;}
+      if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){this.dmg(bb,q.d);if(q.ice)this.freezeBoss(bb);kill=true;break;}
       if(kill)q.s.destroy();return!kill;});
     this.crates.getChildren().forEach(c=>{if(c.y>H*S+40){c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);}});
     if(p.y>H*S+40)return this.die();
@@ -3459,14 +3536,14 @@ class Main extends Phaser.Scene{
     if(fr)p.setTint(0x93c5fd);else if(fx.fire>now)p.setTint(0xfdba74);else if(fx.arm>now)p.setTint(0xa5f3fc);else p.clearTint();
     const act=Object.keys(fx).filter(n=>fx[n]>now&&fx[n]<1e11).map(n=>FXN[n]+" "+((fx[n]-now)/1000).toFixed(0)+"s");
     this.fxT.setText(act.join("   ")).setVisible(act.length>0);
-    {const cm=COARSE,ow=["sword","fb","flame"].filter(n=>fx[n]>now),tp=[];
+    {const cm=COARSE,ow=["sword","fb","flame","boom","ice","zap"].filter(n=>fx[n]>now),tp=[];
       if(this.wep&&fx[this.wep]>now)tp.push({sword:"⚔ Sword: "+(cm?"tap ⚔":"press X")+" to slash",fb:"☄ Fireballs: "+(cm?"tap ⚔":"press X")+" to throw",flame:"🔥 Flamethrower: "+(cm?"hold ⚔":"hold X")+" to spray"}[this.wep]);
       if(ow.length>1)tp.push((cm?"⇄":"Q")+" switch weapon");
       if(fx.dash>now)tp.push((cm?"💨":"Shift")+" dash");
       const lb=this.bosses.filter(bb=>!bb.dead);
       if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 Bosses left: "+lb.length+" (door stays locked)");}
       this.tip.setText(tp.join("   ·   "));}
-    {const SEP=SIDE_MQ.matches&&Ctl.mode==="below"?"\n":" · ";setText($("hud"),"Deaths "+this.deaths+SEP+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?SEP+"Keys "+this.keysGot.size+"/"+this.nk:"")+(this.bosses.length?SEP+"Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:""));}
+    {const SEP=" · ";setText($("hud"),"Deaths "+this.deaths+SEP+(this.t0==null?0:(now-this.t0)/1000).toFixed(1)+"s"+(this.nk?SEP+"Keys "+this.keysGot.size+"/"+this.nk:"")+(this.ng?SEP+"💎 "+this.gemsGot.size+"/"+this.ng:"")+(this.bosses.length?SEP+"Bosses "+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length:""));}
   }
 
   die(){
@@ -3476,9 +3553,10 @@ class Main extends Phaser.Scene{
     this.cameras.main.shake(150,.012);this.sw.setVisible(false);this.p.setVisible(false);this.p.body.enable=false;
     this.time.delayedCall(450,()=>{
       this.p.enableBody(true,this.spawn[0],this.spawn[1],true,true);this.p.setVelocity(0,0).clearTint();
-      this.keysGot=new Set(this.cpKeys);const kw={sword:this.fx.sword,fb:this.fx.fb,flame:this.fx.flame};this.fx=Object.assign(FX0(),kw);this.proj.forEach(q=>q.s.destroy());this.proj=[];this.frz=0;this.inv=this.time.now+800;
+      this.keysGot=new Set(this.cpKeys);this.gemsGot=new Set(this.cpGems);const kw={sword:this.fx.sword,fb:this.fx.fb,flame:this.fx.flame,boom:this.fx.boom,ice:this.fx.ice,zap:this.fx.zap};this.fx=Object.assign(FX0(),kw);this.proj.forEach(q=>q.s.destroy());this.proj=[];if(this.boom){this.boom.s.destroy();this.boom=null;}this.frz=0;this.inv=this.time.now+800;
       this.ents.forEach(e=>{
         if(e.t==="k"){e.gone=this.keysGot.has(e.i);e.s.setVisible(!e.gone);}
+        if(e.t==="q"){e.gone=this.gemsGot.has(e.i);e.s.setVisible(!e.gone);}
         else if("eotjAH".includes(e.t)){e.gone=false;e.s.setVisible(true);}
         else if(e.t==="G"){
                     if(!e.on)e.on=!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
@@ -3518,7 +3596,7 @@ class Main extends Phaser.Scene{
     Juice.burst(this,this.p.x,this.p.y,0xfacc15,"VICTORY!");
     const rawT=(this.time.now-(this.t0==null?this.time.now:this.t0))/1000;
     const t=rawT.toFixed(1);
-    const stars=this.deaths===0?3:this.deaths<=3?2:1;
+    let stars=this.deaths===0?3:this.deaths<=3?2:1;if(this.ng&&this.gemsGot.size<this.ng)stars=Math.max(1,stars-1);
     const bk="bb_best_"+(JSON.stringify(G.cur.o).split("").reduce((h,c)=>(h*31+c.charCodeAt(0))|0,7)>>>0),prevBest=parseFloat(localStorage.getItem(bk)||"99999");
     const isNewBest=rawT<prevBest;
     if(isNewBest)try{localStorage.setItem(bk,String(rawT.toFixed(1)));}catch(_){}
@@ -3533,6 +3611,7 @@ class Main extends Phaser.Scene{
           <span class="win-star" id="ws2">⭐</span>
           <span class="win-star" id="ws3">⭐</span>
         </div>
+        ${this.ng?`<div style="text-align:center;margin:-4px 0 8px;font-weight:700">💎 Gems ${this.gemsGot.size}/${this.ng}${this.gemsGot.size<this.ng?" · collect all for a full star rating":""}</div>`:""}
         <div class="win-stats-grid">
           <div class="win-stat-card">
             <small>Clear Time</small>
