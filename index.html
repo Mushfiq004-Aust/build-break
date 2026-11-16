@@ -317,7 +317,8 @@ body:not([data-mode="edit"]) .ed { display: none !important; }
    5. JUICY POPUPS: POWER-UP CARD, EVENT BANNER & CONFETTI
    ========================================================================== */
 #ban {
-  top: max(6px, var(--safe-t));
+  top:auto;
+  bottom:calc(130px + var(--safe-b));
   left: 50%;
   transform: translateX(-50%);
   padding: 0;
@@ -1081,7 +1082,7 @@ body.lefty #padAct { direction: rtl; }
     padding: 6px;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 14px;
-    background: rgba(15, 12, 38, 0.76);
+    background: rgba(10,10,20,.88);
     backdrop-filter: blur(8px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
@@ -1099,7 +1100,7 @@ body.lefty #padAct { direction: rtl; }
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.14);
+    background: rgba(25,25,45,.95);
     border: 1px solid rgba(255, 255, 255, 0.28);
     color: #fff;
     font-size: 14px;
@@ -3095,7 +3096,7 @@ class Main extends Phaser.Scene{
     this.physics.add.collider(p,this.solid);this.physics.add.collider(p,this.crates);
     this.physics.add.collider(this.crates,this.solid);this.physics.add.collider(this.crates,this.crates);
     this.sl.forEach(m=>{this.physics.add.collider(p,m.s);this.physics.add.collider(this.crates,m.s);});
-    this.cameras.main.setZoom(COARSE?1.45:1).startFollow(p,true,.12,.12).setDeadzone(80,60);this.cameras.main.setBounds(0,0,W*S,H*S+(COARSE?110:60));this.add.rectangle(W*S/2,H*S+200,W*S+400,400,0x0b0a1e).setDepth(0);
+    this.cameras.main.setZoom(COARSE?1.18:1).startFollow(p,true,.12,.12).setDeadzone(80,60);this.cameras.main.setBounds(0,0,W*S,H*S+(COARSE?110:60));this.add.rectangle(W*S/2,H*S+200,W*S+400,400,0x0b0a1e).setDepth(0);
     const fxo={setText(t){setText($("fx"),t);return fxo;},setVisible(v){setDisp($("fx"),v?"block":"none");return fxo;}};this.fxT=fxo;
     this.tip={setText:t=>{const d=$("tip");setText(d,t);setDisp(d,t?"block":"none");}};
     this.sw=this.add.image(0,0,"sword").setOrigin(.5,1).setDepth(4).setVisible(false);this.wep=null;this.sws=-999;this.ps=0;
@@ -3351,7 +3352,7 @@ class Main extends Phaser.Scene{
     {const cm=this.cameras.main,pvx=p.body.velocity.x;
      if(Math.abs(pvx)>40)this.lookDir=pvx>0?1:-1;
      // Look ahead in the travel direction and lift the player above the on-screen buttons.
-     const tx=-(this.lookDir||1)*(COARSE?60:50),ty=COARSE?(Ctl.mode==="below"?-70:-30):0;
+     const tx=-(this.lookDir||1)*(COARSE?60:50),ty=COARSE?(Ctl.mode==="below"?-120:-80):0;
      cm.followOffset.x+=(tx-cm.followOffset.x)*Math.min(1,s*2.4);
      cm.followOffset.y+=(ty-cm.followOffset.y)*Math.min(1,s*3);
     }
@@ -3503,7 +3504,7 @@ class Main extends Phaser.Scene{
       if(ow.length>1)tp.push((cm?"⇄":"Q")+" switch weapon");
       if(fx.dash>now)tp.push((cm?"💨":"Shift")+" dash");
       const lb=this.bosses.filter(bb=>!bb.dead);
-      if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 Bosses left: "+lb.length+" (door stays locked)");}
+      if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 "+lb.length+" Bosses Left · 🚪 Locked");}
       this.tip.setText(tp.join("   ·   "));}
     {const SEP=" · ";setText($("hud"),"D:"+this.deaths+"  B:"+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length+"  T:"+(this.t0==null?0:(now-this.t0)/1000).toFixed(0)+"s");}
   }
