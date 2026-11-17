@@ -1516,6 +1516,15 @@ body.mobile-playing #mobileBar .mobile-left,body.mobile-playing #mobileBar .mobi
   #mobileBar .range-stepper button{min-height:36px !important;width:36px;}
   #mobileBar .range-stepper b{font-size:14px;}
 }
+/* Editor camera controls: stable touch targets and clear active feedback. */
+#mobilePan { touch-action:none; user-select:none; -webkit-user-select:none; }
+#mobilePan button { touch-action:none; min-width:40px; min-height:40px; }
+#mobilePan button.on { background:var(--ac); border-color:#c4b5fd; color:#fff; }
+@media (pointer:coarse) {
+  #mobilePan button { min-width:46px; min-height:46px; border-radius:11px; }
+  body[data-mode="edit"] #mobilePan .pan-grid { gap:5px; }
+}
+
 /* ==========================================================================
    MOBILE EDITOR: look-around pad lives in its own gutter so it never covers the level
    ========================================================================== */
@@ -1797,11 +1806,11 @@ const TOOLS=[
 ["P","Pendulum","Traps","Swinging spiked mace."],
 ["R","Fire bar","Traps","Rotating bar of fireballs. Fireproof ignores it."],
 ["G","Boss flag","Bosses","Arena trigger. Place it near a boss (within ~18 cells): that boss sleeps until you touch the flag. Bosses with no flag nearby wake when you get close."],
-["1","Slime King","Bosses","Hops at you. The door stays locked until every boss is beaten."],
-["2","Bat Lord","Bosses","Flies and dive-bombs."],
+["1","Slime King","Bosses","Lobs sticky slime that briefly traps you, then leaps toward you."],
+["2","Bat Lord","Bosses","Flies overhead and fires a short-range radio-wave burst."],
 ["3","Ghost Mage","Bosses","Teleports and fires 2 bolts (more as she gets hurt)."],
-["4","Stone Golem","Bosses","Walks at you and sends shockwaves."],
-["5","Dragon","Bosses","Hovers and breathes fireballs."],["6","Storm Serpent","Bosses","Sweeps through the air and fires a five-shot lightning fan."],
+["4","Stone Golem","Bosses","Walks carefully, then hurls heavy arcing boulders."],
+["5","Dragon","Bosses","Charges and launches bright, aimed fire orbs."],["6","Storm Serpent","Bosses","Sweeps through the air and fires a narrow fan of electric bolts."],
 ["Z","Sword","Weapons","Yours for the whole level once picked up. X / J (⚔ on phones) to slash. Deflects bolts."],
 ["F","Fireball","Weapons","Yours for the whole level. X / J / ⚔ throws fireballs."],
 ["Y","Flamethrower","Weapons","Yours for the whole level. Hold X / J / ⚔ to spray flames."],
@@ -2592,9 +2601,15 @@ document.addEventListener("click",e=>{if(e.isTrusted){Sfx.init();}if(e.target.ta
 const PAN={x:0,y:0};
 document.querySelectorAll("[data-p]").forEach(b=>{
   const[x,y]=b.dataset.p.split(",").map(Number);
-  b.addEventListener("pointerdown",e=>{e.preventDefault();PAN.x=x;PAN.y=y;});
-  ["pointerup","pointercancel","pointerleave"].forEach(ev=>b.addEventListener(ev,()=>{PAN.x=PAN.y=0;}));
+  b.addEventListener("pointerdown",e=>{
+    e.preventDefault();PAN.x=x;PAN.y=y;
+    if(b.setPointerCapture){try{b.setPointerCapture(e.pointerId);}catch(_){}}
+    b.classList.add("on");
+  });
+  const stop=()=>{PAN.x=PAN.y=0;b.classList.remove("on");};
+  ["pointerup","pointercancel","lostpointercapture"].forEach(ev=>b.addEventListener(ev,stop));
 });
+window.addEventListener("blur",()=>{PAN.x=PAN.y=0;document.querySelectorAll("[data-p].on").forEach(b=>b.classList.remove("on"));});
 
 /* Touch Gameplay Pad with Thumb-Slide Support between Left & Right */
 const T={l:0,r:0,j:0,jd:0,a:0,d:0,s:0};
@@ -3029,6 +3044,13 @@ class Main extends Phaser.Scene{
     pot("pjump",0x4ade80,g=>g.fillStyle(0x14532d).fillTriangle(10,23,16,13,22,23));
     pot("pz",0x94a3b8,g=>g.fillStyle(0xffffff).fillRect(15,13,3,13));pot("pf2",0xf97316,g=>g.fillStyle(0xfde047).fillCircle(16,20,4));pot("pflm",0xef4444,g=>g.fillStyle(0xfde047).fillTriangle(12,26,16,12,20,26));pot("pdj",0xf9a8d4,g=>g.fillStyle(0xffffff).fillTriangle(10,20,16,12,22,20).fillTriangle(10,26,16,18,22,26));pot("pdash",0x2dd4bf,g=>g.fillStyle(0xffffff).fillRect(9,18,14,3).fillRect(12,23,10,2));
     mk("fball",14,14,g=>{g.fillStyle(0xf97316).fillCircle(7,7,7);g.fillStyle(0xfde047).fillCircle(7,7,3.5)});mk("flm",10,10,g=>{g.fillStyle(0xfb923c).fillCircle(5,5,5);g.fillStyle(0xfde047).fillCircle(5,5,2.5)});mk("ebul",12,12,g=>{g.fillStyle(0xa855f7).fillCircle(6,6,6);g.fillStyle(0xf5d0fe).fillCircle(6,6,3)});
+    // Distinct, readable boss projectiles: a sticky glob, radio pulse, stone boulder,
+    // layered fire orb and a jagged storm bolt. Each has a larger hit radius below.
+    mk("slimeGlob",24,20,g=>{g.fillStyle(0x166534,.45).fillCircle(12,11,10);g.fillStyle(0x65a30d).fillEllipse(12,10,10,8);g.fillStyle(0xa3e635).fillEllipse(9,7,5,3);g.fillStyle(0xecfccb).fillCircle(8,6,1.8)});
+    mk("radioWave",30,30,g=>{g.lineStyle(3,0x22d3ee,.95).beginPath().arc(15,15,5,-1.15,1.15).strokePath();g.lineStyle(3,0x67e8f9,.9).beginPath().arc(15,15,11,-1.15,1.15).strokePath();g.lineStyle(2,0xe0f2fe,.85).beginPath().arc(15,15,14,-1.15,1.15).strokePath();g.fillStyle(0x0e7490).fillCircle(15,15,3);});
+    mk("bossRock",30,28,g=>{g.fillStyle(0x292524).fillCircle(15,15,13);g.fillStyle(0x78716c).fillTriangle(3,14,10,2,17,9).fillTriangle(12,7,23,5,27,16);g.fillStyle(0xa8a29e).fillTriangle(6,15,12,7,15,17);g.lineStyle(2,0x44403c).strokeCircle(15,15,12);});
+    mk("bossFire",38,34,g=>{g.fillStyle(0x7c2d12,.35).fillCircle(20,17,16);g.fillStyle(0xea580c).fillCircle(20,17,13);g.fillStyle(0xfb923c).fillCircle(18,15,10);g.fillStyle(0xfde047).fillCircle(17,14,6);g.fillStyle(0xfffbeb).fillCircle(16,12,2.5);g.fillStyle(0xf97316).fillTriangle(5,17,0,8,12,12).fillTriangle(7,23,0,29,15,24);});
+    mk("stormBolt",28,34,g=>{g.fillStyle(0x0891b2,.3).fillCircle(14,17,13);g.lineStyle(7,0x0e7490,.8).beginPath().moveTo(16,1).lineTo(7,17).lineTo(15,17).lineTo(9,32).strokePath();g.lineStyle(3,0xe0f2fe,1).beginPath().moveTo(16,1).lineTo(7,17).lineTo(15,17).lineTo(9,32).strokePath();g.fillStyle(0xfef08a).fillCircle(15,17,2);});
     pot("pice",0x7dd3fc,g=>g.fillStyle(0xffffff).fillTriangle(16,12,12,24,20,24));pot("pboom",0xfbbf24,g=>g.lineStyle(3,0x78350f).beginPath().moveTo(10,16).lineTo(16,26).lineTo(23,14).strokePath());
     pot("pbolt",0x818cf8,g=>g.fillStyle(0xfde047).fillTriangle(17,12,11,21,16,21).fillTriangle(16,21,21,19,14,28));pot("pbomb",0xf87171,g=>g.fillStyle(0x0f172a).fillCircle(16,21,6));
     mk("shard",12,6,g=>{g.fillStyle(0xe0f2fe).fillTriangle(0,3,10,0,10,6);g.fillStyle(0x38bdf8).fillRect(8,1,4,4)});
@@ -3396,7 +3418,7 @@ class Main extends Phaser.Scene{
     this.activatedBosses=new Set();
     this.dsh=0;this.dcd=0;this.acd=0;this.jc=0;this.pd=0;this.hinted=0;this.unlockedShown=false;
     this.gf=this.add.graphics().setDepth(1);this.coy=0;this.buf=0;this.lastGroundedAt=-9999;this.jmp=false;this.frz=0;this.fcd=0;this.inv=0;
-    this.fx=FX0();this.mud=new Set();this.dyn=[];this.proj=[];this.ice=new Set();this.belt=new Map();this.sl=[];this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];this.cpState=null;this.cpDyn=null;
+    this.fx=FX0();this.mud=new Set();this.dyn=[];this.proj=[];this.slimePatches=[];this.slimeStuckUntil=0;this.ice=new Set();this.belt=new Map();this.sl=[];this.keysGot=new Set();this.cpKeys=new Set();this.spawn=[L.s[0]*S+16,L.s[1]*S+18];this.cpState=null;this.cpDyn=null;
     this.physics.world.setBounds(0,0,W*S,H*S);this.physics.world.setBoundsCollision(true,true,true,false);
     this.solid=this.physics.add.staticGroup();this.tiles=this.add.group();this.crates=this.physics.add.group();this.ents=[];
     const sol=new Set(L.o.filter(o=>"pavwM".includes(o[0])).map(o=>o[1]+","+o[2]));this.sol=sol;
@@ -3633,33 +3655,50 @@ class Main extends Phaser.Scene{
       else e.s.setTint(Math.floor(now/60)%2?0xc4b5fd:0xffffff);
     }
     if(!e.wd&&!e.fire)e.ph+=s*sp;
-    if(k==="1"){ // Gloop: hops, every 3rd hop is a slam that sends ground ripples
+    if(k==="1"){ // Slime King: lobs a sticky glob, then makes a readable leap toward the player.
       if(e.g&&!e.wd&&!go)e.vx=0;
-      if(go){e.hc=(e.hc||0)+1;e.big=e.hc%3===0||p2>1;e.vy=e.big?-820:-560;e.g=0;e.vx=sg*(e.big?210:170)*sp;e.tm=now+cd*1300;}
+      if(go){
+        e.hc=(e.hc||0)+1;
+        const dx=cx-(e.x+sg*14),dy=(py+ph*.55)-(e.y+8),dist=Math.max(1,Math.hypot(dx,dy));
+        const speed=250;
+        this.shoot(e.x+sg*16,e.y-3,dx/dist*speed,dy/dist*speed-35,true,"slimeGlob",2.4,0,{kind:"slime",g:420,radius:9});
+        e.big=e.hc%3===0||p2>1;e.vy=e.big?-760:-590;e.g=0;e.vx=sg*(e.big?205:175)*sp;e.tm=now+cd*3100;
+        this.say(e,"Sticky slime! Keep moving!",1100);
+      }
       if(e.vx){const lim=cl(e.x+e.vx*s,xlo,xhi)-e.x;if(this.bmove(e,lim,0).bx)e.vx=0;}
       e.sq=e.wd?[1.14,.8]:[1-Math.min(.16,Math.abs(e.vy)/5000),1+Math.min(.2,Math.abs(e.vy)/3800)];
     }
-    if(k==="4"){ // Grumm: slow walker, never walks off ledges, stomp = two jumpable ground waves
+    if(k==="4"){ // Grumm: advances carefully, then hurls a heavy, arcing boulder you can jump over.
       const ahead=this.sol.has(Math.floor((e.x+sg*26)/S)+","+Math.floor((e.y+34)/S));
-      if(!e.wd&&e.g&&ahead)this.bmove(e,cl(e.x+sg*34*sp*s,xlo,xhi)-e.x,0);
-      if(go){this.cameras.main.shake(230,.014);const v=210*sp;this.shoot(e.x-20,e.y+18,-v,0,true,"ebul",2.4,0);this.shoot(e.x+20,e.y+18,v,0,true,"ebul",2.4,0);if(p2>0)for(let i=-1;i<=1;i++)this.rain(cx+i*70,py,280,"ebul",1.8);e.tm=now+cd*3000;}
-      
+      if(!e.wd&&e.g&&ahead)this.bmove(e,cl(e.x+sg*30*sp*s,xlo,xhi)-e.x,0);
+      if(go){
+        const dx=cx-e.x,flight=Phaser.Math.Clamp(Math.abs(dx)/310,.48,.95);
+        const vx=Phaser.Math.Clamp(dx/flight,-340,340),vy=(cy-(e.y+5)-.5*620*flight*flight)/flight;
+        this.shoot(e.x+sg*24,e.y-2,vx,Phaser.Math.Clamp(vy,-430,-150),true,"bossRock",2.8,0,{kind:"rock",g:620,radius:14});
+        if(p2>0)this.time.delayedCall(420,()=>{if(!e.dead&&!this.dead){const d2=cx-e.x,t2=Phaser.Math.Clamp(Math.abs(d2)/330,.45,.85);this.shoot(e.x+sg*24,e.y-2,Phaser.Math.Clamp(d2/t2,-350,350),-300,true,"bossRock",2.5,0,{kind:"rock",g:620,radius:14});}});
+        this.cameras.main.shake(150,.008);e.tm=now+cd*3300;
+      }
     }
     if(gnd){ // gravity with swept landing (no tunnelling on slow frames, no floating gap)
       const wasAir=!e.g;
       e.vy=Math.min(900,e.vy+1500*s);
       const vIn=e.vy,r=this.bmove(e,0,e.vy*s);
       if(r.by){e.g=vIn>0?1:0;e.vy=0;}else e.g=0;
-      if(k==="1"&&wasAir&&e.g&&e.big&&vIn>300){e.big=false;this.cameras.main.shake(200,.012);this.shoot(e.x-20,e.y+18,-220,0,true,"ebul",1.6,0);this.shoot(e.x+20,e.y+18,220,0,true,"ebul",1.6,0);}
+      if(k==="1"&&wasAir&&e.g&&e.big&&vIn>300){e.big=false;this.cameras.main.shake(120,.006);Juice.burst(this,e.x,e.y,0x84cc16);}
     }
-    if(k==="2"){ // Vesper: locks a dive target (dodgeable); bonks into walls instead of passing through them
-      if(go){e.dx=cx;e.dy=cy;e.dv=now+600;e.dn=(e.dn||0)+1;e.tm=(p2>0&&e.dn%2)?now+250:now+cd*2800;if(p2>0&&p2>1)this.aimAt(e.x,e.y,3,.3,230,"ebul",3);}
-      if(e.dv>now){
-        const t=Math.min(1,6*s),r=this.bmove(e,(e.dx-e.x)*t,(e.dy-e.y)*t);
-        if(r.bx||r.by){e.dv=0;this.cameras.main.shake(90,.006);}
+    if(k==="2"){ // Bat Lord: stays airborne and emits three dodgeable radio pulses with limited arena reach.
+      if(go){
+        const dist=Math.hypot(cx-e.x,cy-e.y);
+        if(dist<500&&this.bclear(e.x,e.y,cx,cy)){
+          const a=Math.atan2(cy-e.y,cx-e.x),life=Math.min(2.05,dist/255+.25);
+          [-.16,0,.16].forEach((off,i)=>this.time.delayedCall(i*145,()=>{
+            if(!e.dead&&!this.dead)this.shoot(e.x,e.y,Math.cos(a+off)*255,Math.sin(a+off)*255,true,"radioWave",life,0,{kind:"wave",radius:11});
+          }));
+        }
+        e.tm=now+cd*3200;this.cameras.main.shake(100,.004);
       }
-      else if(e.wd)this.bmove(e,(Math.random()-.5)*3,0);
-      else this.bto(e,cl(e.fx+Math.sin(e.ph*1.1)*180,xlo,xhi),cl(e.by-90+Math.sin(e.ph*2)*25,60,H*S-60),420,s);
+      if(e.wd)this.bto(e,cl(e.fx+Math.sin(e.ph*1.1)*175,xlo,xhi),cl(e.by-95+Math.sin(e.ph*2)*24,60,H*S-60),330,s);
+      else this.bto(e,cl(e.fx+Math.sin(e.ph*1.1)*180,xlo,xhi),cl(e.by-90+Math.sin(e.ph*2)*25,60,H*S-60),350,s);
     }
     if(k==="3"){ // Mourna: fades out, reappears at a reachable spot near you, short beat, then a fan of bolts (3 -> 5 -> 7)
       if(e.wd)e.s.setAlpha(Math.max(.25,(e.wd-now)/480));
@@ -3670,13 +3709,22 @@ class Main extends Phaser.Scene{
       }
       else if(!e.wd)e.s.setAlpha(1);
     }
-    if(k==="5"){ // Ignarax: hover, aimed fireball volley; enraged = fire rain too
-      if(!e.wd&&!e.fire)this.bto(e,cl(e.fx+Math.sin(e.ph*.8)*220,xlo,xhi),cl(e.by-70+Math.sin(e.ph*1.7)*25,60,e.by),380,s);
-      if(go){const n=3+p2*2;for(let i=0;i<n;i++)this.time.delayedCall(i*150,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,1,0,260,"fball",3);});if(p2>1)for(let i=0;i<4;i++)this.rain(cx+(i-1.5)*80,py,230,"fball",2.4);e.tm=now+cd*3000;this.cameras.main.shake(140,.006);}
+    if(k==="5"){ // Ignarax: charges a bright fire orb, then launches it toward the player's current lane.
+      if(!e.wd&&!e.fire)this.bto(e,cl(e.fx+Math.sin(e.ph*.8)*205,xlo,xhi),cl(e.by-78+Math.sin(e.ph*1.7)*22,60,e.by),330,s);
+      if(go){
+        const dx=cx-e.x,dy=cy-e.y,dist=Math.max(1,Math.hypot(dx,dy)),v=245+p2*12;
+        this.shoot(e.x+sg*34,e.y+5,dx/dist*v,dy/dist*v,true,"bossFire",3.2,0,{kind:"fire",fire:true,radius:13});
+        if(p2>1)this.time.delayedCall(520,()=>{if(!e.dead&&!this.dead){const ddx=cx-e.x,ddy=cy-e.y,dd=Math.max(1,Math.hypot(ddx,ddy));this.shoot(e.x+sg*34,e.y+5,ddx/dd*235,ddy/dd*235,true,"bossFire",3,0,{kind:"fire",fire:true,radius:12});}});
+        e.tm=now+cd*3300;this.cameras.main.shake(110,.005);
+      }
     }
-    if(k==="6"){ // Zephyra: sweeping lightning fans, second fan when hurt
-      if(!e.wd&&!e.fire)this.bto(e,cl(e.fx+Math.sin(e.ph*1.15)*185,xlo,xhi),cl(e.by-85+Math.sin(e.ph*2.1)*32,60,e.by),380,s);
-      if(go){const n=5+p2*2;this.aimAt(e.x,e.y,n,.24,265,"ebul",3.2);if(p2>0)this.time.delayedCall(380,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,n,.24,300,"ebul",3.2);});e.tm=now+cd*2700;this.cameras.main.shake(90,.004);}
+    if(k==="6"){ // Zephyra: three visible electric bolts in a narrow, readable fan.
+      if(!e.wd&&!e.fire)this.bto(e,cl(e.fx+Math.sin(e.ph*1.15)*180,xlo,xhi),cl(e.by-88+Math.sin(e.ph*2.1)*28,60,e.by),340,s);
+      if(go){
+        this.aimAt(e.x,e.y,3,.17,275,"stormBolt",2.7);this.proj.slice(-3).forEach(q=>{q.kind="electric";q.radius=9;});
+        if(p2>0)this.time.delayedCall(560,()=>{if(!e.dead&&!this.dead)this.aimAt(e.x,e.y,2,.10,255,"stormBolt",2.5);this.proj.slice(-2).forEach(q=>{q.kind="electric";q.radius=9;});});
+        e.tm=now+cd*3300;this.cameras.main.shake(90,.004);
+      }
     }
     if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}
     e.s.setPosition(e.x,e.y).setFlipX(sg<0);if(RIG[k]){e.face=sg;rigDraw(this,e,now,s);}
@@ -3726,7 +3774,9 @@ class Main extends Phaser.Scene{
     const jd=!fr&&(JD(k.W)||JD(k.UP)||JD(k.SPACE)||T.jd);T.jd=0;
     if((l||r||j)&&this.t0==null)this.t0=now;
     const kk=Math.floor((b.x+b.width/2)/S)+","+Math.floor((b.bottom+3)/S),g=b.blocked.down||b.touching.down||(b.velocity.y>-20&&this.footOnSolid(b)),ice=g&&this.ice.has(kk),bl=g?(this.belt.get(kk)||0):0;
-    const mud=g&&this.mud.has(kk),tv=(r-l)*(jb?250:200)*(mud?.5:1)+bl*110,a=(fr?3000:ice?260:g?2200:1200)*s;let vx=b.velocity.x;
+    const mud=g&&this.mud.has(kk),stickyPatch=g&&this.slimePatches&&this.slimePatches.find(q=>!q.triggered&&now<q.until&&Math.abs((b.x+b.width/2)-q.x)<q.w/2+pw/2&&Math.abs(b.bottom-q.y)<15);
+    if(stickyPatch){stickyPatch.triggered=true;this.slimeStuckUntil=now+340;this.cameras.main.shake(75,.003);}
+    const stuck=now<this.slimeStuckUntil,tv=stuck?0:(r-l)*(jb?250:200)*(mud?.5:1)+bl*110,a=(fr?3000:ice?260:g?2200:1200)*s;let vx=b.velocity.x;
     vx=vx<tv?Math.min(tv,vx+a):Math.max(tv,vx-a);
         const dp=T.d&&!this.pd;this.pd=T.d;
     if((JD(k.SHIFT)||dp)&&fx.dash>now&&now>this.dcd){this.dsh=now+190;this.dcd=now+700;this.dd=p.flipX?-1:1;this.inv=Math.max(this.inv,now+190);Sfx.play("jump");}
@@ -3745,6 +3795,12 @@ class Main extends Phaser.Scene{
       Juice.card({icon:"🚪",tag:"EXIT READY",title:"DOOR UNLOCKED!",hint:"Head to the exit door to complete the level!",color:"#4ade80",glow:"rgba(74,222,128,0.5)",ms:3200});
     }
     this.gf.clear();
+    if(this.slimePatches){
+      this.slimePatches=this.slimePatches.filter(q=>{
+        const left=q.until-now;if(left<=0){q.obj.destroy();return false;}
+        q.obj.setAlpha(.22+.58*Math.min(1,left/260));return true;
+      });
+    }
     const ow0=WEAPONS.filter(n=>fx[n]>now),sp=T.s&&!this.ps;this.ps=T.s;
     if((JD(k.Q)||sp)&&ow0.length>1){this.wep=ow0[(ow0.indexOf(this.wep)+1)%ow0.length];flash("Weapon: "+FXN[this.wep]);}
 
@@ -3851,10 +3907,24 @@ class Main extends Phaser.Scene{
       if(q.ret&&!q.back&&q.life<q.ret){q.back=true;q.hits.clear();q.life=9;}
       if(q.back){const dx=px+pw/2-q.x,dy=py+ph/2-q.y,dl=Math.hypot(dx,dy)||1;if(dl<22){q.s.destroy();return false;}q.vx=dx/dl*470;q.vy=dy/dl*470;}
       if(q.g)q.vy+=q.g*s;
-      q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);if(q.spin)q.s.angle+=900*s;
+      q.x+=q.vx*s;q.y+=q.vy*s;q.s.setPosition(q.x,q.y);
+      if(q.kind==="wave"||q.kind==="electric"||q.kind==="rock")q.s.setRotation(Math.atan2(q.vy,q.vx));
+      if(q.spin)q.s.angle+=900*s;
       let kill=q.life<=0;
-      if(!kill&&!q.back&&this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S))){if(q.ret){q.back=true;q.hits.clear();q.life=9;}else kill=true;}
-      if(!kill&&q.en&&hit(q.x-6,q.y-6,12,12)){this.hurt(q.fire);kill=true;}
+      if(!kill&&!q.back&&this.sol.has(Math.floor(q.x/S)+","+Math.floor(q.y/S))){
+        if(q.ret){q.back=true;q.hits.clear();q.life=9;}
+        else{
+          if(q.kind==="slime"&&q.vy>0&&this.slimePatches){
+            const floorY=Math.floor(q.y/S)*S;
+            const obj=this.add.ellipse(q.x,floorY+4,42,12,0x65a30d,.8).setDepth(1.2);
+            this.slimePatches.push({x:q.x,y:floorY+7,w:42,until:now+1000,obj,triggered:false});
+            Juice.burst(this,q.x,floorY,0x84cc16);
+          }
+          kill=true;
+        }
+      }
+      const qr=q.radius||6;
+      if(!kill&&q.en&&hit(q.x-qr,q.y-qr,qr*2,qr*2)){this.hurt(q.fire);kill=true;}
       if(!kill&&!q.en)for(const bb of this.bosses)if(bb.awake&&!bb.dead&&Math.abs(q.x-bb.x)<30&&Math.abs(q.y-bb.y)<30){
         if(q.bomb){kill=true;break;}
         if(q.pierce){if(!q.hits.has(bb)){q.hits.add(bb);this.dmg(bb,q.d);}}else{this.dmg(bb,q.d);kill=true;break;}}
@@ -3883,7 +3953,7 @@ class Main extends Phaser.Scene{
     this.cameras.main.shake(150,.012);this.sw.setVisible(false);this.p.setVisible(false);this.p.body.enable=false;
     this.time.delayedCall(450,()=>{
       this.p.enableBody(true,this.spawn[0],this.spawn[1],true,true);this.p.setVelocity(0,0).clearTint();
-      this.keysGot=new Set(this.cpKeys);const kw={sword:this.fx.sword,fb:this.fx.fb,flame:this.fx.flame};this.fx=Object.assign(FX0(),kw);this.proj.forEach(q=>q.s.destroy());this.proj=[];this.frz=0;this.inv=this.time.now+800;
+      this.keysGot=new Set(this.cpKeys);const kw={sword:this.fx.sword,fb:this.fx.fb,flame:this.fx.flame};this.fx=Object.assign(FX0(),kw);this.proj.forEach(q=>q.s.destroy());this.proj=[];this.slimePatches?.forEach(q=>q.obj.destroy());this.slimePatches=[];this.slimeStuckUntil=0;this.frz=0;this.inv=this.time.now+800;
       this.ents.forEach(e=>{
         if(e.t==="k"){e.gone=this.keysGot.has(e.i);e.s.setVisible(!e.gone);}
         else if("eotjAH".includes(e.t)){e.gone=false;e.s.setVisible(true);}
