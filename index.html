@@ -1756,6 +1756,7 @@ body.mobile-playing #mobileBar .mobile-left,body.mobile-playing #mobileBar .mobi
 const W=60,H=30,S=32,MAXO=700,DUR=8000,MV="gumzb";
 const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine",I:"pice",J:"pboom",K:"pbolt",V:"pbomb"};
 const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash",I:"ice",J:"boom",K:"bolt",V:"bomb"},WEAPONS=["sword","fb","flame","ice","boom","bolt","bomb"],WEP_KEYS="ZFYIJKV",FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash",ice:"❄ Ice Wand",boom:"🪃 Boomerang",bolt:"⚡ Lightning",bomb:"💣 Bombs"};
+const BW=54;
 const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,dj:0,dash:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40},
 BOSS={
 1:{n:"Gloop the Glutton",t:"Hungry, hungry, HOP!",c:0x22c55e,q:["Mine! All mine!","You look crunchy...","GLOOP IS HUNGRY!!"],d:"Gloop... melts..."},
@@ -1810,8 +1811,7 @@ const TOOLS=[
 ["V","Bombs","Weapons","Yours for the whole level. Lobbed grenade: area damage, clears shots, breaks crumble blocks."],
 ["A","Double jump","Powerups","8s. Jump once more in mid-air."],
 ["H","Dash","Powerups","8s. Shift / 💨 to dash. Invulnerable while dashing."],
-["S","Start","Level","Where you begin."],["E","Door","Level","The exit."],
-["d","Pan","Level","Drag to scroll the map (or use WASD / arrows)."],["x","Erase","Level","Removes objects. Right-click also erases."]];
+["S","Start","Level","Where you begin."],["E","Door","Level","The exit."]];
 const COL=[0x38bdf8,0xf43f5e,0x4ade80,0xfacc15,0xa78bfa,0xfb923c,0xf472b6,0x94a3b8],HATS=["None","Cap","Crown","Horns","Beanie"];
 const $=id=>document.getElementById(id);
 const COARSE=matchMedia("(pointer:coarse)").matches;
@@ -2288,7 +2288,7 @@ function drawToolIcon(c,sc,t){
   const ctx=c.getContext("2d");
   ctx.setTransform(1,0,0,1,0,0);
   ctx.clearRect(0,0,32,32);
-  const k=t==="S"?G.pk:t==="E"?"door":t==="x"?"x":t==="select"?"check":t==="d"?"check":(t==="p"&&Theme.cur==="day"?"platDay":TYPES[t]);
+  const k=t==="S"?G.pk:t==="E"?"door":t==="x"?"x":t==="select"?"check":(t==="p"&&Theme.cur==="day"?"platDay":TYPES[t]);
   if(!sc.textures.exists(k))return;
   const im=sc.textures.get(k).getSourceImage();
   const z=Math.min(1,32/Math.max(im.width,im.height));
@@ -2411,17 +2411,17 @@ function custom(){
   up();
 }
 
+const WX_DESC={night:"🌙 Night: city lights, homes & stars",day:"☀️ Day: sunshine, clouds & birds",rain:"🌧️ Rain: dark clouds and falling rain",winter:"❄️ Winter: snowfall and icy skies",thunder:"⛈️ Thunder: storm clouds, rain and lightning"};
 function openMobileSettings(){
   closeSheets();
   const scene=sc();let resumeAfter=false;
   try{if(G.mode!=="edit"&&scene?.scene.isActive("main")&&!scene.scene.isPaused("main")){scene.scene.pause();resumeAfter=true;}}catch(_){}
   const render=()=>{
-    const isDay=Theme.cur==="day";
     dlg("Game Settings",
       `<div style="display:grid;gap:10px;margin:8px 0">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
-          <div><b>World Environment</b><br><small style="color:var(--fg-muted)">${isDay?"☀️ Day: Sunshine, clouds & flying birds":"🌙 Night: City lights, homes & stars"}</small></div>
-          <button id="stgTheme" class="pri">${isDay?"☀️ Day":"🌙 Night"}</button>
+        <div style="padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
+          <b>Weather &amp; Time</b><br><small style="color:var(--fg-muted)">${WX_DESC[Theme.cur]}</small>
+          <div id="stgWx" style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px">${Theme.modes.map(m=>`<button type="button" data-wx="${m}" class="${m===Theme.cur?"pri":""}" style="padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font-size:20px;line-height:1">${Theme.meta[m][0]}</span><small>${Theme.meta[m][1]}</small></button>`).join("")}</div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
           <div><b>Sound Effects</b><br><small style="color:var(--fg-muted)">Synthesized arcade chimes</small></div>
@@ -2450,7 +2450,7 @@ function openMobileSettings(){
       </div>`,
       [["Close",()=>{if(resumeAfter){try{scene?.scene.resume();}catch(_){}}}]]
     );
-    $("stgTheme").onclick=()=>{Theme.toggle();render();};
+    document.querySelectorAll("#stgWx button").forEach(b=>{b.onclick=()=>{Theme.set(b.dataset.wx,true);render();};});
     $("stgSfx").onclick=()=>{Sfx.on=!Sfx.on;localStorage.setItem("bbsfx",Sfx.on?"1":"0");Amb.sync();if(Sfx.on)Sfx.play("key");render();};
     $("stgHap").onclick=()=>{Sfx.hap=!Sfx.hap;localStorage.setItem("bbhap",Sfx.hap?"1":"0");if(Sfx.hap)Sfx.vib(35);render();};
     $("stgAmb").onclick=()=>{Amb.on=!Amb.on;localStorage.setItem("bbamb",Amb.on?"1":"0");Amb.sync();render();};
@@ -2654,6 +2654,90 @@ addEventListener("keydown",e=>{
 /* ==========================================================================
    PHASER MAIN SCENE — RICH DAY/NIGHT WORLD + ORIGINAL GAMEPLAY
    ========================================================================== */
+
+/* ==========================================================================
+   PIXEL SPRITES: layered hard-edged shapes rasterised on a small grid, then upscaled
+   with no smoothing. Each layer gets a 1px dark outline, a top-left highlight and a
+   bottom-right shadow, which is what gives the sprites their pixel-art depth.
+   ========================================================================== */
+const PX={
+  E:(cx,cy,rx,ry)=>(x,y)=>((x-cx)/rx)**2+((y-cy)/ry)**2<=1,
+  R:(x0,y0,x1,y1)=>(x,y)=>x>=x0&&x<=x1&&y>=y0&&y<=y1,
+  T:(ax,ay,bx,by,cx,cy)=>(x,y)=>{const f=(px,py,qx,qy,rx,ry)=>(px-rx)*(qy-ry)-(qx-rx)*(py-ry),a=f(x,y,ax,ay,bx,by),b=f(x,y,bx,by,cx,cy),c=f(x,y,cx,cy,ax,ay);return!((a<0||b<0||c<0)&&(a>0||b>0||c>0));},
+  L:(ax,ay,bx,by,w)=>(x,y)=>{const dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-ax-t*dx,y-ay-t*dy)<=w/2;},
+  U:(...f)=>(x,y)=>f.some(g=>g(x,y)),
+  M:f=>(x,y)=>f(x,y)||f(28-x,y),
+  A:(f,g)=>(x,y)=>f(x,y)&&g(x,y)
+};
+function pixSprite(scene,name,layers,size=28,scale=2){
+  const N=size,idx=new Int16Array(N*N).fill(-1),at=(x,y)=>x<0||y<0||x>=N||y>=N?-1:idx[y*N+x];
+  layers.forEach((l,i)=>{for(let y=0;y<N;y++)for(let x=0;x<N;x++)if(l.f(x+.5,y+.5))idx[y*N+x]=i;});
+  const cv=document.createElement("canvas");cv.width=cv.height=N*scale;const cx=cv.getContext("2d");
+  const rgb=(hex,k)=>{const n=parseInt(hex.slice(1),16),f=c=>Math.max(0,Math.min(255,Math.round(c*k)));return`rgb(${f(n>>16)},${f((n>>8)&255)},${f(n&255)})`;};
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const i=at(x,y);let col;
+    if(i<0){if(at(x-1,y)<0&&at(x+1,y)<0&&at(x,y-1)<0&&at(x,y+1)<0)continue;col="#0b0a1e";}
+    else{const l=layers[i];let k=1;
+      if(!l.flat){if(at(x,y-1)!==i)k=1.3;else if(at(x-1,y)!==i)k=1.12;if(at(x,y+1)!==i)k=.72;else if(at(x+1,y)!==i)k=.86;}
+      col=rgb(l.c,k);}
+    cx.fillStyle=col;cx.fillRect(x*scale,y*scale,scale,scale);
+  }
+  scene.textures.addCanvas(name,cv);
+}
+function buildPixelSprites(scene){
+  const{E,R,T,L,U,M,A}=PX,F=(c,f)=>({c,f}),Fl=(c,f)=>({c,f,flat:true});
+  const slime=(x,y)=>E(14,18,12.5,10)(x,y)&&y<26.5;
+  pixSprite(scene,"b1",[ // Slime King
+    F("#22c55e",slime),F("#86efac",A(slime,E(14,23,8,3.4))),Fl("#d9f99d",U(E(7.5,13,2.4,1.4),E(10.5,11.5,1.1,.8))),
+    F("#eab308",U(R(8,5,20,9),T(8,5,10,1.5,12,5),T(12,5,14,0.8,16,5),T(16,5,18,1.5,20,5))),Fl("#ef4444",E(14,7,1.3,1.3)),
+    Fl("#ffffff",M(E(9,16.5,3.2,3.2))),Fl("#0f172a",M(E(10,17,1.5,1.7))),Fl("#14532d",M(L(5.5,12,12,14.5,1.3))),
+    Fl("#14532d",R(10,21.5,18,23.5)),Fl("#ffffff",M(R(11,21.5,12.9,22.7)))]);
+  pixSprite(scene,"b2",[ // Bat Lord
+    F("#5b21b6",M(U(T(13,12,.5,4,5,17),T(13,12,5,17,9,24),T(13,12,9,24,13,19)))),
+    Fl("#a78bfa",M(U(L(13,12,.5,4,.9),L(13,12,5,17,.9),L(13,12,9,24,.9)))),
+    F("#4c1d95",E(14,16,5,7.5)),F("#8b5cf6",E(14,18.5,3,3.5)),F("#6d28d9",E(14,10,5,4.6)),
+    F("#6d28d9",M(T(10,8,9,1.5,13.5,6.5))),Fl("#f43f5e",M(E(12,10,1.4,1.3))),Fl("#ffffff",M(T(12,13.4,12.7,16.2,13.6,13.4)))]);
+  const ghost=(x,y)=>(E(14,13,9,10)(x,y)||R(5,13,23,23)(x,y))&&y<23+2*Math.sin(x*1.4);
+  pixSprite(scene,"b3",[ // Ghost Mage
+    F("#e2e8f0",ghost),F("#cbd5e1",M(E(5,19,2.5,4))),F("#4c1d95",T(14,0,7,9,21,9)),F("#5b21b6",R(5,8.5,23,10.5)),
+    Fl("#facc15",E(14,5.5,1.3,1.3)),Fl("#facc15",R(9,7.2,19,8.2)),Fl("#1e1b4b",E(14,14.5,5.6,4.2)),Fl("#22d3ee",M(E(12,14.5,1.3,1.4))),
+    F("#c084fc",E(24.3,16,2.6,2.6)),Fl("#f5d0fe",E(23.8,15.4,.9,.9))]);
+  pixSprite(scene,"b4",[ // Stone Golem
+    F("#57534e",M(R(7,21,12,27))),F("#78716c",R(7,10,21,22)),F("#6b6560",M(R(1,9,7,16))),F("#57534e",M(R(1.5,16,5.5,24))),F("#6b6560",M(R(.5,23,6.5,27.5))),
+    F("#8a837d",R(10,3,18,10)),Fl("#facc15",M(R(11.5,5.5,13.5,7))),Fl("#1c1917",R(12,8.5,16,9.3)),
+    Fl("#f97316",U(R(13,14,15,18),R(12,15.5,16,16.5))),Fl("#292524",U(L(9,12,11,15,.8),L(18,19,20,22.5,.8),L(5,18,4,22,.7),L(23,12,22,15,.8))),
+    Fl("#4d7c0f",U(E(9,11,2,1.2),E(20,25,2,1),E(3.5,10.5,1.6,1)))]);
+  pixSprite(scene,"b5",[ // Dragon (faces right)
+    F("#7f1d1d",U(T(11,13,3,2,8,15),T(11,13,8,15,1,11),T(11,13,1,11,3,2))),Fl("#fca5a5",U(L(11,13,3,2,.8),L(11,13,1,11,.8))),
+    F("#991b1b",U(R(9,23,12.5,27),R(15,23,18.5,27))),F("#b91c1c",E(13,17,8.5,7)),F("#fde68a",A(E(14,19,5.5,5),E(13,17,8.5,7))),
+    F("#b91c1c",L(17,13,20.5,8,5)),F("#dc2626",E(21,8,5,3.8)),F("#dc2626",R(22,7.5,27,11)),
+    F("#b91c1c",U(L(6,20,2,25,3),T(1,24,0,28,4,27))),
+    F("#fcd34d",U(T(7,11,8,7,10,10),T(11,10,12,6.5,14,10),T(15,10,16,6.5,17.5,10))),
+    F("#fef3c7",T(18,5,16,.5,20.5,4)),Fl("#fde047",E(21,6.5,1.3,1.3)),Fl("#0f172a",R(21,5.7,21.8,7.3)),
+    Fl("#ffffff",U(T(23,11,24,13,25,11),T(25.5,11,26.5,13,27,11))),Fl("#fb923c",E(26.4,9.6,1,.7))]);
+  const body6=U(L(3,23,8,25.5,6.4),L(8,25.5,15,24,6.4),L(15,24,20,19,6.4),L(20,19,17,13,6.4),L(17,13,10,11,6.4));
+  pixSprite(scene,"b6",[ // Storm Serpent
+    F("#4338ca",body6),F("#818cf8",A(body6,U(L(4,25,8,27.5,2),L(9,27,15,26,2),L(16.5,25,21.5,20,2)))),
+    Fl("#fde047",U(L(6,22,8,24,1),L(8,24,7,26,1),L(14,22.5,17,21,1),L(17,21,16,18.5,1),L(18.5,15,15,13.5,1))),
+    F("#6366f1",E(9,8,5.6,4.4)),F("#a5b4fc",U(T(9,4,6.5,.5,11,3.5),T(12,5,14.5,1.5,14.5,6))),
+    Fl("#fde047",U(E(7,7,1.3,1.3),E(11.4,7,1.3,1.3))),Fl("#0f172a",U(E(7,7.2,.5,.9),E(11.4,7.2,.5,.9))),
+    Fl("#ef4444",L(9,12,9,14.5,.9)),Fl("#67e8f9",U(R(21,9,22,10),R(24,14,25,15),R(1,17,2,18),R(23,24,24,25)))]);
+  pixSprite(scene,"fbar",[F("#44403c",E(8,8,6.5,6.5)),F("#7c2d12",E(8,8,4.5,4.5)),Fl("#f97316",E(8,8,3,3)),Fl("#fde047",E(8,8,1.6,1.6))],16);
+}
+/* Pixel flame: 3px cells, white-hot core fading through yellow and orange to red, flickering tongue that rises */
+function pixFlame(g,x,y,now,tx,ty,r,seed){
+  const P=3,n=Math.ceil(r*1.9/P),cx=Math.round(x/P)*P,cy=Math.round(y/P)*P;
+  g.fillStyle(0xf97316,.13).fillCircle(x,y,r*1.9);
+  for(let j=-n;j<=n;j++)for(let i=-n;i<=n;i++){
+    const ox=i*P,oy=j*P,u=ox*tx+oy*ty,v=-ox*ty+oy*tx;
+    let d=Math.hypot(v/(r*.95),u/(u>0?r*1.75:r*.85));
+    d+=Math.sin(now/70+i*2.1+j*1.3+seed)*.12+Math.sin(now/43+j*3.7-seed)*.08;
+    if(d>1)continue;
+    g.fillStyle(d<.28?0xfff7c2:d<.5?0xfde047:d<.75?0xf97316:0xdc2626,d>.9?.7:1).fillRect(cx+ox-1,cy+oy-1,P,P);
+  }
+  for(let k=0;k<2;k++){const t=((now/5+seed*37+k*14)%30);g.fillStyle(0xfdba74,1-t/30).fillRect(Math.round(cx+Math.sin(now/200+seed+k*3)*7),Math.round(cy-6-t),2,2);}
+}
+
 class Main extends Phaser.Scene{
   constructor(){super("main");}
   mkP(){
@@ -2717,18 +2801,12 @@ class Main extends Phaser.Scene{
     mk("crusher",32,32,g=>{g.fillStyle(0x64748b).fillRect(0,0,32,26);g.fillStyle(0x334155).fillRect(4,4,24,6);g.fillStyle(0xcbd5e1).fillTriangle(0,26,8,32,16,26).fillTriangle(16,26,24,32,32,26)});
     mk("laser",32,32,g=>{g.fillStyle(0x1e293b).fillRect(2,0,28,14);g.fillStyle(0x475569).fillRect(2,0,28,4);g.fillStyle(0x0f172a).fillRect(8,10,16,8);g.fillStyle(0xff2d55).fillCircle(16,15,5);g.fillStyle(0xffe4e9).fillCircle(15,14,2)});
     mk("mace",32,32,g=>{g.fillStyle(0x94a3b8);for(let i=0;i<8;i++){const a=i*Math.PI/4;g.fillTriangle(16+15*Math.cos(a),16+15*Math.sin(a),16+8*Math.cos(a-.5),16+8*Math.sin(a-.5),16+8*Math.cos(a+.5),16+8*Math.sin(a+.5))}g.fillStyle(0x475569).fillCircle(16,16,9)});
-    mk("fbar",32,32,g=>{g.fillStyle(0x7c2d12).fillRoundedRect(8,8,16,16,3);g.fillStyle(0xf97316).fillCircle(16,16,4)});
     mk("crumble",32,32,g=>{g.fillStyle(0xa8a29e).fillRect(0,0,32,32);g.lineStyle(2,0x57534e).lineBetween(4,0,12,16).lineBetween(12,16,8,32).lineBetween(22,0,18,14).lineBetween(18,14,28,32);g.fillStyle(0xd6d3d1).fillRect(0,0,32,5)});
     mk("mud",32,32,g=>{g.fillStyle(0x713f12).fillRect(0,0,32,32);g.fillStyle(0x92400e).fillRect(0,0,32,8);g.fillStyle(0x451a03).fillCircle(8,14,3).fillCircle(22,20,4)});
     mk("portal",32,32,g=>{g.lineStyle(4,0xe879f9).strokeCircle(16,16,12);g.lineStyle(3,0x22d3ee).strokeCircle(16,16,7);g.fillStyle(0xe879f9).fillRect(14,2,4,6);g.fillStyle(0xffffff,.5).fillCircle(16,16,3)});
     mk("fan",32,32,g=>{g.fillStyle(0x64748b).fillRect(2,18,28,14);g.fillStyle(0xbae6fd).fillTriangle(4,18,16,2,28,18)});
     mk("blink",32,32,g=>{g.fillStyle(0x38bdf8,.85).fillRect(0,0,32,32);g.lineStyle(2,0xe0f2fe).strokeRect(2,2,28,28)});
-    mk("b1",56,56,g=>{g.fillStyle(0x22c55e).fillRoundedRect(2,18,52,38,{tl:24,tr:24,bl:6,br:6});g.fillStyle(0xffffff).fillCircle(18,36,7).fillCircle(38,36,7);g.fillStyle(0x0f172a).fillCircle(20,37,3).fillCircle(40,37,3);g.fillStyle(0xfacc15).fillRect(14,8,28,8).fillTriangle(14,8,18,0,22,8).fillTriangle(24,8,28,0,32,8).fillTriangle(34,8,38,0,42,8)});
-    mk("b2",56,56,g=>{g.fillStyle(0x6d28d9).fillTriangle(0,12,20,30,8,48).fillTriangle(56,12,36,30,48,48);g.fillStyle(0x7c3aed).fillCircle(28,32,14).fillTriangle(16,22,18,8,24,20).fillTriangle(40,22,38,8,32,20);g.fillStyle(0xef4444).fillCircle(22,30,3).fillCircle(34,30,3)});
-    mk("b3",56,56,g=>{g.fillStyle(0xe2e8f0).fillRoundedRect(8,8,40,44,{tl:20,tr:20,bl:0,br:0}).fillTriangle(8,50,16,56,24,50).fillTriangle(24,50,32,56,40,50).fillTriangle(40,50,48,56,48,50);g.fillStyle(0x0f172a).fillCircle(21,26,5).fillCircle(35,26,5);g.fillStyle(0x6d28d9).fillTriangle(12,12,28,0,44,12)});
-    mk("b4",56,56,g=>{g.fillStyle(0x78716c).fillRect(6,10,44,46).fillRect(0,18,8,28).fillRect(48,18,8,28);g.fillStyle(0xfacc15).fillRect(16,22,8,6).fillRect(32,22,8,6);g.fillStyle(0x57534e).fillRect(14,40,28,6)});
-    mk("b5",56,56,g=>{g.fillStyle(0xb91c1c).fillTriangle(0,10,22,30,6,48).fillTriangle(56,10,34,30,50,48);g.fillStyle(0xdc2626).fillCircle(28,34,20);g.fillStyle(0xfca5a5).fillCircle(28,42,10);g.fillStyle(0xfacc15).fillCircle(20,28,4).fillCircle(36,28,4);g.fillStyle(0xe2e8f0).fillTriangle(10,16,16,0,20,14).fillTriangle(46,16,40,0,36,14)});
-    mk("b6",56,56,g=>{g.lineStyle(7,0x7c3aed).beginPath().moveTo(4,40).lineTo(16,18).lineTo(28,34).lineTo(42,10).lineTo(52,25).strokePath();g.fillStyle(0x4338ca).fillCircle(28,31,17);g.fillStyle(0xa5f3fc).fillCircle(20,27,4).fillCircle(36,27,4);g.fillStyle(0xfacc15).fillTriangle(18,8,23,0,27,10).fillTriangle(30,10,36,0,39,12)});
+    buildPixelSprites(this);
     this.mkP();
   }
 
@@ -2993,7 +3071,6 @@ class Main extends Phaser.Scene{
       }
       const[c,r]=cell(p);if(!inb(c,r))return;
       this.down=true;this.pend=JSON.stringify(G.lv);this.dragObject=null;
-      if(G.tool==="d"&&!p.rightButtonDown())return;
       if(p.rightButtonDown()){this.apply(c,r,"x");return;}
       if(G.tool==="select"){
         const idx=G.lv.o.findIndex(o=>o[1]===c&&o[2]===r);
@@ -3020,7 +3097,6 @@ class Main extends Phaser.Scene{
         pinchMid=mid;return;
       }
       if(!this.down)return;
-      if(G.tool==="d"&&!p.rightButtonDown()){cam.scrollX-=(p.x-p.prevPosition.x)/cam.zoom;cam.scrollY-=(p.y-p.prevPosition.y)/cam.zoom;return;}
       const[c,r]=cell(p);if(!inb(c,r))return;
       if(this.dragObject){
         const obj=G.lv.o[this.dragObject.index];
@@ -3059,7 +3135,7 @@ class Main extends Phaser.Scene{
     const L=G.lv,before=this.pend||JSON.stringify(L),i=L.o.findIndex(o=>o[1]===c&&o[2]===r),sp=a=>a[0]===c&&a[1]===r;
     if(t==="x"){if(i<0)return;L.o.splice(i,1);Sfx.play("erase");if(G.sel===i)G.sel=null;else if(G.sel>i)G.sel--;}
     else if(t==="S"||t==="E"){if(sp(L.s)||sp(L.e))return;L[t==="S"?"s":"e"]=[c,r];if(i>=0){L.o.splice(i,1);if(G.sel===i)G.sel=null;else if(G.sel>i)G.sel--;}}
-    else if(t==="d"||t==="select")return;
+    else if(t==="select")return;
     else{
       if(sp(L.s)||sp(L.e))return;
       let R=0;
@@ -3107,7 +3183,7 @@ class Main extends Phaser.Scene{
         const s=this.add.image(x,y,TYPES[t]).setDepth(1);if(t==="h")s.setTint(0xff8a8a);if(t==="i")s.setVisible(false);if(t==="n")s.setAlpha(.3);
         if(t==="b")s.setDepth(2);
         const e={t,i,x,y,s,cd:0,y0:y,vy:0,R};
-        if("123456".includes(t)){e.hp=e.max=BH[t];e.y=y-12;e.by=e.y;e.fx=x;e.vx=0;e.tm=0;e.ph=0;s.setY(e.y).setDepth(2);e.phase=0;e.awake=false;e.bg=this.add.rectangle(x,e.y-42,52,8,0x000000,.65).setDepth(5).setVisible(false);e.bar=this.add.rectangle(x-25,e.y-42,50,6,BOSS[t].c).setOrigin(0,.5).setDepth(6).setVisible(false);e.nm=this.add.text(x,e.y-55,BOSS[t].n,{font:"bold 11px system-ui",color:"#fff",stroke:"#000",strokeThickness:3}).setOrigin(.5).setDepth(6).setVisible(false);e.say=this.add.text(x,e.y-78,"",{font:"bold 12px system-ui",color:"#fde68a",stroke:"#000",strokeThickness:3,align:"center",wordWrap:{width:200}}).setOrigin(.5,1).setDepth(7).setVisible(false);s.setAlpha(.75);this.bosses.push(e);}
+        if("123456".includes(t)){e.hp=e.max=BH[t];e.y=y-12;e.by=e.y;e.fx=x;e.vx=0;e.tm=0;e.ph=0;s.setY(e.y).setDepth(2);e.phase=0;e.awake=false;e.bg=this.bossFrame(BOSS[t].c);e.tr=this.add.rectangle(x-27,e.y-44,BW,4,0xffffff,.85).setOrigin(0,.5).setDepth(5.5).setVisible(false);e.bar=this.add.rectangle(x-27,e.y-44,BW,4,0x4ade80).setOrigin(0,.5).setDepth(6).setVisible(false);e.sh=this.add.ellipse(x,e.y,34,8,0x000000,.35).setDepth(1).setVisible(false);e.nm=this.add.text(x,e.y-56,BOSS[t].n.toUpperCase(),{font:"bold 10px system-ui",color:"#"+BOSS[t].c.toString(16).padStart(6,"0"),stroke:"#05040f",strokeThickness:3}).setOrigin(.5).setDepth(6).setVisible(false);e.say=this.add.text(x,e.y-78,"",{font:"bold 12px system-ui",color:"#fde68a",stroke:"#000",strokeThickness:3,align:"center",wordWrap:{width:200}}).setOrigin(.5,1).setDepth(7).setVisible(false);s.setAlpha(.75);this.bosses.push(e);}
         if(t==="l"||t==="L"){e.fy=H*S+99;for(let rr=r+1;rr<H;rr++)if(sol.has(c+","+rr)){e.fy=rr*S;break;}if(t==="L"){e.fy=Math.min(e.fy,H*S);}}
         this.ents.push(e);
       }
@@ -3197,8 +3273,24 @@ class Main extends Phaser.Scene{
     this.dyn.forEach(d=>{if(d.t==="D"&&!d.rb&&Math.hypot(d.x-x,d.y-y)<R){d.st=0;d.rb=now+3000;d.b.body.enable=false;d.b.setVisible(false);}});
   }
   say(e,t,ms=1900){if(e.say){e.say.setText(t).setVisible(true);e.sayT=this.time.now+ms;}}
+  bossFrame(c){
+    const g=this.add.graphics().setDepth(5).setVisible(false);
+    g.fillStyle(0x05040f,.92).fillRect(-30,-5,60,10).lineStyle(1,c,1).strokeRect(-29.5,-4.5,59,9).fillStyle(0x241f45,1).fillRect(-27,-2,BW,4);
+    g.fillStyle(0xffffff,.55).fillRect(-27+Math.round(BW*.33),-2,1,4).fillRect(-27+Math.round(BW*.66),-2,1,4);
+    return g;
+  }
+  bossShow(e,on){["bg","tr","bar","nm","sh"].forEach(k=>e[k]&&e[k].setVisible(on));}
+  bossHud(e,s,snap){ // health bar (green > amber > red) with a white damage trail, name plate and ground shadow
+    const f=Math.max(0,e.hp)/e.max,y=e.y-44,w=BW*f;
+    e.bg.setPosition(e.x,y);e.bar.setPosition(e.x-27,y).setSize(w,4).setFillStyle(f>.66?0x4ade80:f>.33?0xfacc15:0xef4444);
+    e.trw=snap||e.trw==null?w:Math.max(w,e.trw-BW*.5*s);e.tr.setPosition(e.x-27,y).setSize(e.trw,4);
+    e.nm.setPosition(e.x,y-12);
+    let gy=H*S;for(let r=Math.floor(e.y/S);r<H;r++)if(this.sol.has(Math.floor(e.x/S)+","+r)){gy=r*S;break;}
+    e.sh.setPosition(e.x,gy-3).setScale(Phaser.Math.Clamp(1-(gy-e.y)/360,.35,1),1);
+  }
   wake(e,card){
-    const B=BOSS[e.t];e.awake=true;e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;e.fire=0;
+    const B=BOSS[e.t];e.awake=true;
+    const ring=this.add.circle(e.x,e.y,20,B.c,0).setStrokeStyle(3,B.c).setDepth(6);this.tweens.add({targets:ring,scale:6,alpha:0,duration:600,onComplete:()=>ring.destroy()});e.s.setAlpha(1);e.tm=this.time.now+1400;e.wd=0;e.fire=0;
     this.say(e,B.q[0],2400);Sfx.play("boss");Sfx.vib([40,30,60]);
     if(card)Juice.card({icon:"👹",tag:"BOSS FIGHT",title:B.n,hint:B.t,color:"#ef4444",glow:"rgba(239,68,68,0.55)",ms:3400});
   }
@@ -3216,7 +3308,7 @@ class Main extends Phaser.Scene{
       Juice.burst(this,e.x,e.y,B.c,np>1?"ENRAGED!":"PHASE 2");this.say(e,B.q[np],2200);
     }
     if(e.hp<=0){
-      e.dead=e.gone=true;e.bar.setVisible(false);e.bg.setVisible(false);e.nm.setVisible(false);
+      e.dead=e.gone=true;this.bossShow(e,false);
       this.say(e,B.d,2300);this.time.delayedCall(2400,()=>e.say&&e.say.scene&&e.say.setVisible(false));
       this.cameras.main.shake(500,.025);
       for(let i=0;i<5;i++)this.time.delayedCall(i*140,()=>Juice.burst(this,e.x+(Math.random()-.5)*50,e.y+(Math.random()-.5)*50,i%2?0xfacc15:B.c,i===4?"BOSS DEFEATED!":""));
@@ -3288,7 +3380,7 @@ class Main extends Phaser.Scene{
     const sg=cx>e.x?1:-1,p2=e.phase,sp=1+p2*.3,cd=[1,.78,.58][p2],gnd=k==="1"||k==="4";
     const xlo=Math.max(e.fx-220,40),xhi=Math.min(e.fx+220,W*S-40);
     const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
-    e.bg.setVisible(true);e.bar.setVisible(true);e.nm.setVisible(true);
+    this.bossShow(e,true);
     if(e.sayT&&now>e.sayT){e.say.setVisible(false);e.sayT=0;}
     let go=false;
     // every attack: red flicker telegraph first, then the move
@@ -3351,8 +3443,9 @@ class Main extends Phaser.Scene{
     }
     if(e.y>H*S){e.x=e.fx;e.y=e.by;e.vy=0;}
     e.s.setPosition(e.x,e.y).setFlipX(sg<0);
-    e.bg.setPosition(e.x,e.y-42);e.bar.setPosition(e.x-25,e.y-42).setSize(50*Math.max(0,e.hp)/e.max,6);
-    e.nm.setPosition(e.x,e.y-54);e.say.setPosition(e.x,e.y-64);
+    this.bossHud(e,s);e.say.setPosition(e.x,e.y-68);
+    if(p2>0){const g=this.gf,c=BOSS[k].c; // enraged embers orbiting the boss
+      for(let i=0;i<4+p2*4;i++){const a=now/(500+i*60)+i*1.9,r=26+8*Math.sin(now/230+i);g.fillStyle(i%2?0xffffff:c,.75).fillRect(Math.round(e.x+Math.cos(a)*r),Math.round(e.y+Math.sin(a)*r*.8-((now/9+i*13)%18)),3,3);}}
     if(hit(e.x-19,e.y-19,38,38))this.hurt();
   }
 
@@ -3485,7 +3578,9 @@ class Main extends Phaser.Scene{
             if(hit(x-4,e.y+16,8,len))this.hurt();}
           break;}
         case"P":{const a=1.15*Math.sin((now-this.t00)/1000*2+e.x*.02),mx=e.x+Math.sin(a)*96,my=e.y+Math.cos(a)*96;e.s.setPosition(mx,my).setRotation(-a*2);this.gf.lineStyle(3,0x94a3b8).lineBetween(e.x,e.y-12,mx,my).fillStyle(0x94a3b8).fillCircle(e.x,e.y-12,5);if(hit(mx-13,my-13,26,26))this.hurt();break;}
-        case"R":{const a=(now-this.t00)/1000*2.2+e.x*.01;for(let n=1;n<=3;n++){const ox=e.x+Math.cos(a)*n*26,oy=e.y+Math.sin(a)*n*26;this.gf.fillStyle(0xf97316).fillCircle(ox,oy,8).fillStyle(0xfde047).fillCircle(ox,oy,4);if(hit(ox-8,oy-8,16,16))this.hurt(true);}break;}
+        case"R":{const a=(now-this.t00)/1000*2.2+e.x*.01,tl=Math.hypot(Math.sin(a)*.6,-Math.cos(a)*.6-.9),tx=Math.sin(a)*.6/tl,ty=(-Math.cos(a)*.6-.9)/tl;
+          for(let n=1;n<=3;n++){const ox=e.x+Math.cos(a)*n*26,oy=e.y+Math.sin(a)*n*26;pixFlame(this.gf,ox,oy,now,tx,ty,8+n*.7,n+e.x*.01);if(hit(ox-8,oy-8,16,16))this.hurt(true);}
+          break;}
         case"W":e.s.setScale(1,1+.05*Math.sin(now/60));if(hit(e.x-14,e.y-160,28,160)){p.setVelocityY(Math.max(-340,b.velocity.y-3200*s));this.gf.fillStyle(0xbae6fd,.35).fillRect(e.x-14,e.y-160,28,160);}break;
         case"Q":{
           e.s.angle+=120*s;
@@ -3558,7 +3653,7 @@ class Main extends Phaser.Scene{
         else if(e.t==="G"){
                     if(!e.on)e.on=!!(e.bosses&&e.bosses.length&&e.bosses.every(bb=>bb.dead));if(e.on)e.s.setTint(0x4ade80);else e.s.clearTint();
         }
-        else if("123456".includes(e.t)&&!e.dead){e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.fire=0;e.g=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);e.bar.setSize(50,6);}
+        else if("123456".includes(e.t)&&!e.dead){e.awake=!!(e.flag&&e.flag.on);e.tm=this.time.now+1400;e.phase=0;e.wd=0;e.hc=0;e.dv=0;e.fire=0;e.g=0;e.s.clearTint().setScale(1).setAlpha(e.awake?1:.75);e.hp=e.max;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.s.setPosition(e.x,e.y);e.bar.setVisible(true);this.bossHud(e,0,true);}
         else if(e.t==="l"){e.fall=false;e.done=false;e.vy=0;e.y=e.y0;e.s.setY(e.y0);}
         else if(e.t==="i"){e.up=false;e.s.setVisible(false);}
       });
@@ -3570,7 +3665,7 @@ class Main extends Phaser.Scene{
           const st=this.cpState[i];if(!st)return;
           // A boss defeated at any point in the run is permanent progress, even
           // if it was defeated after the last checkpoint was activated.
-          if("123456".includes(e.t)&&e.dead){e.gone=true;e.s.setVisible(false);if(e.bar)e.bar.setVisible(false);return;}
+          if("123456".includes(e.t)&&e.dead){e.gone=true;e.s.setVisible(false);this.bossShow(e,false);return;}
           Object.assign(e,{gone:st.gone,on:st.on,up:st.up,fall:st.fall,done:st.done,y:st.y,vy:st.vy,dead:st.dead,hp:st.hp,awake:st.awake});
           e.s.setVisible(!e.gone);
           if(e.t==="h")e.on=true;
@@ -3579,7 +3674,7 @@ class Main extends Phaser.Scene{
           }
           if(e.t==="i")e.s.setVisible(!!e.up).setY(e.y);
           if(e.t==="l")e.s.setY(e.y);
-          if("123456".includes(e.t)&&!e.dead){const f=e.hp/e.max;e.phase=f<=.33?2:f<=.66?1:0;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.g=0;e.wd=0;e.fire=0;e.s.setPosition(e.x,e.y).clearTint();if(e.awake)this.activatedBosses.add(e.t);e.bar.setVisible(true);e.bar.setSize(50*Math.max(0,e.hp)/e.max,6);}
+          if("123456".includes(e.t)&&!e.dead){const f=e.hp/e.max;e.phase=f<=.33?2:f<=.66?1:0;e.x=e.fx;e.y=e.by;e.vy=0;e.vx=0;e.g=0;e.wd=0;e.fire=0;e.s.setPosition(e.x,e.y).clearTint();if(e.awake)this.activatedBosses.add(e.t);e.bar.setVisible(true);this.bossHud(e,0,true);}
         });
       }
       this.crates.getChildren().forEach(c=>{c.setPosition(c.home[0],c.home[1]);c.setVelocity(0,0);});
