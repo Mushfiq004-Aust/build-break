@@ -2598,9 +2598,24 @@ function drawToolIcon(c,sc,t){
   const k=t==="S"?G.pk:t==="E"?"door":t==="x"?"x":t==="select"?"check":(t==="p"&&Theme.cur==="day"?"platDay":TYPES[t]);
   if(!sc.textures.exists(k))return;
   const im=sc.textures.get(k).getSourceImage();
+  if("123456".includes(t)){ // boss art is large with empty margins: crop to the painted area so the icon reads clearly
+    const bb=bossIconBox(im,t),z=Math.min(30/bb.w,30/bb.h);
+    ctx.imageSmoothingEnabled=true;ctx.drawImage(im,bb.x,bb.y,bb.w,bb.h,16-bb.w*z/2,16-bb.h*z/2,bb.w*z,bb.h*z);return;
+  }
   const z=Math.min(1,32/Math.max(im.width,im.height));
   ctx.translate(16,16);if(t==="w")ctx.scale(-1,1);ctx.scale(z,z);
   ctx.drawImage(im,-im.width/2,-im.height/2);
+}
+const _bossBox={};
+function bossIconBox(im,t){
+  if(_bossBox[t])return _bossBox[t];
+  let box={x:0,y:0,w:im.width,h:im.height};
+  try{
+    const d=im.getContext("2d").getImageData(0,0,im.width,im.height).data;let x0=im.width,y0=im.height,x1=0,y1=0;
+    for(let y=0;y<im.height;y++)for(let x=0;x<im.width;x++)if(d[(y*im.width+x)*4+3]>20){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;}
+    if(x1>x0&&y1>y0)box={x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};
+  }catch(_){}
+  return _bossBox[t]=box;
 }
 
 function refreshStartToolIcon(s){
@@ -3364,7 +3379,21 @@ class Main extends Phaser.Scene{
     mk("fan",32,32,g=>{g.fillStyle(0x64748b).fillRect(2,18,28,14);g.fillStyle(0xbae6fd).fillTriangle(4,18,16,2,28,18)});
     mk("blink",32,32,g=>{g.fillStyle(0x38bdf8,.85).fillRect(0,0,32,32);g.lineStyle(2,0xe0f2fe).strokeRect(2,2,28,28)});
     buildPixelSprites(this);
+    this.buildBossStills();
     this.mkP();
+  }
+  /* Editor + palette boss art: the same skeletal rigs the fight uses, frozen in an awake idle pose (replaces the old pixel sprites) */
+  buildBossStills(){
+    const HD=window.RIGHD||2;
+    for(const t of["1","2","3","4","5","6"]){
+      const R=RIG[t],k=TYPES[t];if(!R||!window.rigRender)continue;
+      try{
+        if(this.textures.exists(k))this.textures.remove(k);
+        const ct=this.textures.createCanvas(k,Math.round(R.w*R.z*HD),Math.round(R.h*R.z*HD));
+        const ph={"2":0,"5":0,"6":.8}[t]??1.3;window.rigRender(R,ct.getContext(),{t:ph,fp:ph,aw:1,tel:0,p2:0,dive:0,face:1,look:0,vx:0,vy:0,wp:0,fire:0,sq:[1,1],atk:9,pitch:0},1);
+        ct.refresh();
+      }catch(err){console.warn("boss still failed",t,err);}
+    }
   }
 
   /* Dynamic Day & Night Animated World Scenery */
@@ -3680,6 +3709,7 @@ class Main extends Phaser.Scene{
     L.o.forEach(([t,c,r,R],idx)=>{
       const texture=t==="p"&&Theme.cur==="day"?"platDay":TYPES[t];
       const im=this.add.image(c*S+16,r*S+16,texture);this.spr.push(im);
+      if("123456".includes(t)){im.setScale(1/(window.RIGHD||2)).setDepth(2);im.y-=12;}
       if(t==="i")im.setAlpha(.5).setTint(0xa5b4fc);if(t==="w")im.setFlipX(true);if(t==="g"||t==="u")im.y-=10;
       if(MV.includes(t)){R=R||3;const v=t==="u";this.spr.push(this.add.rectangle(v?c*S+16:c*S+16+R*S/2,v?r*S+16+R*S/2:r*S+(t==="g"?6:16),v?3:R*S,v?R*S:3,0xfacc15,.7));}
       if(t==="l"){let rr=r+1;while(rr<H&&!L.o.some(o=>"pavw".includes(o[0])&&o[1]===c&&o[2]===rr))rr++;this.spr.push(this.add.rectangle(c*S+16,(r+1+rr)*S/2,2,(rr-r-1)*S,0xf97316,.45));}
@@ -4072,7 +4102,7 @@ class Main extends Phaser.Scene{
     const jd=!fr&&(JD(k.W)||JD(k.UP)||JD(k.SPACE)||T.jd);T.jd=0;
     if((l||r||j)&&this.t0==null)this.t0=now;
     const kk=Math.floor((b.x+b.width/2)/S)+","+Math.floor((b.bottom+3)/S),g=b.blocked.down||b.touching.down||(b.velocity.y>-20&&this.footOnSolid(b)),ice=g&&this.ice.has(kk),bl=g?(this.belt.get(kk)||0):0;
-    const mud=g&&this.mud.has(kk),stickyPatch=g&&this.slimePatches&&this.slimePatches.find(q=>!q.triggered&&now<q.until&&Math.abs((b.x+b.width/2)-q.x)<q.w/2+pw/2&&Math.abs(b.bottom-q.y)<15);
+    const mud=g&&this.mud.has(kk),stickyPatch=g&&this.slimePatches&&this.slimePatches.find(q=>!q.triggered&&now<q.until&&Math.abs((b.x+b.width/2)-q.x)<q.w/2+b.width/2&&Math.abs(b.bottom-q.y)<15);
     if(stickyPatch){stickyPatch.triggered=true;this.slimeStuckUntil=now+340;this.cameras.main.shake(75,.003);}
     const stuck=now<this.slimeStuckUntil,tv=stuck?0:(r-l)*(jb?250:200)*(mud?.5:1)+bl*110,a=(fr?3000:ice?260:g?2200:1200)*s;let vx=b.velocity.x;
     vx=vx<tv?Math.min(tv,vx+a):Math.max(tv,vx-a);
