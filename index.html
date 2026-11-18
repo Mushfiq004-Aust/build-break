@@ -1857,6 +1857,66 @@ input[type=number],textarea{
   *,*::before,*::after{scroll-behavior:auto!important}
 }
 
+
+/* ==========================================================================
+   FUN LAYER — visuals only; movement, controls and layout geometry untouched
+   ========================================================================== */
+:root[data-theme="night"]{--ac:#ff5fb0;--ac-strong:#8b5cf6;--ac-glow:rgba(255,95,176,.5);--line:#4d41a3;--card:#231c55;--bg-elev:#2c2370}
+:root[data-theme="day"]{--ac:#ff8a1f;--ac-strong:#f43f5e;--ac-glow:rgba(255,138,31,.42);--line:#fcd9a8}
+button{box-shadow:0 3px 0 rgba(0,0,0,.28);transition:transform .14s cubic-bezier(.3,1.8,.5,1),filter .12s,box-shadow .12s}
+@media(hover:hover){button:hover:not([data-k]){transform:translateY(-2px) rotate(-.5deg);filter:brightness(1.12)}}
+button:active:not([data-k]){transform:translateY(2px) scale(.96)!important;box-shadow:0 0 0 rgba(0,0,0,.3)}
+button.pri,button.on{background:linear-gradient(135deg,var(--ac),var(--ac-strong));text-shadow:0 1px 0 rgba(0,0,0,.3)}
+@keyframes funHue{to{background-position:300% 0}}
+@keyframes funPop{0%{opacity:0;transform:scale(.7) translateY(14px)}100%{opacity:1;transform:none}}
+@keyframes funPulse{0%,100%{box-shadow:0 4px 14px var(--ac-glow),0 0 0 0 var(--ac-glow)}50%{box-shadow:0 4px 22px var(--ac-glow),0 0 0 9px transparent}}
+@keyframes funRise{0%{transform:translateY(0) rotate(0);opacity:0}12%{opacity:.8}100%{transform:translateY(-115vh) rotate(40deg);opacity:0}}
+@keyframes funHurt{0%{opacity:1}100%{opacity:0}}
+@keyframes funChip{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+.brand,#mobileHome h1{background:linear-gradient(90deg,#ff5fb0,#ffd23f,#38e8c6,#7c5cff,#ff5fb0);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:funHue 7s linear infinite}
+#mobileHome h1 span{-webkit-text-fill-color:var(--ac)}
+#mobileHome .home-actions button{animation:funPop .5s cubic-bezier(.2,1.5,.4,1) backwards}
+#mobileHome .home-actions button:nth-child(2){animation-delay:.07s}
+#mobileHome .home-actions button:nth-child(3){animation-delay:.14s}
+#mobileHome .home-actions button:nth-child(4){animation-delay:.21s}
+#mobileHome .home-actions button:nth-child(5){animation-delay:.28s}
+#mobileHome .home-actions button.home-primary{animation:funPop .5s cubic-bezier(.2,1.5,.4,1) backwards,funPulse 2.2s ease-in-out .6s infinite}
+#mobileHome .home-card{border:2px solid var(--ac);box-shadow:0 0 0 4px rgba(255,255,255,.05),var(--shadow),0 0 46px var(--ac-glow)}
+.home-inner{position:relative;z-index:1}
+.fun-float{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.fun-float span{position:absolute;bottom:-12%;opacity:0;animation:funRise linear infinite;filter:drop-shadow(0 4px 8px rgba(0,0,0,.3))}
+.fun-tip{margin-top:10px;padding:8px 13px;border-radius:12px;background:var(--btn-bg);border:1px dashed var(--ac);font-weight:700;font-size:13px;animation:funPop .4s both}
+.fun-tip b{color:var(--ac)}
+#dlg .box{border:2px solid var(--ac);border-radius:22px;box-shadow:0 0 0 4px rgba(255,255,255,.06),0 24px 60px rgba(0,0,0,.6),0 0 44px var(--ac-glow);animation:funPop .45s cubic-bezier(.2,1.5,.4,1)}
+#dlg .box h2{background:linear-gradient(90deg,var(--ac),#ffd23f,var(--ac-strong));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.win-stat-card{border:2px solid var(--ac);box-shadow:0 4px 0 rgba(0,0,0,.25)}
+#pal [data-t],#mobileToolScroll [data-t]{transition:transform .14s cubic-bezier(.3,1.8,.5,1),box-shadow .14s}
+@media(hover:hover){#pal [data-t]:hover{transform:scale(1.07) rotate(-1deg);box-shadow:0 6px 16px var(--ac-glow)}}
+#pad button:not([data-avail="0"]){box-shadow:0 4px 0 rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.28)}
+#wrap::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,transparent 60%,rgba(12,6,44,.4) 100%)}
+:root[data-theme="day"] #wrap::after{background:radial-gradient(ellipse at center,transparent 62%,rgba(255,170,60,.2) 100%)}
+#wrap::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;background:radial-gradient(ellipse at center,transparent 22%,rgba(244,63,94,.6) 100%)}
+body.fun-hurt #wrap::before{animation:funHurt .45s ease-out}
+#hud,#fx{display:none!important}
+#fh{position:absolute;top:calc(8px + var(--safe-t));left:50%;transform:translateX(-50%);z-index:5;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;color:#fff;font-weight:800;width:max-content;max-width:96%}
+body[data-mode="edit"] #fh,body.home-active #fh{display:none}
+.fh-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.fh-c{position:relative;overflow:hidden;padding:4px 10px;border-radius:999px;font-size:12.5px;font-variant-numeric:tabular-nums;white-space:nowrap;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.03)),rgba(20,12,52,.74);border:1px solid rgba(255,255,255,.24);box-shadow:0 3px 0 rgba(0,0,0,.35);backdrop-filter:blur(6px)}
+.fh-c.done{background:linear-gradient(135deg,#22c55e,#15803d)}
+.fh-c.pop{animation:funChip .4s}
+.fh-c.fx i{position:absolute;left:0;bottom:0;height:3px;width:var(--pc);background:#fff;opacity:.85}
+.fh-c.wp{background:linear-gradient(135deg,#6366f1,#a855f7)}
+.fh-c.cur{outline:2px solid #fde047}
+#fhStars span{opacity:.22;filter:grayscale(1)}
+#fhStars span.on{opacity:1;filter:none}
+#fhTrack{position:relative;width:min(300px,56vw);height:8px;border-radius:9px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25)}
+#fhBar{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:9px;background:linear-gradient(90deg,#38bdf8,#a78bfa,#f472b6);transition:width .2s}
+#fhMark,#fhEnd{position:absolute;top:-10px;font-size:14px;line-height:1;transform:translateX(-50%)}
+#fhEnd{right:-6px}
+#fhBoss2{display:none;align-items:center;gap:8px;font-size:12px;letter-spacing:.06em}
+#fhBoss2 div{width:min(220px,48vw);height:9px;border-radius:9px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.3);overflow:hidden}
+#fhBH{display:block;height:100%;width:100%;transition:width .15s}
+@media(prefers-reduced-motion:reduce){.fun-float{display:none}.brand,#mobileHome h1{animation:none}}
 </style>
 </head>
 <body data-mode="edit" class="home-active">
