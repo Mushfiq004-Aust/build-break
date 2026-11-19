@@ -953,7 +953,8 @@ body[data-ctl="below"] #pad::before {
   box-shadow: 0 5px 16px rgba(0, 0, 0, 0.45);
   backdrop-filter: none;
 }
-#padMove { display: flex; gap: calc(var(--mv) * 0.3); }
+#padMove { display: flex; gap: calc(var(--mv) * 0.18); align-items: flex-end; }
+#padMove [data-k="dn"] { width: calc(var(--mv) * 0.88); height: calc(var(--mv) * 0.88); font-size: calc(var(--mv) * 0.36); opacity: 0.85; background: rgba(30, 41, 59, 0.65); }
 #padAct { position: relative; width: calc(var(--jb) * 2.1); height: calc(var(--jb) * 1.95); }
 #padAct button { position: absolute; }
 #padAct .jb {
@@ -1927,10 +1928,15 @@ body[data-mode="edit"] #fh,body.home-active #fh{display:none}
 .pu-chip{padding:1px 5px;font-size:9px}
 .pu-bar{height:2px}
 #hud,#fx{display:none!important}
+body.mobile-playing #topStatus{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;visibility:visible;-webkit-line-clamp:unset;padding:3px 8px;overflow:hidden}
+#fhTop{display:flex;gap:4px;justify-content:center;flex-wrap:nowrap;max-width:100%;overflow:hidden}
+#fhTop .fh-c{padding:2px 7px;font-size:12px;box-shadow:none;flex:none}
+#tsText:empty{display:none}
+#tsText{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:560px){#fhTop{gap:2px}#fhTop .fh-c{padding:1px 4px;font-size:10px}}
 #fhEnd{text-decoration:none;transform:none}
 @media(prefers-reduced-motion:reduce){.fun-float{display:none}.brand,#mobileHome h1{animation:none}}
 </style>
-<base target="_blank">
 </head>
 <body data-mode="edit" class="home-active">
 
@@ -2018,7 +2024,7 @@ body[data-mode="edit"] #fh,body.home-active #fh{display:none}
       <button id="mRgInc" type="button" aria-label="Increase range">+</button>
     </div>
   </div>
-  <div id="topStatus" aria-live="polite"></div>
+  <div id="topStatus" aria-live="polite"><div id="fhTop"></div><span id="tsText"></span></div>
   <div class="mobile-right">
     <button id="mobileSettings" aria-label="Settings">⚙</button><button id="mobileThemeBtn" aria-label="Cycle weather and lighting themes">🌙</button>
     <button id="mobileMoreBtn" class="edit-only" aria-label="More level actions">⋯ More</button>
@@ -2100,6 +2106,7 @@ body[data-mode="edit"] #fh,body.home-active #fh{display:none}
     <div id="pad">
       <div class="g" id="padMove">
         <button data-k="l" aria-label="Move left">◀</button>
+        <button data-k="dn" aria-label="Crouch / Ground pound">▼</button>
         <button data-k="r" aria-label="Move right">▶</button>
       </div>
       <div class="g" id="padAct">
@@ -2134,7 +2141,7 @@ body[data-mode="edit"] #fh,body.home-active #fh{display:none}
 
 
 const W=60,H=30,S=32,MAXO=700,DUR=12000,MV="gumzb";
-const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine",I:"pice",J:"pboom",K:"pbolt",V:"pbomb",y:"plife",d:"psurge",q:"pbow","&":"lava",X:"gas","8":"pspear","9":"pfeather","%":"bpad","7":"b7","0":"b0","#":"bounce","@":"fbelt","!":"fbelt"};
+const TYPES={p:"plat",a:"ice",v:"belt",w:"belt",g:"slider",u:"slider",s:"spike",i:"spike",l:"fspike",m:"mspike",z:"saw",b:"boulder",f:"fire",n:"icet",r:"spring",c:"crate",k:"key",h:"check",e:"pfire",o:"pghost",t:"parm",j:"pjump",T:"turret",C:"crusher",L:"laser",P:"mace",R:"fbar",D:"crumble",M:"mud",Q:"portal",W:"fan",U:"blink",Z:"pz",F:"pf2",Y:"pflm",A:"pdj",H:"pdash","1":"b1","2":"b2","3":"b3","4":"b4","5":"b5",G:"bflag","6":"b6",B:"trampoline",O:"windvent",N:"shockmine",I:"pice",J:"pboom",K:"pbolt",V:"pbomb",y:"plife",d:"psurge",q:"pbow","&":"lava",X:"gas","8":"pspear","9":"pfeather","%":"bpad","7":"b7","0":"b0","#":"bounce","@":"fbelt","!":"fbelt","^":"minion_slime","<":"minion_bat",">":"minion_knight","$":"coin","*":"starcoin","+":"switch_block","=":"red_block","~":"blue_block"};
 const FX={e:"fire",o:"ghost",t:"arm",j:"jump",Z:"sword",F:"fb",Y:"flame",A:"dj",H:"dash",I:"ice",J:"boom",K:"bolt",V:"bomb",q:"bow",d:"surge","8":"spear","9":"feather"},WEAPONS=["sword","fb","flame","ice","boom","bolt","bomb","bow","spear"],WEP_KEYS="ZFYIJKVq8",FXN={fire:"🔥 Fireproof",ghost:"👻 Invisible",arm:"🛡 Armor",jump:"⚡ Boost",sword:"⚔ Sword",fb:"☄ Fireball",flame:"🔥 Flamethrower",dj:"🦘 Double jump",dash:"💨 Dash",ice:"❄ Ice Wand",boom:"🪃 Boomerang",bolt:"⚡ Lightning",bomb:"💣 Bombs",bow:"🏹 Bow",surge:"⚡ Surge",spear:"🔱 Spear",feather:"🪶 Feather"};
 const BW=54,BK="1234567"+"0";
 const FX0=()=>({fire:0,ghost:0,arm:0,jump:0,sword:0,fb:0,flame:0,dj:0,dash:0,surge:0,feather:0}),BH={1:18,2:20,3:20,4:30,5:36,6:40,7:34,0:30},
@@ -2163,14 +2170,17 @@ const TOOLS=[
 ["f","Fire trap","Hazards","Flickers, then burns. Fireproof ignores it."],
 ["n","Ice trap","Hazards","Blasts cold and freezes you in place for a moment. Deadly combined with other traps."],
 ["&","Lava","Hazards","Deadly pool. Fireproof lets you wade through it (it is not solid, so you sink)."],["X","Toxic gas","Hazards","Vent that swells for a moment, then releases poison. Armor absorbs one hit; Invisibility does not help."],
+["^","Slime Minion","Hazards","Patrols platforms. Stomp its head or strike with weapons."],["<","Cave Bat","Hazards","Hangs on ceiling. Swoops down when you approach."], [">","Shield Sentry","Hazards","Armored guard. Stomp or jump behind it to hit."],
 ["e","Fireproof","Powerups","12 seconds immune to fire."],
 ["o","Invisibility","Powerups","12 seconds: hidden spikes, falling spikes and ice traps don't notice you."],
 ["t","Armor","Powerups","Absorbs one hit (lasts 18 seconds)."],
 ["j","Boost","Powerups","12 seconds of higher jumps and faster running."],
 ["r","Spring","Helpers","Launches you high."],["B","Mega trampoline","Helpers","A powerful bounce pad that launches you extra high."],["O","Wind vent","Obstacles","A vertical gust lifts the player while they are above it."],["N","Shock mine","Traps","Charges, flashes, then releases a dangerous electric pulse."],["c","Crate","Helpers","Pushable box."],
 ["k","Key","Helpers","Collect all keys to open the door."],["h","Checkpoint","Helpers","Respawn here after dying."],
+["$","Gold Coin","Helpers","Collectible shiny coin."],["*","Star Medal","Helpers","Hidden secret medal. 3 per level."],
 ["D","Crumble","Obstacles","Falls shortly after you step on it, then returns."],
 ["U","Blink block","Obstacles","Appears and vanishes on a timer."],
+["+","ON/OFF Switch","Obstacles","Hit or shoot to toggle Red and Blue blocks."],["=","Red Block","Obstacles","Solid when switch is OFF, ghost when switch is ON."],["~","Blue Block","Obstacles","Ghost when switch is OFF, solid when switch is ON."],
 ["M","Mud","Obstacles","Sticky ground that slows you down."],
 ["W","Fan","Obstacles","Blows you upward over 5 cells."],
 ["Q","Portal","Obstacles","Place two. Step into one to come out of the other."],
@@ -2234,6 +2244,96 @@ const Sfx={
     else if(kind==="bossDown"){[440,554,659,880].forEach((n,i)=>setTimeout(()=>this.tone(n,0.18,"square",0.09),i*70));}
     else if(kind==="hurt"){this.tone(180,0.2,"sawtooth",0.12,-100);}
     else if(kind==="win"){[523,659,784,1046,1318].forEach((n,i)=>setTimeout(()=>this.tone(n,0.22,"triangle",0.14),i*85));}
+    else if(kind==="coin"){this.tone(988,0.07,"sine",0.12);setTimeout(()=>this.tone(1318,0.12,"sine",0.14),55);}
+    else if(kind==="stomp"){this.tone(360,0.08,"triangle",0.16);setTimeout(()=>this.tone(540,0.12,"triangle",0.14),50);}
+    else if(kind==="switch"){this.tone(480,0.06,"square",0.12);setTimeout(()=>this.tone(720,0.09,"square",0.12),45);}
+    else if(kind==="wallkick"){this.tone(320,0.08,"sine",0.11,180);}
+    else if(kind==="slam"){this.tone(140,0.22,"sawtooth",0.15,-60);}
+  }
+};
+
+/* ==========================================================================
+   CHIPTUNE BGM SYNTHESIZER (8-bit adventure and boss battle soundtracks)
+   ========================================================================== */
+const Bgm={
+  on:localStorage.getItem("bb_bgm")!=="0",
+  mode:null,
+  timer:null,
+  step:0,
+  toggle(){
+    this.on=!this.on;
+    try{localStorage.setItem("bb_bgm",this.on?"1":"0");}catch(_){}
+    if(!this.on)this.stop();
+    else if(G.mode!=="edit")this.play(this.lastTrack||"overworld");
+    return this.on;
+  },
+  stop(){
+    if(this.timer){clearInterval(this.timer);this.timer=null;}
+    this.mode=null;
+  },
+  play(track="overworld"){
+    this.lastTrack=track;
+    if(!this.on||!Sfx.on)return;
+    Sfx.init();
+    if(!Sfx.ctx)return;
+    if(this.mode===track&&this.timer)return;
+    this.stop();
+    this.mode=track;
+    this.step=0;
+    const bpm=track==="boss"?155:135;
+    const interval=(60/bpm)/4*1000;
+    const owMelody=[
+      523.3,0,523.3,0,587.3,0,659.3,0,
+      523.3,0,392.0,0,440.0,0,523.3,0,
+      659.3,0,784.0,0,659.3,0,587.3,0,
+      523.3,0,440.0,0,392.0,0,0,0,
+      523.3,523.3,0,659.3,784.0,0,880.0,0,
+      784.0,0,659.3,0,587.3,0,523.3,0,
+      440.0,0,523.3,0,659.3,0,587.3,0,
+      523.3,0,0,0,523.3,0,0,0
+    ];
+    const owBass=[
+      130.8,130.8,261.6,130.8,174.6,174.6,349.2,174.6,
+      196.0,196.0,392.0,196.0,130.8,130.8,261.6,130.8
+    ];
+    const bossMelody=[
+      440.0,440.0,0,440.0,523.3,0,440.0,0,
+      392.0,0,440.0,0,523.3,0,587.3,0,
+      659.3,659.3,0,587.3,523.3,0,440.0,0,
+      392.0,0,370.0,0,392.0,0,440.0,0
+    ];
+    const bossBass=[
+      110.0,220.0,110.0,220.0,103.8,207.7,103.8,207.7,
+      98.0,196.0,98.0,196.0,110.0,220.0,116.5,233.1
+    ];
+    this.timer=setInterval(()=>{
+      if(!this.on||!Sfx.on||!Sfx.ctx||G.mode==="edit")return;
+      const t=Sfx.ctx.currentTime;
+      const isBoss=this.mode==="boss";
+      const mel=isBoss?bossMelody:owMelody;
+      const bss=isBoss?bossBass:owBass;
+      const mNote=mel[this.step%mel.length];
+      const bNote=bss[Math.floor(this.step/2)%bss.length];
+      if(mNote>0){
+        try{
+          const o=Sfx.ctx.createOscillator(),g=Sfx.ctx.createGain();
+          o.type="square";o.frequency.setValueAtTime(mNote,t);
+          g.gain.setValueAtTime(0.025,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+          o.connect(g);g.connect(Sfx.ctx.destination);
+          o.start(t);o.stop(t+0.13);
+        }catch(_){}
+      }
+      if(this.step%2===0&&bNote>0){
+        try{
+          const bo=Sfx.ctx.createOscillator(),bg=Sfx.ctx.createGain();
+          bo.type="triangle";bo.frequency.setValueAtTime(bNote,t);
+          bg.gain.setValueAtTime(0.06,t);bg.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+          bo.connect(bg);bg.connect(Sfx.ctx.destination);
+          bo.start(t);bo.stop(t+0.2);
+        }catch(_){}
+      }
+      this.step++;
+    },interval);
   }
 };
 
@@ -2583,8 +2683,8 @@ function askRangeForPlacement(t,c,r){
 let ft;
 // Top-bar status line: persistent tip (bosses left, weapon hints) + temporary alerts (door locked, etc.)
 const TS={tip:"",msg:"",t:null,
-  render(){const el=$("topStatus");if(!el)return;const v=this.msg||this.tip;
-    if(el.textContent!==v)el.textContent=v;
+  render(){const el=$("topStatus"),tx=$("tsText");if(!el||!tx)return;const v=this.msg||this.tip;
+    if(tx.textContent!==v)tx.textContent=v;
     el.classList.toggle("on",!!v);el.classList.toggle("alert",!!this.msg);},
   setTip(v){v=v||"";if(v===this.tip)return;this.tip=v;this.render();},
   alert(m,ms=2800){this.msg=m;clearTimeout(this.t);this.t=setTimeout(()=>{this.msg="";this.t=null;this.render();},ms);
@@ -2841,6 +2941,10 @@ function openMobileSettings(){
           <div><b>Ambient Sound</b><br><small style="color:var(--fg-muted)">Birds, crickets, rain, thunder and carols for each weather</small></div>
           <button id="stgAmb" class="${Amb.on?"pri":""}">${Amb.on?"🎵 On":"Off"}</button>
         </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
+          <div><b>Chiptune Music (BGM)</b><br><small style="color:var(--fg-muted)">8-bit adventure and boss battle soundtracks</small></div>
+          <button id="stgBgm" class="${Bgm.on?"pri":""}">${Bgm.on?"🎶 On":"Off"}</button>
+        </div>
         <div style="padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)">
           <b>Gameplay Assists</b><br><small style="color:var(--fg-muted)">Saved on this device. Extra lives are held up to 3 and each one used still counts as a death.</small>
           <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"><button id="stgLives" class="pri">❤ Start lives: ${Assist.lives}</button><button id="stgDur" class="pri">⏱ Power-up time ×${Assist.dur}</button></div>
@@ -3015,7 +3119,7 @@ document.querySelectorAll("[data-p]").forEach(b=>{
 window.addEventListener("blur",()=>{PAN.x=PAN.y=0;document.querySelectorAll("[data-p].on").forEach(b=>b.classList.remove("on"));});
 
 /* Touch Gameplay Pad with Thumb-Slide Support between Left & Right */
-const T={l:0,r:0,j:0,jd:0,a:0,d:0,s:0};
+const T={l:0,r:0,dn:0,j:0,jd:0,a:0,d:0,s:0};
 function releaseTouchButton(b){const k=b.dataset.k;if(!k)return;T[k]=0;b.classList.remove("dn");}
 const movePad=$("padMove");
 if(movePad){
@@ -3039,7 +3143,7 @@ if(movePad){
   }));
 }
 document.querySelectorAll("#pad button").forEach(b=>{
-  const k=b.dataset.k;if(k==="l"||k==="r")return;
+  const k=b.dataset.k;if(k==="l"||k==="r"||k==="dn")return;
   b.addEventListener("pointerdown",e=>{
     e.preventDefault();
     if(b.setPointerCapture){try{b.setPointerCapture(e.pointerId);}catch(_){}}
@@ -4413,7 +4517,7 @@ class Main extends Phaser.Scene{
       if(ow.length>1)tp.push((cm?"⇄":"Q")+" switch weapon");
       if(fx.dash>now)tp.push((cm?"💨":"Shift")+" dash");
       const lb=this.bosses.filter(bb=>!bb.dead);
-      if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);tp.push(Math.abs(nb.x-px)<700?(ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"):"👹 "+lb.length+" Bosses Left · 🚪 Locked");}
+      if(lb.length){const nb=lb.reduce((a,bb)=>Math.abs(bb.x-px)<Math.abs(a.x-px)?bb:a);if(Math.abs(nb.x-px)<700)tp.push((ow.length?"👹 Boss "+Math.max(0,Math.ceil(nb.hp))+"/"+nb.max+" HP"+(nb.flag&&!nb.awake?" (asleep until you touch its 🚩 flag)":nb.awake?" · "+BOSS[nb.t].n:""):"👹 Boss ahead! Grab a weapon pickup first"));}
       this.tip.setText(tp.join("   ·   "));}
     {const SEP=" · ";setText($("hud"),"❤"+(this.lives||0)+"  D:"+this.deaths+"  B:"+this.bosses.filter(bb=>bb.dead).length+"/"+this.bosses.length+"  T:"+(this.t0==null?0:(now-this.t0)/1000).toFixed(0)+"s");}
   }
@@ -4512,7 +4616,8 @@ class Main extends Phaser.Scene{
 if(typeof Phaser!=="undefined"){
   const op=Main.prototype.play,ot=Main.prototype.tex,od=Main.prototype.die,odm=Main.prototype.dmg;
   const fh=document.createElement("div");fh.id="fh";
-  fh.innerHTML='<div class="fh-row"><span class="fh-c" id="fhKey"></span><span class="fh-c" id="fhBoss"></span><span class="fh-c" id="fhLife"></span><span class="fh-c" id="fhDeath"></span><span class="fh-c" id="fhTime"></span><span class="fh-c" id="fhStars"></span></div><div id="fhTrack"><i id="fhBar"></i><b id="fhMark">🏃</b><u id="fhEnd">🚪</u></div><div id="fhBoss2"><span id="fhBN"></span><div><i id="fhBH"></i></div></div><div class="fh-row" id="fhFx"></div>';
+  $("fhTop").innerHTML='<span class="fh-c" id="fhKey"></span><span class="fh-c" id="fhBoss"></span><span class="fh-c" id="fhLife"></span><span class="fh-c" id="fhDeath"></span><span class="fh-c" id="fhTime"></span><span class="fh-c" id="fhStars"></span>';
+  fh.innerHTML='<div id="fhTrack"><i id="fhBar"></i><b id="fhMark">🏃</b><u id="fhEnd">🚪</u></div><div id="fhBoss2"><span id="fhBN"></span><div><i id="fhBH"></i></div></div><div class="fh-row" id="fhFx"></div>';
   $("wrap").appendChild(fh);
   function hudTick(sc){
     const now=sc.time.now,p=sc.p,fx=sc.fx;if(now<(sc._hu||0))return;sc._hu=now+90;
