@@ -2624,18 +2624,24 @@ function lzwUnpack(encoded){
   for(let i=1;i<codes.length;i++){const k=codes[i],entry=dict[k]!==undefined?dict[k]:w+w[0];out+=entry;if(next<65535)dict[next++]=w+entry[0];w=entry;}
   return out;
 }
-const SHARE_TYPES=["1","2","3","4","5","6","p","a","v","w","g","u","s","i","l","m","z","b","f","n","r","c","k","h","e","o","t","j","T","C","L","P","R","D","M","Q","W","U","Z","F","Y","A","H","G","B","O","N","I","J","K","V","y","d","q","&","X","8","9","%","7","0","#","@","!"],SHARE_INDEX=new Map(SHARE_TYPES.map((t,i)=>[t,i]));
+const SHARE_TYPES=["1","2","3","4","5","6","p","a","v","w","g","u","s","i","l","m","z","b","f","n","r","c","k","h","e","o","t","j","T","C","L","P","R","D","M","Q","W","U","Z","F","Y","A","H","G","B","O","N","I","J","K","V","y","d","q","&","X","8","9","%","7","0","#","@","!","^","<",">","$","*","+","=","~"],SHARE_INDEX=new Map(SHARE_TYPES.map((t,i)=>[t,i]));
 function bitWriter(){let bits=[];return{put(v,n){for(let i=n-1;i>=0;i--)bits.push((v>>i)&1);},finish(){const bytes=[];for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|(bits[i+j]||0);bytes.push(b);}let bin="";bytes.forEach(b=>bin+=String.fromCharCode(b));return btoa(bin).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/g,"");}}}
 function bitReader(str){const b64=str.replace(/-/g,"+").replace(/_/g,"/"),bin=atob(b64+"=".repeat((4-b64.length%4)%4));let bit=0;return{get(n){let v=0;for(let i=0;i<n;i++){const k=bit++;v=(v<<1)|((bin.charCodeAt(k>>3)>>(7-(k&7)))&1);}return v;},left(){return bin.length*8-bit;}}}
 function compactEncode(L){
-  const w=bitWriter();w.put(3,3);w.put(L.s[0],6);w.put(L.s[1],5);w.put(L.e[0],6);w.put(L.e[1],5);w.put(L.o.length,10);
-  for(const o of L.o){const idx=SHARE_INDEX.get(o[0]);if(idx===undefined)throw Error("Unknown object type");w.put(idx,6);w.put(o[1],6);w.put(o[2],5);const has=Number.isInteger(o[3]);w.put(has?1:0,1);if(has)w.put(Math.max(1,Math.min(15,o[3])),4);}
+  const w=bitWriter();w.put(4,3);w.put(L.s[0],6);w.put(L.s[1],5);w.put(L.e[0],6);w.put(L.e[1],5);w.put(L.o.length,10);
+  for(const o of L.o){const idx=SHARE_INDEX.get(o[0]);if(idx===undefined)throw Error("Unknown object type");w.put(idx,7);w.put(o[1],6);w.put(o[2],5);const has=Number.isInteger(o[3]);w.put(has?1:0,1);if(has)w.put(Math.max(1,Math.min(15,o[3])),4);}
   return "b"+w.finish();
 }
 function compactDecode(code){
-  const r=bitReader(code);if(r.get(3)!==3)return null;
+  const r=bitReader(code);const ver=r.get(3);
+  if(ver===3){
+    const s=[r.get(6),r.get(5)],e=[r.get(6),r.get(5)],n=r.get(10);if(n>MAXO)return null;
+    const o=[];for(let i=0;i<n;i++){const idx=r.get(6),t=SHARE_TYPES[idx];if(!t)return null;const c=r.get(6),y=r.get(5),has=r.get(1),v=has?r.get(4):undefined;o.push(v===undefined?[t,c,y]:[t,c,y,v]);}
+    if(r.left()>=8)return null;return{v:2,s,e,o};
+  }
+  if(ver!==4)return null;
   const s=[r.get(6),r.get(5)],e=[r.get(6),r.get(5)],n=r.get(10);if(n>MAXO)return null;
-  const o=[];for(let i=0;i<n;i++){const idx=r.get(6),t=SHARE_TYPES[idx];if(!t)return null;const c=r.get(6),y=r.get(5),has=r.get(1),v=has?r.get(4):undefined;o.push(v===undefined?[t,c,y]:[t,c,y,v]);}
+  const o=[];for(let i=0;i<n;i++){const idx=r.get(7),t=SHARE_TYPES[idx];if(!t)return null;const c=r.get(6),y=r.get(5),has=r.get(1),v=has?r.get(4):undefined;o.push(v===undefined?[t,c,y]:[t,c,y,v]);}
   if(r.left()>=8)return null;
   return{v:2,s,e,o};
 }
@@ -2970,6 +2976,7 @@ function openMobileSettings(){
     $("stgLives").onclick=()=>{Assist.lives=(Assist.lives+1)%4;localStorage.setItem("bbLives",Assist.lives);render();};
     $("stgDur").onclick=()=>{const o=[1,1.5,2];Assist.dur=o[(o.indexOf(Assist.dur)+1)%3];localStorage.setItem("bbDur",Assist.dur);render();};
     $("stgAmb").onclick=()=>{Amb.on=!Amb.on;localStorage.setItem("bbamb",Amb.on?"1":"0");Amb.sync();render();};
+    if($("stgBgm"))$("stgBgm").onclick=()=>{Bgm.toggle();render();};
     if($("stgCtl")){
       $("stgCtl").onclick=()=>{Ctl.set("mode",Ctl.mode==="below"?"over":"below");render();};
       $("stgSzDn").onclick=()=>{Ctl.set("size",Math.max(.8,+(Ctl.size-.1).toFixed(2)));render();};
@@ -3598,6 +3605,15 @@ class Main extends Phaser.Scene{
     mk("portal",32,32,g=>{g.lineStyle(4,0xe879f9).strokeCircle(16,16,12);g.lineStyle(3,0x22d3ee).strokeCircle(16,16,7);g.fillStyle(0xe879f9).fillRect(14,2,4,6);g.fillStyle(0xffffff,.5).fillCircle(16,16,3)});
     mk("fan",32,32,g=>{g.fillStyle(0x64748b).fillRect(2,18,28,14);g.fillStyle(0xbae6fd).fillTriangle(4,18,16,2,28,18)});
     mk("blink",32,32,g=>{g.fillStyle(0x38bdf8,.85).fillRect(0,0,32,32);g.lineStyle(2,0xe0f2fe).strokeRect(2,2,28,28)});
+    // --- New entity textures ---
+    mk("minion_slime",32,32,g=>{g.fillStyle(0x4ade80).fillEllipse(16,20,26,18);g.fillStyle(0x86efac).fillEllipse(14,17,8,6);g.fillStyle(0x0f172a).fillCircle(12,18,3).fillCircle(20,18,3);g.fillStyle(0xffffff).fillCircle(11,17,1.5).fillCircle(19,17,1.5);});
+    mk("minion_bat",32,32,g=>{g.fillStyle(0x7c3aed).fillEllipse(16,16,14,10);g.fillStyle(0x5b21b6).fillTriangle(2,22,10,10,16,16).fillTriangle(30,22,22,10,16,16);g.fillStyle(0xf43f5e).fillCircle(13,15,2).fillCircle(19,15,2);});
+    mk("minion_knight",32,32,g=>{g.fillStyle(0x64748b).fillRect(8,6,16,20);g.fillStyle(0x334155).fillRect(4,6,6,16);g.fillStyle(0xe2e8f0).fillRect(10,8,12,8);g.fillStyle(0xfacc15).fillCircle(16,24,4);g.fillStyle(0xffffff).fillCircle(13,11,2).fillCircle(19,11,2);});
+    mk("coin",32,32,g=>{g.fillStyle(0xfacc15).fillCircle(16,16,13);g.fillStyle(0xfde047).fillCircle(14,14,8);g.fillStyle(0xca8a04).fillCircle(16,16,4);g.lineStyle(2,0x92400e).strokeCircle(16,16,13);});
+    mk("starcoin",32,32,g=>{g.fillStyle(0xfacc15);const pts=[],r1=13,r2=6,n=5;for(let i=0;i<n*2;i++){const a=i*Math.PI/n-Math.PI/2,r=i%2===0?r1:r2;pts.push(16+r*Math.cos(a),16+r*Math.sin(a));}g.fillPoints(pts.reduce((a,v,i)=>i%2?[...a,{x:pts[i-1],y:v}]:a,[]),true);g.fillStyle(0xfde047).fillCircle(16,16,5);});
+    mk("switch_block",32,32,g=>{g.fillStyle(0xf43f5e).fillRect(0,0,32,32);g.fillStyle(0xffffff).fillRect(4,4,24,24);g.fillStyle(0xf43f5e).fillRect(8,10,8,12);g.lineStyle(2,0x334155).strokeRect(2,2,28,28);});
+    mk("red_block",32,32,g=>{g.fillStyle(0xf43f5e).fillRect(0,0,32,32);g.fillStyle(0xfca5a5).fillRect(2,2,28,6);g.fillStyle(0xdc2626).fillRect(0,26,32,6);g.lineStyle(2,0xffffff).strokeRect(2,2,28,28);});
+    mk("blue_block",32,32,g=>{g.fillStyle(0x3b82f6).fillRect(0,0,32,32);g.fillStyle(0x93c5fd).fillRect(2,2,28,6);g.fillStyle(0x1d4ed8).fillRect(0,26,32,6);g.lineStyle(2,0xffffff).strokeRect(2,2,28,28);});
     buildPixelSprites(this);
     this.buildBossStills();
     this.mkP();
@@ -4474,6 +4490,52 @@ class Main extends Phaser.Scene{
           if(lv.length){lv.forEach((bb,i)=>this.wake(bb,i===0));this.cameras.main.shake(180,.012);}
           else flash("The flag is raised.");
         }break;
+        case"$":if(!e.gone&&hit(e.x-10,e.y-10,20,20)){e.gone=true;e.s.setVisible(false);this.coins=(this.coins||0)+1;Sfx.play("coin");Juice.burst(this,e.x,e.y,0xfacc15,"+1 coin");}break;
+        case"*":if(!e.gone&&hit(e.x-12,e.y-12,24,24)){e.gone=true;e.s.setVisible(false);this.starCoins=(this.starCoins||0)+1;Sfx.play("coin");Sfx.play("power");Juice.burst(this,e.x,e.y,0xfacc15,"\u2b50 STAR!");}break;
+        case"+":{ // ON/OFF switch — hit from below or weapon collision handled in proj loop
+          const hitSwitch=hit(e.x-14,e.y-28,28,8)&&b.velocity.y<0;
+          if(hitSwitch&&now>(e.cd||0)){e.cd=now+500;this.switchOn=!this.switchOn;Sfx.play("switch");Juice.burst(this,e.x,e.y,0xf43f5e,"SWITCH!");this.ents.forEach(q=>{if(q.t==="=")q.s.setAlpha(this.switchOn?0.25:1);if(q.t==="~")q.s.setAlpha(this.switchOn?1:0.25);});}
+          break;}
+        case"=":{ // Red block: solid when switch OFF
+          const solidR=!this.switchOn;e.s.setAlpha(solidR?1:0.3);
+          if(solidR&&!ghost&&hit(e.x-15,e.y-15,30,30))this.hurt();break;}
+        case"~":{ // Blue block: solid when switch ON
+          const solidB=!!this.switchOn;e.s.setAlpha(solidB?1:0.3);
+          if(solidB&&!ghost&&hit(e.x-15,e.y-15,30,30))this.hurt();break;}
+        case"^":{ // Slime Minion — ground patrol
+          if(!e.dead){
+            if(!e.dir)e.dir=1;
+            const nx=e.x+e.dir*58*s;
+            const wallAhead=this.sol.has(Math.floor((nx+(e.dir>0?16:-16))/S)+","+Math.floor(e.y/S));
+            const ledge=!this.sol.has(Math.floor((e.x+e.dir*18)/S)+","+Math.floor((e.y+18)/S));
+            if(wallAhead||ledge)e.dir*=-1;else e.x=nx;
+            e.s.setPosition(e.x,e.y).setFlipX(e.dir<0);
+            const stompHit=hit(e.x-13,e.y-10,26,10)&&b.velocity.y>60&&py+ph<e.y+4;
+            if(stompHit){e.dead=true;e.s.setVisible(false);p.setVelocityY(-480);Sfx.play("stomp");Juice.burst(this,e.x,e.y,0x4ade80,"STOMP!");}
+            else if(!ghost&&hit(e.x-13,e.y-13,26,26))this.hurt();
+          }break;}
+        case"<":{ // Cave Bat — swoops at player
+          if(!e.dead){
+            if(!e.gy)e.gy=e.y;
+            const dist=Math.hypot(px+pw/2-e.x,py+ph/2-e.y);
+            if(!e.swooping&&dist<200){e.swooping=true;const d2=dist||1;e.vx=(px+pw/2-e.x)/d2*120;e.vy=Math.abs(py+ph/2-e.y)/d2*120+40;}
+            if(e.swooping){e.x+=e.vx*s;e.y+=e.vy*s;if(e.y>e.gy+200||e.y<e.gy-20){e.swooping=false;e.y=e.gy;e.vx=0;e.vy=0;}}
+            e.s.setPosition(e.x,e.y);
+            const stompB=hit(e.x-10,e.y-8,20,8)&&b.velocity.y>60&&py+ph<e.y;
+            if(stompB){e.dead=true;e.s.setVisible(false);p.setVelocityY(-480);Sfx.play("stomp");Juice.burst(this,e.x,e.y,0x7c3aed,"STOMP!");}
+            else if(!ghost&&hit(e.x-10,e.y-10,20,20))this.hurt();
+          }break;}
+        case">":{ // Shield Sentry — armored patrol
+          if(!e.dead){
+            if(!e.dir)e.dir=1;
+            const nx=e.x+e.dir*45*s;
+            const wall=this.sol.has(Math.floor((nx+(e.dir>0?17:-17))/S)+","+Math.floor(e.y/S));
+            if(wall)e.dir*=-1;else e.x=nx;
+            e.s.setPosition(e.x,e.y).setFlipX(e.dir<0);
+            const stompS=hit(e.x-13,e.y-10,26,10)&&b.velocity.y>60&&py+ph<e.y+4;
+            if(stompS){e.dead=true;e.s.setVisible(false);p.setVelocityY(-480);Sfx.play("stomp");Juice.burst(this,e.x,e.y,0x64748b,"STOMP!");}
+            else if(!ghost&&hit(e.x-13,e.y-13,26,26))this.hurt();
+          }break;}
         case"E":e.s.setAlpha(open?1:.5);if(hit(e.x-12,e.y-14,24,30)){if(open)return this.win();if(now>(this.hintAt||0)){this.hintAt=now+1500;flash("The door is locked. Collect all keys and defeat every boss!");}}break;
       }
     }
